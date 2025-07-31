@@ -9,7 +9,8 @@ import {
   LogOut,
   Phone,
   Brain,
-  AlertTriangle
+  AlertTriangle,
+  Shield
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,6 +31,7 @@ const items = [
   { title: "Solicitações", url: "/requests", icon: MessageSquare },
   { title: "Munícipes", url: "/citizens", icon: Users },
   { title: "Agendamentos", url: "/appointments", icon: Calendar },
+  { title: "Usuários", url: "/users", icon: Shield },
   { title: "WhatsApp", url: "/whatsapp", icon: Phone },
   { title: "Relatórios", url: "/reports", icon: BarChart3 },
   { title: "Insights", url: "/insights", icon: Brain },
