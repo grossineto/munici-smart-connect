@@ -14,16 +14,242 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          assigned_to: string | null
+          citizen_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          scheduled_date: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          citizen_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          scheduled_date: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          citizen_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          scheduled_date?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_citizen_id_fkey"
+            columns: ["citizen_id"]
+            isOneToOne: false
+            referencedRelation: "citizens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      citizens: {
+        Row: {
+          address: string | null
+          cpf: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          neighborhood: string | null
+          phone: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          neighborhood?: string | null
+          phone: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          neighborhood?: string | null
+          phone?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_from_citizen: boolean | null
+          request_id: string | null
+          sender_phone: string
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_from_citizen?: boolean | null
+          request_id?: string | null
+          sender_phone: string
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_from_citizen?: boolean | null
+          request_id?: string | null
+          sender_phone?: string
+          whatsapp_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      requests: {
+        Row: {
+          assigned_to: string | null
+          citizen_id: string
+          completed_at: string | null
+          created_at: string | null
+          description: string
+          id: string
+          location: string | null
+          priority: Database["public"]["Enums"]["request_priority"] | null
+          protocol_number: string
+          status: Database["public"]["Enums"]["request_status"] | null
+          title: string
+          type: Database["public"]["Enums"]["request_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          citizen_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          location?: string | null
+          priority?: Database["public"]["Enums"]["request_priority"] | null
+          protocol_number: string
+          status?: Database["public"]["Enums"]["request_status"] | null
+          title: string
+          type: Database["public"]["Enums"]["request_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          citizen_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          location?: string | null
+          priority?: Database["public"]["Enums"]["request_priority"] | null
+          protocol_number?: string
+          status?: Database["public"]["Enums"]["request_status"] | null
+          title?: string
+          type?: Database["public"]["Enums"]["request_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requests_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requests_citizen_id_fkey"
+            columns: ["citizen_id"]
+            isOneToOne: false
+            referencedRelation: "citizens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_protocol_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      request_priority: "low" | "medium" | "high" | "urgent"
+      request_status: "pending" | "in_progress" | "completed" | "cancelled"
+      request_type:
+        | "manutencao"
+        | "limpeza"
+        | "iluminacao"
+        | "transporte"
+        | "saude"
+        | "educacao"
+        | "outros"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +376,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      request_priority: ["low", "medium", "high", "urgent"],
+      request_status: ["pending", "in_progress", "completed", "cancelled"],
+      request_type: [
+        "manutencao",
+        "limpeza",
+        "iluminacao",
+        "transporte",
+        "saude",
+        "educacao",
+        "outros",
+      ],
+    },
   },
 } as const
