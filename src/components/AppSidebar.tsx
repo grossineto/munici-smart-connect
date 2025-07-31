@@ -6,7 +6,8 @@ import {
   BarChart3, 
   FileText, 
   Settings,
-  LogOut 
+  LogOut,
+  Phone
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,12 +25,9 @@ import { Button } from "@/components/ui/button";
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
-  { title: "Solicitações", url: "/dashboard/requests", icon: MessageSquare },
-  { title: "Agendamentos", url: "/dashboard/appointments", icon: Calendar },
-  { title: "Munícipes", url: "/dashboard/citizens", icon: Users },
-  { title: "Análises", url: "/dashboard/analytics", icon: BarChart3 },
-  { title: "Relatórios", url: "/dashboard/reports", icon: FileText },
-  { title: "Configurações", url: "/dashboard/settings", icon: Settings },
+  { title: "Solicitações", url: "/requests", icon: MessageSquare },
+  { title: "WhatsApp", url: "/whatsapp", icon: Phone },
+  { title: "Relatórios", url: "/reports", icon: BarChart3 },
 ];
 
 export function AppSidebar() {

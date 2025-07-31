@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_metrics: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          metric_type: string
+          period_end: string
+          period_start: string
+          value: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          period_end: string
+          period_start: string
+          value: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          period_end?: string
+          period_start?: string
+          value?: number
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           assigned_to: string | null
@@ -75,7 +108,10 @@ export type Database = {
           name: string
           neighborhood: string | null
           phone: string
+          preferred_language: string | null
+          registration_step: string | null
           updated_at: string | null
+          whatsapp_phone: string | null
         }
         Insert: {
           address?: string | null
@@ -86,7 +122,10 @@ export type Database = {
           name: string
           neighborhood?: string | null
           phone: string
+          preferred_language?: string | null
+          registration_step?: string | null
           updated_at?: string | null
+          whatsapp_phone?: string | null
         }
         Update: {
           address?: string | null
@@ -97,34 +136,46 @@ export type Database = {
           name?: string
           neighborhood?: string | null
           phone?: string
+          preferred_language?: string | null
+          registration_step?: string | null
           updated_at?: string | null
+          whatsapp_phone?: string | null
         }
         Relationships: []
       }
       messages: {
         Row: {
           content: string
+          conversation_state: string | null
           created_at: string | null
           id: string
           is_from_citizen: boolean | null
+          media_url: string | null
+          message_type: string | null
           request_id: string | null
           sender_phone: string
           whatsapp_message_id: string | null
         }
         Insert: {
           content: string
+          conversation_state?: string | null
           created_at?: string | null
           id?: string
           is_from_citizen?: boolean | null
+          media_url?: string | null
+          message_type?: string | null
           request_id?: string | null
           sender_phone: string
           whatsapp_message_id?: string | null
         }
         Update: {
           content?: string
+          conversation_state?: string | null
           created_at?: string | null
           id?: string
           is_from_citizen?: boolean | null
+          media_url?: string | null
+          message_type?: string | null
           request_id?: string | null
           sender_phone?: string
           whatsapp_message_id?: string | null
@@ -229,11 +280,62 @@ export type Database = {
           },
         ]
       }
+      whatsapp_sessions: {
+        Row: {
+          citizen_id: string | null
+          created_at: string | null
+          current_flow: string | null
+          flow_data: Json | null
+          id: string
+          last_activity: string | null
+          phone: string
+          updated_at: string | null
+        }
+        Insert: {
+          citizen_id?: string | null
+          created_at?: string | null
+          current_flow?: string | null
+          flow_data?: Json | null
+          id?: string
+          last_activity?: string | null
+          phone: string
+          updated_at?: string | null
+        }
+        Update: {
+          citizen_id?: string | null
+          created_at?: string | null
+          current_flow?: string | null
+          flow_data?: Json | null
+          id?: string
+          last_activity?: string | null
+          phone?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_sessions_citizen_id_fkey"
+            columns: ["citizen_id"]
+            isOneToOne: false
+            referencedRelation: "citizens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      generate_analytics_insights: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          insight_type: string
+          title: string
+          description: string
+          severity: string
+          data: Json
+        }[]
+      }
       generate_protocol_number: {
         Args: Record<PropertyKey, never>
         Returns: string
