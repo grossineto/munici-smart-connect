@@ -190,6 +190,45 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          read: boolean
+          title: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          read?: boolean
+          title: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          read?: boolean
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -359,6 +398,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_notification: {
+        Args: {
+          _user_id: string
+          _title: string
+          _message: string
+          _type?: string
+          _action_url?: string
+          _metadata?: Json
+        }
+        Returns: string
+      }
       generate_analytics_insights: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -383,6 +433,16 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      notify_admins: {
+        Args: {
+          _title: string
+          _message: string
+          _type?: string
+          _action_url?: string
+          _metadata?: Json
+        }
+        Returns: number
       }
     }
     Enums: {

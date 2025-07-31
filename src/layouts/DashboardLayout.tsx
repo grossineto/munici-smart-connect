@@ -1,8 +1,9 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { NotificationCenter } from "@/components/NotificationCenter";
 import { useAuth } from "@/hooks/useAuth";
-import { NotificationBell } from "@/components/ui/notification-bell";
+
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -30,7 +31,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <span className="text-sm text-muted-foreground font-medium tracking-wide">Your city. Smarter. Together.</span>
               </div>
               <div className="flex items-center gap-4">
-                <NotificationBell />
+                <NotificationCenter />
                 <span className="text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full">
                   {user?.email}
                 </span>

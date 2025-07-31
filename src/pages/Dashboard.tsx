@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Clock, CheckCircle, AlertTriangle, Users, Calendar, TrendingUp, Brain, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { TestNotifications } from "@/components/TestNotifications";
 
 interface DashboardStats {
   totalRequests: number;
@@ -290,7 +291,12 @@ const Dashboard = () => {
             </p>
           </CardContent>
         </Card>
-      </div>
+        </div>
+        
+        {/* Seção de teste das notificações - remover em produção */}
+        <div className="space-y-6">
+          <TestNotifications />
+        </div>
 
       {/* Análise Preditiva - Insights de IA */}
       {aiInsights.length > 0 && (
