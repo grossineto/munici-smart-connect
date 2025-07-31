@@ -8,7 +8,8 @@ import {
   Settings,
   LogOut,
   Phone,
-  Brain
+  Brain,
+  AlertTriangle
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,6 +31,7 @@ const items = [
   { title: "WhatsApp", url: "/whatsapp", icon: Phone },
   { title: "Relatórios", url: "/reports", icon: BarChart3 },
   { title: "Insights", url: "/insights", icon: Brain },
+  { title: "Gabinete de Urgência", url: "/urgency-office", icon: AlertTriangle },
 ];
 
 export function AppSidebar() {
