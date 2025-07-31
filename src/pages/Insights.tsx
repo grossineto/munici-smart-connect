@@ -356,16 +356,16 @@ const Insights = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Insights Preditivos</h2>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Insights Preditivos</h2>
           <p className="text-muted-foreground">
             Análise inteligente dos dados municipais para tomada de decisão
           </p>
         </div>
-        <Button onClick={exportInsights} variant="outline">
-          <Download className="h-4 w-4 mr-2" />
-          Exportar Relatório
+        <Button onClick={exportInsights} variant="outline" size="sm" className="md:text-sm">
+          <Download className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+          <span className="hidden sm:inline">Exportar</span>
         </Button>
       </div>
 
@@ -551,7 +551,7 @@ const Insights = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {insights.citySegments.map((segment, index) => (
               <div 
                 key={index} 
@@ -613,7 +613,7 @@ const Insights = () => {
 
                 <p className="text-muted-foreground">{insight.description}</p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <div>
                       <h4 className="font-medium flex items-center gap-2">
@@ -669,7 +669,7 @@ const Insights = () => {
                 </div>
 
                 <div className="pt-3 border-t space-y-2">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="font-medium">Áreas Afetadas:</span>
                       <p className="text-muted-foreground">{insight.affectedAreas.join(', ')}</p>

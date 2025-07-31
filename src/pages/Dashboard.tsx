@@ -170,7 +170,7 @@ const Dashboard = () => {
       </div>
 
       {/* Estatísticas Principais */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -343,7 +343,7 @@ const Dashboard = () => {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Solicitações Recentes */}
         <Card>
           <CardHeader>
@@ -356,7 +356,7 @@ const Dashboard = () => {
             <div className="space-y-4">
               {recentRequests.length > 0 ? (
                 recentRequests.map((request) => (
-                  <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={request.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">#{request.protocol_number}</span>
@@ -368,7 +368,7 @@ const Dashboard = () => {
                         {request.type} • {request.citizen_name}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right">
                       <p className={`text-sm font-medium ${getPriorityColor(request.priority)}`}>
                         {request.priority === 'high' ? 'Alta' : 
                          request.priority === 'medium' ? 'Média' : 'Baixa'} prioridade

@@ -317,20 +317,20 @@ const Reports = () => {
 
   return (
     <div id="report-content" className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Relatórios</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Relatórios</h1>
           <p className="text-muted-foreground">
             Análise e estatísticas das solicitações
           </p>
         </div>
         
-        <div className="flex gap-4">
+        <div className="flex gap-2 md:gap-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button>
-                <Download className="mr-2 h-4 w-4" />
-                Exportar
+              <Button size="sm" className="md:text-sm">
+                <Download className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">Exportar</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -348,7 +348,7 @@ const Reports = () => {
       </div>
 
       {/* Estatísticas Gerais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Solicitações</CardTitle>
@@ -403,7 +403,7 @@ const Reports = () => {
       </div>
 
       {/* Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
         {/* Solicitações por Tipo */}
         <Card>
           <CardHeader>
@@ -412,16 +412,17 @@ const Reports = () => {
               Distribuição das solicitações por categoria
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={reportData.requestsByType}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="label" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                />
+           <CardContent>
+             <ResponsiveContainer width="100%" height={250}>
+               <BarChart data={reportData.requestsByType}>
+                 <CartesianGrid strokeDasharray="3 3" />
+                 <XAxis 
+                   dataKey="label" 
+                   angle={-45}
+                   textAnchor="end"
+                   height={80}
+                   fontSize={12}
+                 />
                 <YAxis />
                 <Tooltip />
                 <Bar dataKey="count" fill="#8884d8" />
@@ -438,9 +439,9 @@ const Reports = () => {
               Distribuição atual por status
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
+           <CardContent>
+             <ResponsiveContainer width="100%" height={250}>
+               <PieChart>
                 <Pie
                   data={reportData.requestsByStatus}
                   cx="50%"
@@ -470,9 +471,9 @@ const Reports = () => {
             Volume de solicitações por mês
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={reportData.requestsByMonth}>
+         <CardContent>
+           <ResponsiveContainer width="100%" height={250}>
+             <BarChart data={reportData.requestsByMonth}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
