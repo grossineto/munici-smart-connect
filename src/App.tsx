@@ -13,6 +13,7 @@ import Insights from "./pages/Insights";
 import WhatsApp from "./pages/WhatsApp";
 import UrgencyOffice from "./pages/UrgencyOffice";
 import Citizens from "./pages/Citizens";
+import Appointments from "./pages/Appointments";
 import DashboardLayout from "./layouts/DashboardLayout";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/whatsapp" element={<DashboardLayout><WhatsApp /></DashboardLayout>} />
             <Route path="/urgency-office" element={<DashboardLayout><UrgencyOffice /></DashboardLayout>} />
             <Route path="/citizens" element={<DashboardLayout><Citizens /></DashboardLayout>} />
+            <Route path="/appointments" element={<DashboardLayout><Appointments /></DashboardLayout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

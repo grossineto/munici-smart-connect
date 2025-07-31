@@ -29,6 +29,7 @@ const items = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Solicitações", url: "/requests", icon: MessageSquare },
   { title: "Munícipes", url: "/citizens", icon: Users },
+  { title: "Agendamentos", url: "/appointments", icon: Calendar },
   { title: "WhatsApp", url: "/whatsapp", icon: Phone },
   { title: "Relatórios", url: "/reports", icon: BarChart3 },
   { title: "Insights", url: "/insights", icon: Brain },
