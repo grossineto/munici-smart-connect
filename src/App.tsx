@@ -15,26 +15,37 @@ import UrgencyOffice from "./pages/UrgencyOffice";
 import Citizens from "./pages/Citizens";
 import Appointments from "./pages/Appointments";
 import Users from "./pages/Users";
-import Settings from "./pages/Settings";
 import DashboardLayout from "./layouts/DashboardLayout";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">BR.I.A.N. Sistema</h1>
-        <p className="text-lg text-gray-600">Sistema funcionando corretamente</p>
-        <div className="mt-4">
-          <a href="/auth" className="bg-blue-500 text-white px-4 py-2 rounded">
-            Ir para Login
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-};
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+            <Route path="/requests" element={<DashboardLayout><Requests /></DashboardLayout>} />
+            <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>} />
+            <Route path="/insights" element={<DashboardLayout><Insights /></DashboardLayout>} />
+            <Route path="/whatsapp" element={<DashboardLayout><WhatsApp /></DashboardLayout>} />
+            <Route path="/urgency-office" element={<DashboardLayout><UrgencyOffice /></DashboardLayout>} />
+            <Route path="/citizens" element={<DashboardLayout><Citizens /></DashboardLayout>} />
+            <Route path="/appointments" element={<DashboardLayout><Appointments /></DashboardLayout>} />
+            <Route path="/users" element={<DashboardLayout><Users /></DashboardLayout>} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+);
 
 export default App;
