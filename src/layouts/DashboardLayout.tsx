@@ -19,8 +19,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <div className="flex-1 flex flex-col">
             <header className="h-16 border-b bg-background flex items-center px-6 gap-4">
               <SidebarTrigger />
-              <div className="flex-1">
-                <h1 className="text-xl font-semibold">BRIAN - Sistema Municipal</h1>
+              <div className="flex-1 flex items-center gap-3">
+                <img 
+                  src="/lovable-uploads/15e88a34-c752-40da-b211-dbf4235418f1.png" 
+                  alt="BR.I.A.N." 
+                  className="h-8 w-auto"
+                />
+                <span className="text-sm text-muted-foreground">Sistema Municipal</span>
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-sm text-muted-foreground">

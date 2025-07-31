@@ -27,8 +27,11 @@ const Index = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       <div className="text-center space-y-6 max-w-2xl mx-auto px-4">
         <div className="space-y-4">
-          <h1 className="text-6xl font-bold text-primary">BRIAN</h1>
-          <h2 className="text-2xl font-semibold text-foreground">Brasil Inteligência Artificial Nexus</h2>
+          <img 
+            src="/lovable-uploads/15e88a34-c752-40da-b211-dbf4235418f1.png" 
+            alt="BR.I.A.N. - Brasil Inteligência Artificial Nexus" 
+            className="mx-auto max-w-md w-full h-auto"
+          />
           <p className="text-xl text-muted-foreground leading-relaxed">
             Sistema inteligente para atendimento automatizado de munícipes via WhatsApp, 
             com dashboard administrativo em tempo real e análise preditiva de dados.
