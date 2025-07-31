@@ -2,15 +2,18 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Calendar, Download, TrendingUp, TrendingDown, Users, FileText, Clock, CheckCircle } from "lucide-react";
+import { Calendar, Download, TrendingUp, TrendingDown, Users, FileText, Clock, CheckCircle, FileImage, FileSpreadsheet } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import * as XLSX from "xlsx";
 
 interface ReportData {
   totalRequests: number;
@@ -177,12 +180,125 @@ const Reports = () => {
     }
   };
 
-  const exportReport = () => {
-    // Implementar exportação para PDF/Excel
-    toast({
-      title: "Funcionalidade em desenvolvimento",
-      description: "A exportação de relatórios estará disponível em breve.",
-    });
+  const exportToPDF = async () => {
+    try {
+      const element = document.getElementById('report-content');
+      if (!element) return;
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const fileName = `relatorio-solicitacoes-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      pdf.save(fileName);
+
+      toast({
+        title: "Sucesso",
+        description: "Relatório exportado para PDF com sucesso!",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao exportar relatório para PDF.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const exportToExcel = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+
+      // Planilha de estatísticas gerais
+      const statsData = [
+        ['Estatísticas Gerais', ''],
+        ['Total de Solicitações', reportData.totalRequests],
+        ['Solicitações Pendentes', reportData.pendingRequests],
+        ['Solicitações Concluídas', reportData.completedRequests],
+        ['Tempo Médio de Resposta (dias)', reportData.averageResponseTime],
+        ['Taxa de Conclusão (%)', Math.round((reportData.completedRequests / reportData.totalRequests) * 100) || 0],
+        [''],
+        ['Período', `${format(dateRange?.from || new Date(), 'dd/MM/yyyy')} - ${format(dateRange?.to || new Date(), 'dd/MM/yyyy')}`],
+      ];
+
+      const statsWS = XLSX.utils.aoa_to_sheet(statsData);
+      XLSX.utils.book_append_sheet(wb, statsWS, 'Estatísticas');
+
+      // Planilha de solicitações por tipo
+      if (reportData.requestsByType.length > 0) {
+        const typeData = [
+          ['Tipo', 'Quantidade'],
+          ...reportData.requestsByType.map(item => [item.label, item.count])
+        ];
+        const typeWS = XLSX.utils.aoa_to_sheet(typeData);
+        XLSX.utils.book_append_sheet(wb, typeWS, 'Por Tipo');
+      }
+
+      // Planilha de solicitações por status
+      if (reportData.requestsByStatus.length > 0) {
+        const statusData = [
+          ['Status', 'Quantidade'],
+          ...reportData.requestsByStatus.map(item => [item.label, item.count])
+        ];
+        const statusWS = XLSX.utils.aoa_to_sheet(statusData);
+        XLSX.utils.book_append_sheet(wb, statusWS, 'Por Status');
+      }
+
+      // Planilha de tendência mensal
+      if (reportData.requestsByMonth.length > 0) {
+        const monthData = [
+          ['Mês', 'Quantidade'],
+          ...reportData.requestsByMonth.map(item => [item.month, item.count])
+        ];
+        const monthWS = XLSX.utils.aoa_to_sheet(monthData);
+        XLSX.utils.book_append_sheet(wb, monthWS, 'Tendência Mensal');
+      }
+
+      // Planilha de top cidadãos
+      if (reportData.topCitizens.length > 0) {
+        const citizenData = [
+          ['Nome', 'Telefone', 'Quantidade de Solicitações'],
+          ...reportData.topCitizens.map(item => [item.name, item.phone, item.count])
+        ];
+        const citizenWS = XLSX.utils.aoa_to_sheet(citizenData);
+        XLSX.utils.book_append_sheet(wb, citizenWS, 'Top Cidadãos');
+      }
+
+      const fileName = `relatorio-solicitacoes-${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      toast({
+        title: "Sucesso",
+        description: "Relatório exportado para Excel com sucesso!",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao exportar relatório para Excel.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -200,7 +316,7 @@ const Reports = () => {
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div id="report-content" className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Relatórios</h1>
@@ -210,10 +326,24 @@ const Reports = () => {
         </div>
         
         <div className="flex gap-4">
-          <Button onClick={exportReport}>
-            <Download className="mr-2 h-4 w-4" />
-            Exportar
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <Download className="mr-2 h-4 w-4" />
+                Exportar
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={exportToPDF}>
+                <FileImage className="mr-2 h-4 w-4" />
+                Exportar para PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportToExcel}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Exportar para Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
