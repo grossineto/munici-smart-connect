@@ -25,7 +25,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   alt="BR.I.A.N." 
                   className="h-8 w-auto"
                 />
-                <span className="text-sm text-muted-foreground">Sistema Municipal</span>
+                <span className="text-sm text-muted-foreground">Your city. Smarter. Together.</span>
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-sm text-muted-foreground">
