@@ -7,7 +7,8 @@ import {
   FileText, 
   Settings,
   LogOut,
-  Phone
+  Phone,
+  Brain
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +29,7 @@ const items = [
   { title: "Solicitações", url: "/requests", icon: MessageSquare },
   { title: "WhatsApp", url: "/whatsapp", icon: Phone },
   { title: "Relatórios", url: "/reports", icon: BarChart3 },
+  { title: "Insights", url: "/insights", icon: Brain },
 ];
 
 export function AppSidebar() {
