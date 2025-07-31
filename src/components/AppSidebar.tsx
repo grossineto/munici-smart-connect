@@ -51,15 +51,11 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <div className="p-4 border-b">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">B</span>
-            </div>
-            <div>
-              <h2 className="font-bold text-lg">BRIAN</h2>
-              <p className="text-xs text-muted-foreground">Sistema Municipal</p>
-            </div>
-          </div>
+          <img 
+            src="/lovable-uploads/15e88a34-c752-40da-b211-dbf4235418f1.png" 
+            alt="BR.I.A.N." 
+            className="w-full h-auto max-w-32 mx-auto"
+          />
         </div>
 
         <SidebarGroup>
