@@ -28,14 +28,14 @@ import { Button } from "@/components/ui/button";
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
+  { title: "Insights", url: "/insights", icon: Brain },
+  { title: "Gabinete de Urgência", url: "/urgency-office", icon: AlertTriangle },
+  { title: "Relatórios", url: "/reports", icon: BarChart3 },
+  { title: "WhatsApp", url: "/whatsapp", icon: Phone },
   { title: "Solicitações", url: "/requests", icon: MessageSquare },
   { title: "Munícipes", url: "/citizens", icon: Users },
   { title: "Agendamentos", url: "/appointments", icon: Calendar },
   { title: "Usuários", url: "/users", icon: Shield },
-  { title: "WhatsApp", url: "/whatsapp", icon: Phone },
-  { title: "Relatórios", url: "/reports", icon: BarChart3 },
-  { title: "Insights", url: "/insights", icon: Brain },
-  { title: "Gabinete de Urgência", url: "/urgency-office", icon: AlertTriangle },
 ];
 
 export function AppSidebar() {
