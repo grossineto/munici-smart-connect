@@ -196,6 +196,7 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
           updated_at: string | null
           user_id: string
         }
@@ -204,6 +205,7 @@ export type Database = {
           full_name: string
           id?: string
           phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
           updated_at?: string | null
           user_id: string
         }
@@ -212,6 +214,7 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
           updated_at?: string | null
           user_id?: string
         }
@@ -280,6 +283,36 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       whatsapp_sessions: {
         Row: {
           citizen_id: string | null
@@ -340,8 +373,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "operator" | "viewer"
       request_priority: "low" | "medium" | "high" | "urgent"
       request_status: "pending" | "in_progress" | "completed" | "cancelled"
       request_type:
@@ -479,6 +524,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "operator", "viewer"],
       request_priority: ["low", "medium", "high", "urgent"],
       request_status: ["pending", "in_progress", "completed", "cancelled"],
       request_type: [
