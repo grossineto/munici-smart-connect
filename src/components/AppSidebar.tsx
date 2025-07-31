@@ -32,6 +32,7 @@ const items = [
   { title: "Munícipes", url: "/citizens", icon: Users },
   { title: "Agendamentos", url: "/appointments", icon: Calendar },
   { title: "Usuários", url: "/users", icon: Shield },
+  { title: "Configurações", url: "/settings", icon: Settings },
   { title: "WhatsApp", url: "/whatsapp", icon: Phone },
   { title: "Relatórios", url: "/reports", icon: BarChart3 },
   { title: "Insights", url: "/insights", icon: Brain },
