@@ -24,28 +24,25 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
+      <BrowserRouter>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
-            <Route path="/requests" element={<DashboardLayout><Requests /></DashboardLayout>} />
-            <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>} />
-            <Route path="/insights" element={<DashboardLayout><Insights /></DashboardLayout>} />
-            <Route path="/whatsapp" element={<DashboardLayout><WhatsApp /></DashboardLayout>} />
-            <Route path="/urgency-office" element={<DashboardLayout><UrgencyOffice /></DashboardLayout>} />
-            <Route path="/citizens" element={<DashboardLayout><Citizens /></DashboardLayout>} />
-            <Route path="/appointments" element={<DashboardLayout><Appointments /></DashboardLayout>} />
-            <Route path="/users" element={<DashboardLayout><Users /></DashboardLayout>} />
-            <Route path="/settings" element={<DashboardLayout><Settings /></DashboardLayout>} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+          <Route path="/requests" element={<DashboardLayout><Requests /></DashboardLayout>} />
+          <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>} />
+          <Route path="/insights" element={<DashboardLayout><Insights /></DashboardLayout>} />
+          <Route path="/whatsapp" element={<DashboardLayout><WhatsApp /></DashboardLayout>} />
+          <Route path="/urgency-office" element={<DashboardLayout><UrgencyOffice /></DashboardLayout>} />
+          <Route path="/citizens" element={<DashboardLayout><Citizens /></DashboardLayout>} />
+          <Route path="/appointments" element={<DashboardLayout><Appointments /></DashboardLayout>} />
+          <Route path="/users" element={<DashboardLayout><Users /></DashboardLayout>} />
+          <Route path="/settings" element={<DashboardLayout><Settings /></DashboardLayout>} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
     </AuthProvider>
   </QueryClientProvider>
 );
