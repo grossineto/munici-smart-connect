@@ -32,8 +32,8 @@ export default function Citizens() {
   const [filteredCitizens, setFilteredCitizens] = useState<Citizen[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterNeighborhood, setFilterNeighborhood] = useState("");
-  const [filterRegistrationStep, setFilterRegistrationStep] = useState("");
+  const [filterNeighborhood, setFilterNeighborhood] = useState("all");
+  const [filterRegistrationStep, setFilterRegistrationStep] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [neighborhoods, setNeighborhoods] = useState<string[]>([]);
   const { toast } = useToast();
@@ -102,12 +102,12 @@ export default function Citizens() {
     }
 
     // Neighborhood filter
-    if (filterNeighborhood) {
+    if (filterNeighborhood && filterNeighborhood !== "all") {
       filtered = filtered.filter(citizen => citizen.neighborhood === filterNeighborhood);
     }
 
     // Registration step filter
-    if (filterRegistrationStep) {
+    if (filterRegistrationStep && filterRegistrationStep !== "all") {
       filtered = filtered.filter(citizen => citizen.registration_step === filterRegistrationStep);
     }
 
@@ -160,8 +160,8 @@ export default function Citizens() {
 
   const clearFilters = () => {
     setSearchTerm("");
-    setFilterNeighborhood("");
-    setFilterRegistrationStep("");
+    setFilterNeighborhood("all");
+    setFilterRegistrationStep("all");
   };
 
   const getRegistrationStepBadge = (step?: string) => {
@@ -372,7 +372,7 @@ export default function Citizens() {
                   <SelectValue placeholder="Todos os bairros" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os bairros</SelectItem>
+                  <SelectItem value="all">Todos os bairros</SelectItem>
                   {neighborhoods.map((neighborhood) => (
                     <SelectItem key={neighborhood} value={neighborhood}>
                       {neighborhood}
@@ -389,7 +389,7 @@ export default function Citizens() {
                   <SelectValue placeholder="Todos os status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os status</SelectItem>
+                  <SelectItem value="all">Todos os status</SelectItem>
                   <SelectItem value="completed">Completo</SelectItem>
                   <SelectItem value="pending">Pendente</SelectItem>
                   <SelectItem value="incomplete">Incompleto</SelectItem>
