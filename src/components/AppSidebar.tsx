@@ -50,12 +50,14 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
-        <div className="p-4 border-b">
-          <img 
-            src="/lovable-uploads/15e88a34-c752-40da-b211-dbf4235418f1.png" 
-            alt="BR.I.A.N." 
-            className="w-full h-auto max-w-32 mx-auto"
-          />
+        <div className="p-6 border-b bg-gradient-to-br from-primary/5 to-secondary/5">
+          <div className="flex justify-center">
+            <img 
+              src="/lovable-uploads/15e88a34-c752-40da-b211-dbf4235418f1.png" 
+              alt="BR.I.A.N." 
+              className="w-full h-auto max-w-28 transition-transform duration-200 hover:scale-105"
+            />
+          </div>
         </div>
 
         <SidebarGroup>
@@ -80,11 +82,11 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <div className="mt-auto p-4 border-t">
+        <div className="mt-auto p-4 border-t bg-muted/30">
           <Button
             variant="ghost"
             onClick={signOut}
-            className="w-full justify-start"
+            className="w-full justify-start hover:bg-destructive/10 hover:text-destructive transition-colors"
           >
             <LogOut className="h-4 w-4" />
             <span className="ml-2">Sair</span>

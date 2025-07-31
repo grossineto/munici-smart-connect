@@ -25,30 +25,33 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-      <div className="text-center space-y-6 max-w-2xl mx-auto px-4">
-        <div className="space-y-4">
-          <img 
-            src="/lovable-uploads/15e88a34-c752-40da-b211-dbf4235418f1.png" 
-            alt="BR.I.A.N. - Brasil Inteligência Artificial Nexus" 
-            className="mx-auto max-w-md w-full h-auto"
-          />
-          <p className="text-xl text-muted-foreground leading-relaxed">
+      <div className="text-center space-y-8 max-w-2xl mx-auto px-4 animate-fade-in">
+        <div className="space-y-6">
+          <div className="flex justify-center">
+            <img 
+              src="/lovable-uploads/15e88a34-c752-40da-b211-dbf4235418f1.png" 
+              alt="BR.I.A.N. - Brasil Inteligência Artificial Nexus" 
+              className="max-w-sm w-full h-auto hover-scale"
+            />
+          </div>
+          <h2 className="text-2xl font-semibold text-foreground">Brasil Inteligência Artificial Nexus</h2>
+          <p className="text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto">
             Sistema inteligente para atendimento automatizado de munícipes via WhatsApp, 
             com dashboard administrativo em tempo real e análise preditiva de dados.
           </p>
         </div>
         
-        <div className="space-y-4">
+        <div className="space-y-6 pt-4">
           <Button 
             size="lg" 
             onClick={() => navigate("/auth")}
-            className="text-lg px-8 py-3"
+            className="text-lg px-12 py-4 h-auto hover-scale"
           >
             Acessar Sistema
           </Button>
           
-          <div className="text-sm text-muted-foreground">
-            Sistema desenvolvido para prefeituras
+          <div className="text-sm text-muted-foreground border-t pt-4">
+            Sistema desenvolvido para prefeituras brasileiras
           </div>
         </div>
       </div>
