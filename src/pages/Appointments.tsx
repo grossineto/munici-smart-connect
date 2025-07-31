@@ -62,7 +62,7 @@ export default function Appointments() {
     title: "",
     description: "",
     citizen_id: "",
-    assigned_to: "",
+    assigned_to: "unassigned",
     scheduled_date: undefined as Date | undefined,
     scheduled_time: "",
   });
@@ -138,7 +138,7 @@ export default function Appointments() {
         title: newAppointment.title,
         description: newAppointment.description,
         citizen_id: newAppointment.citizen_id,
-        assigned_to: newAppointment.assigned_to || null,
+        assigned_to: newAppointment.assigned_to === "unassigned" ? null : newAppointment.assigned_to,
         scheduled_date: scheduledDateTime.toISOString(),
       });
 
@@ -154,7 +154,7 @@ export default function Appointments() {
         title: "",
         description: "",
         citizen_id: "",
-        assigned_to: "",
+        assigned_to: "unassigned",
         scheduled_date: undefined,
         scheduled_time: "",
       });
@@ -344,7 +344,7 @@ export default function Appointments() {
                     <SelectValue placeholder="Selecione um responsável" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Não atribuído</SelectItem>
+                    <SelectItem value="unassigned">Não atribuído</SelectItem>
                     {profiles.map((profile) => (
                       <SelectItem key={profile.id} value={profile.id}>
                         {profile.full_name}
