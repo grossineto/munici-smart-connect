@@ -23,13 +23,17 @@ const queryClient = new QueryClient();
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="*" element={<div>Página não encontrada</div>} />
-      </Routes>
-    </BrowserRouter>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold mb-4">BR.I.A.N. Sistema</h1>
+        <p className="text-lg text-gray-600">Sistema funcionando corretamente</p>
+        <div className="mt-4">
+          <a href="/auth" className="bg-blue-500 text-white px-4 py-2 rounded">
+            Ir para Login
+          </a>
+        </div>
+      </div>
+    </div>
   );
 };
 
