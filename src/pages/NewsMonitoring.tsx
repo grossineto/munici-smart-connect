@@ -412,7 +412,14 @@ function NewsMonitoring() {
     try {
       console.log('🚀 Iniciando coleta para prefeito:', mayor);
       
-      const { data, error } = await supabase.functions.invoke('perplexity-news-collector', {
+      setIsCollecting(true);
+      
+      // Timeout local de 4 minutos
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout local: Coleta excedeu 4 minutos')), 240000);
+      });
+      
+      const collectionPromise = supabase.functions.invoke('perplexity-news-collector', {
         body: { 
           mayor: {
             nome: mayor.nome,
@@ -425,10 +432,18 @@ function NewsMonitoring() {
         },
       });
       
+      const result = await Promise.race([collectionPromise, timeoutPromise]);
+      const { data, error } = result as any;
+      
       console.log('Perplexity news response:', { data, error });
       
       if (error) {
         console.error('Perplexity news error:', error);
+        toast({
+          title: "Erro na Coleta ❌",
+          description: "A coleta demorou muito ou falhou. Tente novamente em alguns minutos.",
+          variant: "destructive",
+        });
         return;
       }
       
@@ -438,9 +453,25 @@ function NewsMonitoring() {
           title: "Coleta Concluída ✅",
           description: data.message,
         });
+        
+        // Recarregar dados após sucesso
+        if (selectedMayor) {
+          loadDataForMayor(selectedMayor);
+        } else {
+          loadData();
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Perplexity news failed:', error);
+      toast({
+        title: "Erro na Coleta ❌",
+        description: error.message?.includes('Timeout') 
+          ? "A coleta demorou muito para responder. Tente novamente." 
+          : "Falha na comunicação com o serviço. Verifique sua conexão.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCollecting(false);
     }
   };
   
