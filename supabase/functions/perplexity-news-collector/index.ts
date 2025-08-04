@@ -95,13 +95,17 @@ serve(async (req) => {
 
       const data = await perplexityResponse.json();
       const content = data.choices[0].message.content;
+      console.log('📄 QUERY:', query);
+      console.log('📄 RESPOSTA COMPLETA:', content);
       console.log('📄 Conteúdo recebido:', content.substring(0, 300));
 
       // Extrair notícias do formato estruturado
       const newsBlocks = content.split(/NOTÍCIA \d+:|---/).filter(block => block.trim());
+      console.log('📰 BLOCOS ENCONTRADOS:', newsBlocks.length);
       
       for (const block of newsBlocks) {
         if (!block.trim()) continue;
+        console.log('🔍 PROCESSANDO BLOCO:', block.substring(0, 200));
         
         const titleMatch = block.match(/Título:\s*(.+)/i);
         const urlMatch = block.match(/URL:\s*(https?:\/\/[^\s\n]+)/i);
@@ -110,7 +114,8 @@ serve(async (req) => {
         const resumoMatch = block.match(/Resumo:\s*(.+)/i);
         
         if (!titleMatch || !urlMatch) {
-          console.log('⚠️ Notícia incompleta, pulando');
+          console.log('⚠️ Notícia incompleta, pulando. Título:', !!titleMatch, 'URL:', !!urlMatch);
+          console.log('⚠️ BLOCO PROBLEMÁTICO:', block);
           continue;
         }
 
