@@ -22,22 +22,35 @@ serve(async (req) => {
   try {
     console.log('Testing news analysis with sample articles...');
 
-    // Sample articles for testing
+    // Sample articles for testing - ADICIONANDO FUAD NOMAN
     const testArticles = [
       {
-        title: "Prefeito de São Paulo Ricardo Nunes anuncia nova linha de metrô para zona sul",
-        content: "O prefeito de São Paulo, Ricardo Nunes, anunciou hoje o início das obras da nova linha de metrô que ligará a zona sul ao centro da cidade. O projeto prevê investimento de R$ 8 bilhões e deve ser concluído em 5 anos. 'Esta é uma obra fundamental para melhorar a mobilidade urbana dos paulistanos', disse o prefeito durante evento na Prefeitura de São Paulo. A obra beneficiará mais de 2 milhões de pessoas.",
-        url: "https://test.com/sp-article1"
+        title: "Prefeito Fuad Noman inaugura novo BRT em Belo Horizonte com investimento de R$ 2 bilhões",
+        content: "O prefeito de Belo Horizonte, Fuad Noman, inaugurou nesta terça-feira a nova linha do BRT que liga a região do Barreiro ao centro da capital mineira. O projeto, que custou R$ 2 bilhões, é considerado o maior investimento em transporte público da história de Belo Horizonte. 'Esta obra vai transformar a mobilidade urbana da nossa cidade', declarou Fuad Noman durante a cerimônia. O sistema vai atender mais de 1 milhão de passageiros diariamente.",
+        url: "https://test.com/bh-article1",
+        mayor: "Fuad Noman",
+        city: "Belo Horizonte"
       },
       {
-        title: "Crise na saúde: São Paulo enfrenta falta de médicos em UBS da periferia",
-        content: "Moradores da zona leste de São Paulo denunciam a falta de médicos em várias Unidades Básicas de Saúde. A situação tem gerado críticas à gestão do prefeito Ricardo Nunes. O vereador Carlos Santos afirmou que 'a prefeitura está negligenciando a saúde da população mais vulnerável'. Manifestantes se reuniram em frente à Prefeitura pedindo soluções urgentes. A gestão Ricardo Nunes ainda não apresentou um plano para resolver a crise.",
-        url: "https://test.com/sp-article2"
+        title: "Crise na saúde: Belo Horizonte registra superlotação em hospitais municipais",
+        content: "Hospitais municipais de Belo Horizonte enfrentam grave crise de superlotação, com ocupação acima de 150% nas UTIs. A situação gera críticas à gestão do prefeito Fuad Noman, que prometeu resolver a crise até o final do mês. Médicos do Hospital Municipal Odilon Behrens denunciam falta de leitos e equipamentos. A oposição na Câmara Municipal cobra explicações urgentes da Prefeitura de Belo Horizonte sobre o colapso no sistema de saúde.",
+        url: "https://test.com/bh-article2",
+        mayor: "Fuad Noman",
+        city: "Belo Horizonte"
       },
       {
-        title: "São Paulo lidera ranking de cidades mais inovadoras do Brasil",
-        content: "A cidade de São Paulo conquistou o primeiro lugar no ranking nacional de inovação urbana, segundo estudo divulgado hoje. O resultado é atribuído às políticas de digitalização e modernização implementadas pela atual gestão. O prefeito Ricardo Nunes comemorou o resultado: 'São Paulo está se consolidando como a capital da inovação no país'. A prefeitura de São Paulo investiu R$ 500 milhões em tecnologia nos últimos dois anos.",
-        url: "https://test.com/sp-article3"
+        title: "Fuad Noman anuncia programa habitacional que vai construir 10 mil casas em BH",
+        content: "O prefeito Fuad Noman anunciou hoje o maior programa habitacional da história de Belo Horizonte, que prevê a construção de 10 mil unidades habitacionais nos próximos 3 anos. O investimento de R$ 5 bilhões vai beneficiar famílias de baixa renda em todas as regionais da capital. 'Vamos reduzir significativamente o déficit habitacional de Belo Horizonte', afirmou o prefeito. O programa já recebeu aprovação da Câmara Municipal.",
+        url: "https://test.com/bh-article3",
+        mayor: "Fuad Noman",
+        city: "Belo Horizonte"
+      },
+      {
+        title: "Protesto em BH: moradores cobram melhorias no saneamento básico da gestão Fuad Noman",
+        content: "Centenas de moradores da região da Pampulha protestaram hoje em frente à Prefeitura de Belo Horizonte cobrando melhorias no saneamento básico. O movimento critica a gestão de Fuad Noman por não cumprir promessas de campanha relacionadas ao esgotamento sanitário. 'A Prefeitura de Belo Horizonte não está priorizando as necessidades básicas da população', disse um dos manifestantes. A gestão Fuad Noman prometeu apresentar um plano de ação na próxima semana.",
+        url: "https://test.com/bh-article4",
+        mayor: "Fuad Noman", 
+        city: "Belo Horizonte"
       }
     ];
 
@@ -101,9 +114,10 @@ serve(async (req) => {
             messages: [
               {
                 role: 'system',
-                content: `Você é um analista especializado em monitoramento de notícias para gestão pública municipal de São Paulo. 
+                content: `Você é um analista especializado em monitoramento de notícias para gestão pública municipal. 
                 Analise a notícia procurando especificamente por menções a:
-                - "prefeito de são paulo", "Ricardo Nunes", "prefeito ricardo nunes", "prefeitura de são paulo"
+                - "prefeito", "Ricardo Nunes", "Fuad Noman", "prefeitura", nomes de prefeitos
+                - "São Paulo", "Belo Horizonte", nomes de cidades brasileiras
                 - Palavras relacionadas à gestão municipal, políticas públicas
                 - Situações que possam afetar a imagem do prefeito ou da prefeitura
                 
