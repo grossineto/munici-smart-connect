@@ -190,6 +190,267 @@ export type Database = {
           },
         ]
       }
+      monitored_keywords: {
+        Row: {
+          active: boolean | null
+          alert_threshold: number | null
+          category: string | null
+          created_at: string
+          id: string
+          keyword: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          alert_threshold?: number | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          keyword: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          alert_threshold?: number | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          keyword?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      news_alerts: {
+        Row: {
+          acknowledged: boolean | null
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          article_id: string | null
+          created_at: string
+          id: string
+          message: string
+          severity: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged?: boolean | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          article_id?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          severity?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged?: boolean | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          article_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          severity?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_alerts_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "news_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_analysis: {
+        Row: {
+          article_id: string | null
+          created_at: string
+          crisis_potential: boolean | null
+          id: string
+          impact_analysis: string | null
+          keywords: string[] | null
+          mentions_city: boolean | null
+          mentions_mayor: boolean | null
+          recommended_action: string | null
+          relevance_score: number | null
+          sentiment_score: number | null
+          summary: string | null
+          updated_at: string
+          urgency_level: string
+        }
+        Insert: {
+          article_id?: string | null
+          created_at?: string
+          crisis_potential?: boolean | null
+          id?: string
+          impact_analysis?: string | null
+          keywords?: string[] | null
+          mentions_city?: boolean | null
+          mentions_mayor?: boolean | null
+          recommended_action?: string | null
+          relevance_score?: number | null
+          sentiment_score?: number | null
+          summary?: string | null
+          updated_at?: string
+          urgency_level?: string
+        }
+        Update: {
+          article_id?: string | null
+          created_at?: string
+          crisis_potential?: boolean | null
+          id?: string
+          impact_analysis?: string | null
+          keywords?: string[] | null
+          mentions_city?: boolean | null
+          mentions_mayor?: boolean | null
+          recommended_action?: string | null
+          relevance_score?: number | null
+          sentiment_score?: number | null
+          summary?: string | null
+          updated_at?: string
+          urgency_level?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_analysis_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "news_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_articles: {
+        Row: {
+          author: string | null
+          content: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          published_at: string | null
+          source_id: string | null
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          author?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          published_at?: string | null
+          source_id?: string | null
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          author?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          published_at?: string | null
+          source_id?: string | null
+          title?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_articles_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "news_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_sources: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          last_crawled_at: string | null
+          name: string
+          region: string | null
+          type: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          last_crawled_at?: string | null
+          name: string
+          region?: string | null
+          type?: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          last_crawled_at?: string | null
+          name?: string
+          region?: string | null
+          type?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          read: boolean
+          title: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          read?: boolean
+          title: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          read?: boolean
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -359,6 +620,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_notification: {
+        Args: {
+          _user_id: string
+          _title: string
+          _message: string
+          _type?: string
+          _action_url?: string
+          _metadata?: Json
+        }
+        Returns: string
+      }
       generate_analytics_insights: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -383,6 +655,16 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      notify_admins: {
+        Args: {
+          _title: string
+          _message: string
+          _type?: string
+          _action_url?: string
+          _metadata?: Json
+        }
+        Returns: number
       }
     }
     Enums: {

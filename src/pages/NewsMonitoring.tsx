@@ -1,119 +1,48 @@
 import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertTriangle, TrendingUp, Eye, Bell, RefreshCw, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, Eye, TrendingUp, Clock, Search } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface NewsSource {
-  id: string;
-  name: string;
-  url: string;
-  type: string;
-  region: string;
-  is_active: boolean;
-}
-
-interface NewsArticle {
-  id: string;
-  title: string;
-  content: string;
-  url: string;
-  published_at: string;
-  source_name: string;
-  urgency_score: number;
-  sentiment_score: number;
-  impact_score: number;
-  keywords: string[];
-  summary: string;
-}
-
-interface NewsAlert {
-  id: string;
-  title: string;
-  description: string;
-  severity: string;
-  article_count: number;
-  created_at: string;
-}
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function NewsMonitoring() {
-  const { toast } = useToast();
-  const [articles, setArticles] = useState<NewsArticle[]>([]);
-  const [sources, setSources] = useState<NewsSource[]>([]);
-  const [alerts, setAlerts] = useState<NewsAlert[]>([]);
-  const [keywords, setKeywords] = useState<string[]>([]);
-  const [newKeyword, setNewKeyword] = useState("");
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [analyses, setAnalyses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [urgencyFilter, setUrgencyFilter] = useState("all");
+  const [crawling, setCrawling] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     loadData();
+    setupRealtimeSubscription();
   }, []);
 
   const loadData = async () => {
     try {
-      setLoading(true);
-
-      // Load articles with analysis
-      const { data: articlesData, error: articlesError } = await supabase
-        .from('news_articles')
-        .select(`
-          *,
-          news_sources!inner(name),
-          news_analysis(
-            urgency_score,
-            sentiment_score,
-            impact_score,
-            keywords,
-            summary
-          )
-        `)
-        .order('published_at', { ascending: false })
+      const { data: alertsData } = await supabase
+        .from('news_alerts')
+        .select(`*, news_articles(title, url, published_at, news_sources(name))`)
+        .order('created_at', { ascending: false })
         .limit(50);
 
-      if (articlesError) throw articlesError;
-
-      // Load sources
-      const { data: sourcesData, error: sourcesError } = await supabase
-        .from('news_sources')
-        .select('*')
-        .order('name');
-
-      if (sourcesError) throw sourcesError;
-
-      // Load recent alerts
-      const { data: alertsData, error: alertsError } = await supabase
-        .from('news_alerts')
-        .select('*')
+      const { data: analysesData } = await supabase
+        .from('news_analysis')
+        .select(`*, news_articles(title, url, published_at, news_sources(name))`)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(100);
 
-      if (alertsError) throw alertsError;
-
-      // Load monitored keywords
-      const { data: keywordsData, error: keywordsError } = await supabase
-        .from('monitored_keywords')
-        .select('keyword')
-        .eq('is_active', true);
-
-      if (keywordsError) throw keywordsError;
-
-      setArticles(articlesData || []);
-      setSources(sourcesData || []);
       setAlerts(alertsData || []);
-      setKeywords(keywordsData?.map(k => k.keyword) || []);
-
+      setAnalyses(analysesData || []);
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
         title: "Erro",
-        description: "Erro ao carregar dados do monitoramento",
+        description: "Erro ao carregar dados de monitoramento",
         variant: "destructive",
       });
     } finally {
@@ -121,321 +50,167 @@ export default function NewsMonitoring() {
     }
   };
 
-  const startNewsCollection = async () => {
+  const setupRealtimeSubscription = () => {
+    const channel = supabase
+      .channel('news-monitoring')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news_alerts' }, () => {
+        loadData();
+      })
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
+  };
+
+  const runNewsCrawler = async () => {
+    setCrawling(true);
     try {
-      toast({
-        title: "Coletando notícias",
-        description: "Iniciando coleta de notícias...",
-      });
-
-      const { data, error } = await supabase.functions.invoke('collect-news');
-
-      if (error) throw error;
-
-      toast({
-        title: "Sucesso",
-        description: "Coleta de notícias iniciada com sucesso",
-      });
-
-      loadData();
+      await supabase.functions.invoke('news-crawler');
+      toast({ title: "Coleta Iniciada", description: "Processando notícias..." });
+      setTimeout(loadData, 5000);
     } catch (error) {
-      console.error('Error starting collection:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao iniciar coleta de notícias",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Erro ao executar coleta", variant: "destructive" });
+    } finally {
+      setCrawling(false);
     }
   };
-
-  const addKeyword = async () => {
-    if (!newKeyword.trim()) return;
-
-    try {
-      const { error } = await supabase
-        .from('monitored_keywords')
-        .insert({
-          keyword: newKeyword.trim(),
-          category: 'custom',
-          is_active: true
-        });
-
-      if (error) throw error;
-
-      setKeywords([...keywords, newKeyword.trim()]);
-      setNewKeyword("");
-      
-      toast({
-        title: "Sucesso",
-        description: "Palavra-chave adicionada com sucesso",
-      });
-    } catch (error) {
-      console.error('Error adding keyword:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao adicionar palavra-chave",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return 'destructive';
-      case 'high': return 'secondary';
-      case 'medium': return 'outline';
-      default: return 'default';
-    }
-  };
-
-  const getUrgencyColor = (score: number) => {
-    if (score >= 8) return 'destructive';
-    if (score >= 6) return 'secondary';
-    if (score >= 4) return 'outline';
-    return 'default';
-  };
-
-  const filteredArticles = articles.filter(article => {
-    const matchesSearch = searchTerm === "" || 
-      article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.content.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesUrgency = urgencyFilter === "all" ||
-      (urgencyFilter === "high" && (article.news_analysis?.[0]?.urgency_score || 0) >= 7) ||
-      (urgencyFilter === "medium" && (article.news_analysis?.[0]?.urgency_score || 0) >= 4 && (article.news_analysis?.[0]?.urgency_score || 0) < 7) ||
-      (urgencyFilter === "low" && (article.news_analysis?.[0]?.urgency_score || 0) < 4);
-
-    return matchesSearch && matchesUrgency;
-  });
 
   if (loading) {
-    return (
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Monitoramento de Notícias</h1>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader className="pb-2">
-                <div className="h-4 bg-muted rounded w-3/4"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-8 bg-muted rounded w-1/2"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
+    return <div className="p-6">Carregando...</div>;
   }
 
+  const criticalAlerts = alerts.filter(a => a.severity === 'critical' && !a.acknowledged);
+  const unacknowledgedAlerts = alerts.filter(a => !a.acknowledged);
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Monitoramento de Notícias</h1>
-        <Button onClick={startNewsCollection} className="flex items-center gap-2">
-          <Search className="h-4 w-4" />
-          Coletar Notícias
+        <div>
+          <h1 className="text-3xl font-bold">Monitoramento de Notícias</h1>
+          <p className="text-muted-foreground">Acompanhe notícias relevantes e alertas em tempo real</p>
+        </div>
+        <Button onClick={runNewsCrawler} disabled={crawling} className="flex items-center gap-2">
+          <RefreshCw className={`h-4 w-4 ${crawling ? 'animate-spin' : ''}`} />
+          {crawling ? 'Coletando...' : 'Atualizar Notícias'}
         </Button>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total de Artigos</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Alertas Críticos</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{articles.length}</div>
+            <div className="text-2xl font-bold text-red-600">{criticalAlerts.length}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Alertas Ativos</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Alertas Pendentes</CardTitle>
+            <Bell className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{alerts.length}</div>
+            <div className="text-2xl font-bold">{unacknowledgedAlerts.length}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Análises</CardTitle>
+            <TrendingUp className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{analyses.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Fontes Ativas</CardTitle>
+            <Eye className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{sources.filter(s => s.is_active).length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Palavras-chave</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{keywords.length}</div>
+            <div className="text-2xl font-bold">5</div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="articles" className="space-y-4">
+      <Tabs defaultValue="alerts">
         <TabsList>
-          <TabsTrigger value="articles">Artigos</TabsTrigger>
           <TabsTrigger value="alerts">Alertas</TabsTrigger>
-          <TabsTrigger value="sources">Fontes</TabsTrigger>
-          <TabsTrigger value="keywords">Palavras-chave</TabsTrigger>
+          <TabsTrigger value="analysis">Análises</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="articles" className="space-y-4">
-          <div className="flex gap-4 items-center">
-            <Input
-              placeholder="Buscar artigos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1"
-            />
-            <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filtrar por urgência" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="high">Alta urgência</SelectItem>
-                <SelectItem value="medium">Média urgência</SelectItem>
-                <SelectItem value="low">Baixa urgência</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-4">
-            {filteredArticles.map((article) => {
-              const analysis = article.news_analysis?.[0];
-              return (
-                <Card key={article.id}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">{article.title}</CardTitle>
-                        <CardDescription className="flex items-center gap-2 mt-2">
-                          <span>{article.source_name}</span>
-                          <Clock className="h-4 w-4" />
-                          <span>{new Date(article.published_at).toLocaleString('pt-BR')}</span>
-                        </CardDescription>
-                      </div>
-                      <div className="flex gap-2">
-                        {analysis && (
-                          <Badge variant={getUrgencyColor(analysis.urgency_score)}>
-                            Urgência: {analysis.urgency_score}/10
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {analysis?.summary && (
-                      <p className="text-muted-foreground mb-3">{analysis.summary}</p>
-                    )}
-                    {analysis?.keywords && analysis.keywords.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {analysis.keywords.map((keyword, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
-                            {keyword}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={article.url} target="_blank" rel="noopener noreferrer">
-                        Ver artigo completo
-                      </a>
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="alerts" className="space-y-4">
-          {alerts.map((alert) => (
-            <Card key={alert.id}>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-destructive" />
-                  <CardTitle>{alert.title}</CardTitle>
-                  <Badge variant={getSeverityColor(alert.severity)}>
-                    {alert.severity}
-                  </Badge>
-                </div>
-                <CardDescription>
-                  {new Date(alert.created_at).toLocaleString('pt-BR')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>{alert.description}</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {alert.article_count} artigos relacionados
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="sources" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sources.map((source) => (
-              <Card key={source.id}>
-                <CardHeader>
-                  <CardTitle className="text-lg">{source.name}</CardTitle>
-                  <CardDescription>{source.region}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <Badge variant={source.is_active ? "default" : "secondary"}>
-                      {source.is_active ? "Ativa" : "Inativa"}
-                    </Badge>
-                    <Badge variant="outline">{source.type}</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="keywords" className="space-y-4">
+        <TabsContent value="alerts">
           <Card>
-            <CardHeader>
-              <CardTitle>Adicionar Palavra-chave</CardTitle>
-              <CardDescription>
-                Monitore temas específicos nas notícias
-              </CardDescription>
-            </CardHeader>
+            <CardHeader><CardTitle>Alertas Recentes</CardTitle></CardHeader>
             <CardContent>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Nova palavra-chave..."
-                  value={newKeyword}
-                  onChange={(e) => setNewKeyword(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addKeyword()}
-                />
-                <Button onClick={addKeyword}>Adicionar</Button>
-              </div>
+              <ScrollArea className="h-[400px]">
+                {alerts.length === 0 ? (
+                  <p className="text-center text-muted-foreground">Nenhum alerta encontrado</p>
+                ) : (
+                  <div className="space-y-4">
+                    {alerts.map((alert) => (
+                      <div key={alert.id} className="p-4 border rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <Badge variant={alert.severity === 'critical' ? 'destructive' : 'secondary'}>
+                              {alert.severity}
+                            </Badge>
+                            <h3 className="font-semibold mt-2">{alert.title}</h3>
+                            <p className="text-sm text-muted-foreground">{alert.message}</p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true, locale: ptBR })}
+                            </p>
+                          </div>
+                          {alert.news_articles?.url && (
+                            <Button size="sm" variant="ghost" onClick={() => window.open(alert.news_articles.url, '_blank')}>
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
             </CardContent>
           </Card>
+        </TabsContent>
 
+        <TabsContent value="analysis">
           <Card>
-            <CardHeader>
-              <CardTitle>Palavras-chave Monitoradas</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle>Análises Recentes</CardTitle></CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {keywords.map((keyword, idx) => (
-                  <Badge key={idx} variant="outline">
-                    {keyword}
-                  </Badge>
-                ))}
-              </div>
+              <ScrollArea className="h-[400px]">
+                {analyses.length === 0 ? (
+                  <p className="text-center text-muted-foreground">Nenhuma análise encontrada</p>
+                ) : (
+                  <div className="space-y-4">
+                    {analyses.map((analysis) => (
+                      <div key={analysis.id} className="p-4 border rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <Badge variant="outline">{analysis.urgency_level}</Badge>
+                            {analysis.mentions_mayor && <Badge className="ml-2">Menciona Prefeito</Badge>}
+                            <h3 className="font-semibold mt-2">{analysis.news_articles?.title}</h3>
+                            <p className="text-sm text-muted-foreground">{analysis.summary}</p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Relevância: {Math.round((analysis.relevance_score || 0) * 100)}%
+                            </p>
+                          </div>
+                          {analysis.news_articles?.url && (
+                            <Button size="sm" variant="ghost" onClick={() => window.open(analysis.news_articles.url, '_blank')}>
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>

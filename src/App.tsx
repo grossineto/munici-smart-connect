@@ -15,6 +15,7 @@ import UrgencyOffice from "./pages/UrgencyOffice";
 import Citizens from "./pages/Citizens";
 import Appointments from "./pages/Appointments";
 import Users from "./pages/Users";
+import NewsMonitoring from "./pages/NewsMonitoring";
 import DashboardLayout from "./layouts/DashboardLayout";
 import NotFound from "./pages/NotFound";
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/citizens" element={<DashboardLayout><Citizens /></DashboardLayout>} />
             <Route path="/appointments" element={<DashboardLayout><Appointments /></DashboardLayout>} />
             <Route path="/users" element={<DashboardLayout><Users /></DashboardLayout>} />
+            <Route path="/news-monitoring" element={<DashboardLayout><NewsMonitoring /></DashboardLayout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
