@@ -98,49 +98,70 @@ function NewsMonitoring() {
   // Função para carregar dados filtrados por prefeito
   const loadDataForMayor = async (mayor: any) => {
     try {
-      console.log(`🔍 Carregando dados para: ${mayor.nome} - ${mayor.cidade}/${mayor.estado}`);
+      setLoading(true);
+      console.log(`🔍 Carregando dados FILTRADOS para: ${mayor.nome} - ${mayor.cidade}/${mayor.estado}`);
       
-      // Carregar alertas filtrados com campos corretos
+      // Filtros mais robustos para alertas
       const { data: alertsData, error: alertsError } = await supabase
         .from('news_alerts')
-        .select('*')
-        .or(`content.ilike.%${mayor.nome}%,content.ilike.%${mayor.cidade}%`)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (alertsError) {
-        console.error('Erro ao carregar alertas filtrados:', alertsError);
-      } else {
-        setAlerts(alertsData || []);
-      }
-
-      // Carregar análises filtradas com campos corretos
-      const { data: analysesData, error: analysesError } = await supabase
-        .from('news_analysis')
         .select(`
           *,
-          news_articles (
+          news_articles!inner (
             id,
             title,
             content,
             author,
-            source,
             url,
             published_at
           )
         `)
-        .or(`executive_summary.ilike.%${mayor.nome}%,impact_analysis.ilike.%${mayor.cidade}%,keywords.ilike.%${mayor.nome}%`)
+        .or(`title.ilike.%${mayor.nome}%,title.ilike.%${mayor.cidade}%,message.ilike.%${mayor.nome}%,message.ilike.%${mayor.cidade}%,news_articles.title.ilike.%${mayor.nome}%,news_articles.title.ilike.%${mayor.cidade}%,news_articles.content.ilike.%${mayor.nome}%,news_articles.content.ilike.%${mayor.cidade}%`)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50);
+
+      if (alertsError) {
+        console.error('Erro ao carregar alertas filtrados:', alertsError);
+        setAlerts([]);
+      } else {
+        console.log(`📊 Alertas filtrados carregados: ${alertsData?.length || 0}`);
+        setAlerts(alertsData || []);
+      }
+
+      // Filtros mais robustos para análises
+      const { data: analysesData, error: analysesError } = await supabase
+        .from('news_analysis')
+        .select(`
+          *,
+          news_articles!inner (
+            id,
+            title,
+            content,
+            author,
+            url,
+            published_at
+          )
+        `)
+        .or(`summary.ilike.%${mayor.nome}%,summary.ilike.%${mayor.cidade}%,impact_analysis.ilike.%${mayor.nome}%,impact_analysis.ilike.%${mayor.cidade}%,keywords::text.ilike.%${mayor.nome}%,keywords::text.ilike.%${mayor.cidade}%,news_articles.title.ilike.%${mayor.nome}%,news_articles.title.ilike.%${mayor.cidade}%,news_articles.content.ilike.%${mayor.nome}%,news_articles.content.ilike.%${mayor.cidade}%`)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       if (analysesError) {
         console.error('Erro ao carregar análises filtradas:', analysesError);
+        setAnalyses([]);
       } else {
+        console.log(`📊 Análises filtradas carregadas: ${analysesData?.length || 0}`);
         setAnalyses(analysesData || []);
       }
 
     } catch (error) {
-      console.error('Erro geral ao carregar dados:', error);
+      console.error('Erro geral ao carregar dados filtrados:', error);
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar os dados filtrados. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -189,10 +210,16 @@ function NewsMonitoring() {
 
   // Carregar dados iniciais e configurar subscription
   useEffect(() => {
-    loadData();
+    if (selectedMayor) {
+      console.log('🔄 Recarregando dados filtrados para:', selectedMayor.nome);
+      loadDataForMayor(selectedMayor);
+    } else {
+      console.log('🔄 Carregando dados gerais...');
+      loadData();
+    }
     const cleanup = setupRealtimeSubscription();
     return cleanup;
-  }, []);
+  }, [selectedMayor]); // Adicionar selectedMayor como dependência
 
   // Função para buscar cidades na API do IBGE
   const searchCities = async (query: string) => {
@@ -494,6 +521,30 @@ function NewsMonitoring() {
         </Button>
       </div>
 
+      {/* Banner de Filtro Ativo */}
+      {selectedMayor && (
+        <Card className="p-4 bg-gradient-to-r from-blue-100 to-purple-100 border-blue-300">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                <User className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-blue-800">
+                  📊 Dashboard Filtrado - {selectedMayor.nome}
+                </p>
+                <p className="text-sm text-blue-600">
+                  Exibindo apenas dados de {selectedMayor.cidade}/{selectedMayor.uf} • {analyses.length} análises • {alerts.length} alertas
+                </p>
+              </div>
+            </div>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+              🎯 Modo Focado
+            </Badge>
+          </div>
+        </Card>
+      )}
+
       {/* Seleção de Cidade/Prefeito */}
       <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
         <div className="space-y-6">
@@ -769,7 +820,9 @@ function NewsMonitoring() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Sentimento das Notícias */}
               <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Sentimento das Notícias</h3>
+                <h3 className="text-lg font-semibold mb-4">
+                  {selectedMayor ? `Sentimento das Notícias - ${selectedMayor.cidade}` : 'Sentimento das Notícias'}
+                </h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Positivo</span>
@@ -794,7 +847,9 @@ function NewsMonitoring() {
 
               {/* Menções do Prefeito */}
               <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Menções do Prefeito</h3>
+                <h3 className="text-lg font-semibold mb-4">
+                  {selectedMayor ? `Menções - ${selectedMayor.nome}` : 'Menções do Prefeito'}
+                </h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Menções Diretas</span>
@@ -822,9 +877,11 @@ function NewsMonitoring() {
             <Card className="p-6 bg-gradient-to-br from-white to-gray-50/30">
               <div className="flex items-center gap-2 mb-4">
                 <Brain className="h-5 w-5 text-purple-600" />
-                <h3 className="text-lg font-semibold">Análises Recentes</h3>
+                <h3 className="text-lg font-semibold">
+                  {selectedMayor ? `Análises Recentes - ${selectedMayor.cidade}` : 'Análises Recentes'}
+                </h3>
                 <Badge variant="outline" className="text-xs">
-                  {analyses.length} total
+                  {analyses.length} {selectedMayor ? 'filtradas' : 'total'}
                 </Badge>
               </div>
               
