@@ -510,7 +510,11 @@ function NewsMonitoring() {
     { nome: "Salvador", uf: "BA" },
     { nome: "Fortaleza", uf: "CE" },
     { nome: "Brasília", uf: "DF" },
-    { nome: "Manaus", uf: "AM" }
+    { nome: "Manaus", uf: "AM" },
+    { nome: "Bauru", uf: "SP" },
+    { nome: "Pederneiras", uf: "SP" },
+    { nome: "Botucatu", uf: "SP" },
+    { nome: "São Roque", uf: "SP" }
   ];
 
   // Funções para abrir modais de resumo
