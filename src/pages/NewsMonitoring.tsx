@@ -74,6 +74,25 @@ export default function NewsMonitoring() {
     }
   };
 
+  const runTestAnalysis = async () => {
+    setCrawling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('test-news-analysis');
+      if (error) throw error;
+      
+      toast({ 
+        title: "Teste Executado", 
+        description: `Processados ${data.processed_articles || 0} artigos de teste com palavras-chave específicas` 
+      });
+      
+      setTimeout(loadData, 2000);
+    } catch (error) {
+      toast({ title: "Erro", description: "Erro ao executar teste", variant: "destructive" });
+    } finally {
+      setCrawling(false);
+    }
+  };
+
   if (loading) {
     return <div className="p-6">Carregando...</div>;
   }
@@ -88,10 +107,16 @@ export default function NewsMonitoring() {
           <h1 className="text-3xl font-bold">Monitoramento de Notícias</h1>
           <p className="text-muted-foreground">Acompanhe notícias relevantes e alertas em tempo real</p>
         </div>
-        <Button onClick={runNewsCrawler} disabled={crawling} className="flex items-center gap-2">
-          <RefreshCw className={`h-4 w-4 ${crawling ? 'animate-spin' : ''}`} />
-          {crawling ? 'Coletando...' : 'Atualizar Notícias'}
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={runTestAnalysis} disabled={crawling} variant="outline" className="flex items-center gap-2">
+            <RefreshCw className={`h-4 w-4 ${crawling ? 'animate-spin' : ''}`} />
+            {crawling ? 'Testando...' : 'Teste com Bauru'}
+          </Button>
+          <Button onClick={runNewsCrawler} disabled={crawling} className="flex items-center gap-2">
+            <RefreshCw className={`h-4 w-4 ${crawling ? 'animate-spin' : ''}`} />
+            {crawling ? 'Coletando...' : 'Atualizar Notícias'}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

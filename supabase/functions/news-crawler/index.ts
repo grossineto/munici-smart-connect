@@ -167,15 +167,20 @@ serve(async (req) => {
                 messages: [
                   {
                     role: 'system',
-                    content: `Você é um analista especializado em monitoramento de notícias para gestão pública municipal. 
-                    Analise a notícia e retorne APENAS um JSON válido com esta estrutura:
+                    content: `Você é um analista especializado em monitoramento de notícias para gestão pública municipal de Bauru. 
+                    Analise a notícia procurando especificamente por menções a:
+                    - "prefeita de bauru", "Suéllen Silva Rosim", "Suéllen Rosim", "prefeitura de bauru"
+                    - Palavras relacionadas à gestão municipal, políticas públicas
+                    - Situações que possam afetar a imagem da prefeita ou da prefeitura
+                    
+                    Retorne APENAS um JSON válido com esta estrutura:
                     {
                       "sentiment_score": number(-1 a 1),
                       "urgency_level": "low|medium|high|critical",
                       "relevance_score": number(0 a 1),
                       "keywords": ["palavra1", "palavra2"],
                       "summary": "resumo em até 150 caracteres",
-                      "impact_analysis": "análise do impacto",
+                      "impact_analysis": "análise do impacto para a gestão municipal",
                       "recommended_action": "ação recomendada",
                       "mentions_mayor": boolean,
                       "mentions_city": boolean,
