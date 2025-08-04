@@ -109,11 +109,29 @@ export default function NewsMonitoring() {
   const runNewsCrawler = async () => {
     setCrawling(true);
     try {
-      await supabase.functions.invoke('news-crawler');
-      toast({ title: "Coleta Iniciada", description: "Processando notícias..." });
-      setTimeout(loadData, 5000);
+      console.log('Starting real news collection...');
+      const { data, error } = await supabase.functions.invoke('real-news-collector');
+      
+      console.log('Real news collection response:', { data, error });
+      
+      if (error) {
+        console.error('Real news collection error:', error);
+        throw error;
+      }
+      
+      toast({ 
+        title: "Notícias Coletadas", 
+        description: `Coletadas ${data?.processed_articles || 0} notícias reais dos principais portais` 
+      });
+      
+      console.log('Reloading data in 3 seconds...');
+      setTimeout(() => {
+        console.log('Reloading data now...');
+        loadData();
+      }, 3000);
     } catch (error) {
-      toast({ title: "Erro", description: "Erro ao executar coleta", variant: "destructive" });
+      console.error('Real news collection failed:', error);
+      toast({ title: "Erro", description: "Erro ao coletar notícias reais", variant: "destructive" });
     } finally {
       setCrawling(false);
     }
@@ -173,7 +191,7 @@ export default function NewsMonitoring() {
           </Button>
           <Button onClick={runNewsCrawler} disabled={crawling} className="flex items-center gap-2">
             <RefreshCw className={`h-4 w-4 ${crawling ? 'animate-spin' : ''}`} />
-            {crawling ? 'Coletando...' : 'Atualizar Notícias'}
+            {crawling ? 'Coletando...' : 'Coletar Notícias Reais'}
           </Button>
         </div>
       </div>
