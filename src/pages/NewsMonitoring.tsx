@@ -53,7 +53,7 @@ export default function NewsMonitoring() {
             title,
             url,
             published_at,
-            news_sources (name)
+            author
           )
         `)
         .order('created_at', { ascending: false })
@@ -273,11 +273,94 @@ export default function NewsMonitoring() {
         </Card>
       </div>
 
-      <Tabs defaultValue="alerts">
+      <Tabs defaultValue="dashboard">
         <TabsList>
+          <TabsTrigger value="dashboard">Dashboard Visual</TabsTrigger>
           <TabsTrigger value="alerts">Alertas</TabsTrigger>
           <TabsTrigger value="analysis">Análises</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="dashboard">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Notícias Recentes */}
+            <Card className="col-span-1 lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                  Últimas Notícias de São Paulo
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[500px]">
+                  {analyses.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground mb-4">Nenhuma notícia encontrada</p>
+                      <p className="text-sm text-muted-foreground">Clique em "Tempo Real (Perplexity)" para buscar notícias recentes</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      {analyses.slice(0, 10).map((analysis) => (
+                        <div key={analysis.id} className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-purple-50 hover:shadow-lg transition-all">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                <Badge variant="outline" className="bg-blue-100 text-blue-800 font-semibold">
+                                  {analysis.news_articles?.author || 'Fonte'}
+                                </Badge>
+                                <Badge variant={
+                                  analysis.sentiment_score > 0.3 ? 'default' : 
+                                  analysis.sentiment_score < -0.3 ? 'destructive' : 'secondary'
+                                } className="text-xs">
+                                  {analysis.sentiment_score > 0.3 ? '😊 POSITIVA' : 
+                                   analysis.sentiment_score < -0.3 ? '😞 NEGATIVA' : '😐 NEUTRA'}
+                                </Badge>
+                                {analysis.urgency_level === 'high' && (
+                                  <Badge variant="destructive" className="animate-pulse">🚨 URGENTE</Badge>
+                                )}
+                                {analysis.mentions_mayor && (
+                                  <Badge className="bg-purple-100 text-purple-700">👨‍💼 Prefeito</Badge>
+                                )}
+                                {analysis.crisis_potential && (
+                                  <Badge variant="destructive" className="animate-bounce">⚠️ CRISE</Badge>
+                                )}
+                              </div>
+                              <h3 className="font-bold text-lg mb-2 line-clamp-2">{analysis.news_articles?.title}</h3>
+                              <p className="text-sm text-gray-600 mb-3 line-clamp-3">{analysis.summary}</p>
+                              
+                              {analysis.recommended_action && (
+                                <div className="mb-3 p-3 bg-yellow-100 border-l-4 border-yellow-500 rounded">
+                                  <p className="text-sm font-semibold text-yellow-800">Ação Recomendada:</p>
+                                  <p className="text-sm text-yellow-700">{analysis.recommended_action}</p>
+                                </div>
+                              )}
+                              
+                              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  📊 Relevância: {Math.round((analysis.relevance_score || 0) * 10)}%
+                                </span>
+                                <span>{formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true, locale: ptBR })}</span>
+                              </div>
+                            </div>
+                            
+                            {analysis.news_articles?.url && (
+                              <Button 
+                                size="sm" 
+                                onClick={() => window.open(analysis.news_articles.url, '_blank')}
+                                className="ml-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent value="alerts">
           <Card>
