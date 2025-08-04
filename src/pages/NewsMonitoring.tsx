@@ -218,18 +218,24 @@ export default function NewsMonitoring() {
 
   const selectCity = (city: any) => {
     setSelectedCity(city);
+    console.log('🏙️ Cidade selecionada:', city.nome);
+    console.log('📋 Buscando prefeito para:', city.nome);
+    console.log('🗂️ Cidades disponíveis na base:', Object.keys(mayorData));
+    
     const mayor = mayorData[city.nome as keyof typeof mayorData];
     if (mayor) {
       setSelectedMayor({ ...mayor, cidade: city.nome, uf: city.uf });
+      console.log('✅ Prefeito encontrado:', mayor.nome);
       toast({
         title: "Prefeito Encontrado",
         description: `${mayor.nome} (${mayor.partido}) - ${city.nome}/${city.uf}`,
       });
     } else {
       setSelectedMayor(null);
+      console.log('❌ Prefeito não encontrado para:', city.nome);
       toast({
-        title: "Prefeito Não Encontrado",
-        description: `Dados do prefeito de ${city.nome} não disponíveis na base atual`,
+        title: "Cidade Não Disponível",
+        description: `${city.nome}/${city.uf} ainda não está na nossa base. Tente: São Paulo, Rio de Janeiro, Belo Horizonte, Curitiba, etc.`,
         variant: "destructive",
       });
     }
