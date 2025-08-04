@@ -960,7 +960,7 @@ function NewsMonitoring() {
                         </div>
                         <div className="text-center">
                           <div className="text-xl font-bold text-orange-600">
-                            {analysis.keywords ? analysis.keywords.split(',').length : 0}
+                            {analysis.keywords && typeof analysis.keywords === 'string' ? analysis.keywords.split(',').length : 0}
                           </div>
                           <div className="text-xs text-gray-600">Keywords</div>
                         </div>
@@ -974,7 +974,7 @@ function NewsMonitoring() {
                       </div>
 
                       {/* Keywords */}
-                      {analysis.keywords && (
+                      {analysis.keywords && typeof analysis.keywords === 'string' && (
                         <div className="flex flex-wrap gap-1 mb-3">
                           {analysis.keywords.split(',').slice(0, 5).map((keyword, index) => (
                             <span 
