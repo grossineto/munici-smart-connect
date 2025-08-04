@@ -56,25 +56,38 @@ serve(async (req) => {
 
     for (const testArticle of testArticles) {
       try {
-        // Save test article to database
-        const { data: savedArticle, error: insertError } = await supabase
+        // First check if article already exists
+        const { data: existingArticle } = await supabase
           .from('news_articles')
-          .insert({
-            source_id: testSource.id,
-            title: testArticle.title,
-            content: testArticle.content,
-            url: testArticle.url,
-            published_at: new Date().toISOString()
-          })
-          .select()
-          .single();
+          .select('id')
+          .eq('url', testArticle.url)
+          .maybeSingle();
 
-        if (insertError) {
-          console.error('Error saving test article:', insertError);
-          continue;
+        let savedArticle;
+        if (existingArticle) {
+          console.log(`Article already exists: ${testArticle.title}`);
+          savedArticle = existingArticle;
+        } else {
+          // Save new test article to database
+          const { data: newArticle, error: insertError } = await supabase
+            .from('news_articles')
+            .insert({
+              source_id: testSource.id,
+              title: testArticle.title,
+              content: testArticle.content,
+              url: testArticle.url,
+              published_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error('Error saving test article:', insertError);
+            continue;
+          }
+          savedArticle = newArticle;
+          console.log(`Saved new test article: ${testArticle.title}`);
         }
-
-        console.log(`Saved test article: ${testArticle.title}`);
 
         // Analyze with AI
         const analysisResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -122,30 +135,62 @@ serve(async (req) => {
           const analysisData = await analysisResponse.json();
           const analysisText = analysisData.choices[0]?.message?.content;
           
+          console.log(`AI Response for ${testArticle.title}:`, analysisText);
+          
           try {
             const analysis = JSON.parse(analysisText);
             
-            // Save analysis
-            await supabase
+            // Check if analysis already exists
+            const { data: existingAnalysis } = await supabase
               .from('news_analysis')
-              .insert({
-                article_id: savedArticle.id,
-                ...analysis
-              });
+              .select('id')
+              .eq('article_id', savedArticle.id)
+              .maybeSingle();
+
+            if (!existingAnalysis) {
+              // Save analysis
+              const { error: analysisError } = await supabase
+                .from('news_analysis')
+                .insert({
+                  article_id: savedArticle.id,
+                  ...analysis
+                });
+
+              if (analysisError) {
+                console.error('Error saving analysis:', analysisError);
+              } else {
+                console.log(`Analysis saved for: ${testArticle.title}`);
+              }
+            } else {
+              console.log(`Analysis already exists for: ${testArticle.title}`);
+            }
 
             // Create alert if high urgency or crisis potential
             if (analysis.urgency_level === 'high' || analysis.urgency_level === 'critical' || analysis.crisis_potential) {
-              await supabase
+              const { data: existingAlert } = await supabase
                 .from('news_alerts')
-                .insert({
-                  article_id: savedArticle.id,
-                  alert_type: analysis.crisis_potential ? 'crisis' : 'mention',
-                  severity: analysis.urgency_level,
-                  title: `Alerta: ${testArticle.title}`,
-                  message: analysis.summary
-                });
-            }
+                .select('id')
+                .eq('article_id', savedArticle.id)
+                .maybeSingle();
 
+              if (!existingAlert) {
+                const { error: alertError } = await supabase
+                  .from('news_alerts')
+                  .insert({
+                    article_id: savedArticle.id,
+                    alert_type: analysis.crisis_potential ? 'crisis' : 'mention',
+                    severity: analysis.urgency_level,
+                    title: `Alerta: ${testArticle.title}`,
+                    message: analysis.summary
+                  });
+
+                if (alertError) {
+                  console.error('Error creating alert:', alertError);
+                } else {
+                  console.log(`Alert created for: ${testArticle.title}`);
+                }
+              }
+            }
             results.push({
               article: testArticle.title,
               analysis: analysis,
@@ -153,11 +198,14 @@ serve(async (req) => {
             });
 
             console.log(`Analysis completed for: ${testArticle.title}`);
-            console.log(`Urgency: ${analysis.urgency_level}, Mentions Mayor: ${analysis.mentions_mayor}`);
+            console.log(`Urgency: ${analysis.urgency_level}, Mentions Mayor: ${analysis.mentions_mayor}, Sentiment: ${analysis.sentiment_score}`);
 
           } catch (parseError) {
             console.error('Error parsing AI analysis:', parseError);
+            console.error('Raw AI response:', analysisText);
           }
+        } else {
+          console.error(`AI Analysis failed for ${testArticle.title}:`, analysisResponse.status, analysisResponse.statusText);
         }
 
         // Wait between requests
