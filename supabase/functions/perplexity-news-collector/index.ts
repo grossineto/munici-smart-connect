@@ -20,138 +20,20 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting Perplexity news collection...');
-    console.log('Perplexity API Key available:', !!perplexityApiKey);
+    console.log('🔍 Buscando notícias reais sobre São Paulo...');
 
     const processedArticles = [];
 
-    // Criar algumas notícias de exemplo primeiro para testar o visual
-    const exampleNews = [
-      {
-        title: "Prefeito Ricardo Nunes anuncia nova linha de metrô em São Paulo",
-        content: "A Prefeitura de São Paulo anunciou hoje o projeto de uma nova linha de metrô que conectará a zona norte à zona sul da cidade, beneficiando milhões de paulistanos.",
-        source: "G1 São Paulo",
-        url: `https://g1.globo.com/sp/sao-paulo/noticia/nova-linha-metro-${Date.now()}.ghtml`,
-        sentiment: 0.8,
-        urgency: 'medium',
-        mentions_mayor: true,
-        crisis_potential: false
-      },
-      {
-        title: "São Paulo registra aumento na criminalidade no centro da cidade",
-        content: "Dados da Secretaria de Segurança Pública mostram crescimento de 15% nos crimes contra o patrimônio na região central de São Paulo nos últimos 30 dias.",
-        source: "Folha de S.Paulo",
-        url: `https://folha.uol.com.br/cotidiano/criminalidade-centro-sp-${Date.now()}.shtml`,
-        sentiment: -0.7,
-        urgency: 'high',
-        mentions_mayor: false,
-        crisis_potential: true
-      },
-      {
-        title: "Prefeitura investe R$ 50 milhões em tecnologia para escolas municipais",
-        content: "O investimento contempla tablets para estudantes, internet de alta velocidade e equipamentos modernos para laboratórios de informática em 500 escolas da rede municipal.",
-        source: "CNN Brasil",
-        url: `https://cnnbrasil.com.br/educacao/tecnologia-escolas-sp-${Date.now()}.html`,
-        sentiment: 0.9,
-        urgency: 'low',
-        mentions_mayor: true,
-        crisis_potential: false
-      }
+    // Queries específicas para São Paulo e gestão municipal
+    const queries = [
+      "São Paulo prefeito Ricardo Nunes notícias hoje",
+      "São Paulo prefeitura problemas urbanos hoje",
+      "São Paulo transporte público metrô hoje"
     ];
 
-    console.log('Processando notícias de exemplo...');
-
-    for (const news of exampleNews) {
-      try {
-        // Verificar se já existe
-        const { data: existingArticle } = await supabase
-          .from('news_articles')
-          .select('id')
-          .eq('url', news.url)
-          .single();
-
-        if (existingArticle) {
-          console.log('Artigo já existe:', news.url);
-          continue;
-        }
-
-        // Salvar artigo
-        const { data: article, error: articleError } = await supabase
-          .from('news_articles')
-          .insert({
-            title: news.title,
-            url: news.url,
-            content: news.content,
-            author: news.source,
-            published_at: new Date().toISOString(),
-          })
-          .select()
-          .single();
-
-        if (articleError) {
-          console.error('Erro ao salvar artigo:', articleError);
-          continue;
-        }
-
-        console.log('Artigo salvo:', article.title);
-
-        // Salvar análise
-        const { data: savedAnalysis, error: analysisError } = await supabase
-          .from('news_analysis')
-          .insert({
-            article_id: article.id,
-            sentiment_score: news.sentiment,
-            relevance_score: 8,
-            urgency_level: news.urgency,
-            mentions_mayor: news.mentions_mayor,
-            mentions_city: true,
-            crisis_potential: news.crisis_potential,
-            keywords: ['São Paulo', 'prefeito', 'gestão municipal'],
-            summary: news.content,
-            impact_analysis: news.sentiment > 0 ? 'Impacto positivo na gestão municipal' : 'Requer atenção da gestão municipal',
-            recommended_action: news.crisis_potential ? 'Ação urgente necessária' : 'Acompanhar desenvolvimento'
-          })
-          .select()
-          .single();
-
-        if (analysisError) {
-          console.error('Erro ao salvar análise:', analysisError);
-        } else {
-          console.log('Análise salva para:', article.title);
-
-          // Criar alerta se necessário
-          if (news.urgency === 'high' || news.crisis_potential) {
-            const { error: alertError } = await supabase
-              .from('news_alerts')
-              .insert({
-                article_id: article.id,
-                alert_type: news.crisis_potential ? 'crisis' : 'urgent',
-                title: `ALERTA: ${article.title}`,
-                message: news.content.substring(0, 150) + '...',
-                severity: news.urgency === 'high' ? 'high' : 'medium'
-              });
-
-            if (alertError) {
-              console.error('Erro ao criar alerta:', alertError);
-            }
-          }
-        }
-
-        processedArticles.push({
-          title: article.title,
-          url: article.url,
-          source: news.source
-        });
-
-      } catch (error) {
-        console.error('Erro ao processar notícia:', error);
-      }
-    }
-
-    // Agora tentar usar Perplexity para notícias reais
-    console.log('Tentando buscar notícias reais com Perplexity...');
-    
-    try {
+    for (const query of queries) {
+      console.log(`📰 Procurando: ${query}`);
+      
       const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
         headers: {
@@ -163,31 +45,220 @@ serve(async (req) => {
           messages: [
             {
               role: 'user',
-              content: 'Quais são as últimas 3 notícias sobre São Paulo hoje? Inclua URLs reais e títulos.'
+              content: `Encontre 2 notícias recentes sobre "${query}" dos últimos 2 dias. 
+              
+              Retorne APENAS notícias reais de sites brasileiros como G1, Folha, Estadão, UOL, R7, CNN Brasil.
+              
+              Para cada notícia, forneça:
+              - Título exato
+              - URL completa e funcional
+              - Fonte/veículo
+              - Resumo do conteúdo
+              - Data de publicação
+              
+              Formato:
+              NOTÍCIA 1:
+              Título: [título]
+              URL: [link]
+              Fonte: [veículo]
+              Resumo: [conteúdo]
+              Data: [data]
+              
+              NOTÍCIA 2:
+              Título: [título]
+              URL: [link]
+              Fonte: [veículo]  
+              Resumo: [conteúdo]
+              Data: [data]`
             }
           ],
           temperature: 0.1,
-          max_tokens: 1000
+          max_tokens: 1500
         }),
       });
 
-      if (perplexityResponse.ok) {
-        const perplexityData = await perplexityResponse.json();
-        console.log('Resposta Perplexity:', perplexityData.choices[0].message.content);
-      } else {
-        const errorText = await perplexityResponse.text();
-        console.error('Erro Perplexity:', errorText);
+      if (!perplexityResponse.ok) {
+        console.error('❌ Erro Perplexity:', await perplexityResponse.text());
+        continue;
       }
-    } catch (error) {
-      console.error('Erro ao chamar Perplexity:', error);
+
+      const data = await perplexityResponse.json();
+      const content = data.choices[0].message.content;
+      console.log('📄 Conteúdo recebido:', content.substring(0, 300));
+
+      // Extrair notícias do formato estruturado
+      const newsBlocks = content.split(/NOTÍCIA \d+:|---/).filter(block => block.trim());
+      
+      for (const block of newsBlocks) {
+        if (!block.trim()) continue;
+        
+        const titleMatch = block.match(/Título:\s*(.+)/i);
+        const urlMatch = block.match(/URL:\s*(https?:\/\/[^\s\n]+)/i);
+        const sourceMatch = block.match(/Fonte:\s*(.+)/i);
+        const resumoMatch = block.match(/Resumo:\s*(.+)/i);
+        
+        if (!titleMatch || !urlMatch) {
+          console.log('⚠️ Notícia incompleta, pulando');
+          continue;
+        }
+
+        const title = titleMatch[1].trim();
+        const url = urlMatch[1].trim();
+        const source = sourceMatch ? sourceMatch[1].trim() : 'Portal de Notícias';
+        const content = resumoMatch ? resumoMatch[1].trim() : 'Conteúdo via Perplexity';
+
+        console.log(`✅ Processando: ${title.substring(0, 50)}...`);
+        console.log(`🔗 URL: ${url}`);
+
+        // Verificar se já existe
+        const { data: existing } = await supabase
+          .from('news_articles')
+          .select('id')
+          .eq('url', url)
+          .single();
+
+        if (existing) {
+          console.log('📋 Artigo já existe');
+          continue;
+        }
+
+        // Salvar artigo
+        const { data: article, error: articleError } = await supabase
+          .from('news_articles')
+          .insert({
+            title,
+            url,
+            content,
+            author: source,
+            published_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (articleError) {
+          console.error('❌ Erro ao salvar:', articleError);
+          continue;
+        }
+
+        // Análise com OpenAI
+        const analysisResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openaiApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `Você é um analista de opinião pública especializado em gestão municipal de São Paulo. 
+
+Analise esta notícia e retorne um JSON com:
+{
+  "sentiment": "positivo|negativo|neutro",
+  "sentiment_score": -1 a 1,
+  "relevance": 1 a 10,
+  "urgency": "baixo|medio|alto|critico",
+  "mentions_mayor": true/false,
+  "mentions_city": true/false,
+  "crisis_potential": true/false,
+  "keywords": ["palavra1", "palavra2"],
+  "summary": "resumo executivo",
+  "impact_analysis": "análise detalhada do impacto",
+  "recommended_action": "ação recomendada para gestão",
+  "public_opinion_impact": "impacto na opinião pública",
+  "media_attention_level": "baixo|medio|alto",
+  "stakeholders_affected": ["grupo1", "grupo2"]
+}`
+              },
+              {
+                role: 'user',
+                content: `Título: ${title}\nConteúdo: ${content}\nFonte: ${source}`
+              }
+            ],
+            temperature: 0.2,
+          }),
+        });
+
+        let analysis = {
+          sentiment: 'neutro',
+          sentiment_score: 0,
+          relevance: 5,
+          urgency: 'medio',
+          mentions_mayor: false,
+          mentions_city: true,
+          crisis_potential: false,
+          keywords: ['São Paulo'],
+          summary: content.substring(0, 200),
+          impact_analysis: 'Análise em processamento',
+          recommended_action: 'Monitorar desenvolvimento',
+          public_opinion_impact: 'Impacto moderado na opinião pública',
+          media_attention_level: 'medio',
+          stakeholders_affected: ['Cidadãos', 'Gestão Municipal']
+        };
+
+        if (analysisResponse.ok) {
+          try {
+            const analysisData = await analysisResponse.json();
+            const aiAnalysis = JSON.parse(analysisData.choices[0].message.content);
+            analysis = { ...analysis, ...aiAnalysis };
+          } catch (e) {
+            console.log('⚠️ Usando análise padrão');
+          }
+        }
+
+        // Salvar análise
+        const { error: analysisError } = await supabase
+          .from('news_analysis')
+          .insert({
+            article_id: article.id,
+            sentiment_score: analysis.sentiment_score,
+            relevance_score: analysis.relevance,
+            urgency_level: analysis.urgency,
+            mentions_mayor: analysis.mentions_mayor,
+            mentions_city: analysis.mentions_city,
+            crisis_potential: analysis.crisis_potential,
+            keywords: analysis.keywords,
+            summary: analysis.summary,
+            impact_analysis: analysis.impact_analysis,
+            recommended_action: analysis.recommended_action
+          });
+
+        if (!analysisError) {
+          console.log('💾 Análise salva');
+          
+          // Criar alerta se necessário
+          if (analysis.urgency === 'alto' || analysis.urgency === 'critico' || analysis.crisis_potential) {
+            await supabase
+              .from('news_alerts')
+              .insert({
+                article_id: article.id,
+                alert_type: analysis.crisis_potential ? 'crisis' : 'urgent',
+                title: `🚨 ${analysis.urgency.toUpperCase()}: ${title}`,
+                message: analysis.summary,
+                severity: analysis.urgency === 'critico' ? 'critical' : 'high'
+              });
+          }
+        }
+
+        processedArticles.push({
+          title,
+          url,
+          source
+        });
+      }
+
+      // Pausa entre queries
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
-    console.log(`Processadas ${processedArticles.length} notícias`);
+    console.log(`✅ Processadas ${processedArticles.length} notícias reais`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Processadas ${processedArticles.length} notícias`,
+        message: `Coletadas ${processedArticles.length} notícias reais de fontes brasileiras`,
         articles: processedArticles
       }),
       {
@@ -196,7 +267,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Erro na coleta de notícias:', error);
+    console.error('❌ Erro:', error);
     return new Response(
       JSON.stringify({
         success: false,

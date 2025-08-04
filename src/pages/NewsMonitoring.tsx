@@ -4,17 +4,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, TrendingUp, Eye, Bell, RefreshCw, ExternalLink } from "lucide-react";
+import { AlertTriangle, TrendingUp, Eye, Bell, RefreshCw, ExternalLink, Target, Users, Zap, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AnalysisModal } from "@/components/AnalysisModal";
 
 export default function NewsMonitoring() {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [analyses, setAnalyses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [crawling, setCrawling] = useState(false);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<any>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -281,76 +284,185 @@ export default function NewsMonitoring() {
         </TabsList>
 
         <TabsContent value="dashboard">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Notícias Recentes */}
-            <Card className="col-span-1 lg:col-span-2">
+          {/* Dashboard Visual Redesenhado */}
+          <div className="space-y-6">
+            {/* Resumo Visual para o Prefeito */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-green-200">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-green-800">
+                    <TrendingUp className="h-6 w-6" />
+                    Notícias Positivas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-700">
+                    {analyses.filter(a => a.sentiment_score > 0.3).length}
+                  </div>
+                  <p className="text-sm text-green-600 mt-1">Impacto favorável na opinião pública</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-red-50 to-rose-100 border-red-200">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-red-800">
+                    <AlertTriangle className="h-6 w-6" />
+                    Notícias Negativas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-red-700">
+                    {analyses.filter(a => a.sentiment_score < -0.3).length}
+                  </div>
+                  <p className="text-sm text-red-600 mt-1">Requerem atenção da gestão</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-50 to-violet-100 border-purple-200">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-purple-800">
+                    <Target className="h-6 w-6" />
+                    Menções ao Prefeito
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-purple-700">
+                    {analyses.filter(a => a.mentions_mayor).length}
+                  </div>
+                  <p className="text-sm text-purple-600 mt-1">Impacto direto na gestão</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Feed Visual de Notícias */}
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-blue-600" />
-                  Últimas Notícias de São Paulo
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <Globe className="h-6 w-6 text-blue-600" />
+                  Painel de Opinião Pública em Tempo Real
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700">São Paulo</Badge>
                 </CardTitle>
+                <p className="text-sm text-muted-foreground">Clique em qualquer notícia para ver análise completa</p>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[500px]">
+                <ScrollArea className="h-[600px]">
                   {analyses.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground mb-4">Nenhuma notícia encontrada</p>
-                      <p className="text-sm text-muted-foreground">Clique em "Tempo Real (Perplexity)" para buscar notícias recentes</p>
+                    <div className="text-center py-12">
+                      <Globe className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-600 mb-2">Nenhuma notícia encontrada</h3>
+                      <p className="text-sm text-muted-foreground mb-6">Clique em "Tempo Real (Perplexity)" para buscar notícias atualizadas</p>
+                      <Button onClick={runPerplexityNews} disabled={crawling} className="bg-gradient-to-r from-blue-600 to-purple-600">
+                        <Zap className="h-4 w-4 mr-2" />
+                        Buscar Notícias Agora
+                      </Button>
                     </div>
                   ) : (
-                    <div className="grid gap-4">
-                      {analyses.slice(0, 10).map((analysis) => (
-                        <div key={analysis.id} className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-purple-50 hover:shadow-lg transition-all">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                                <Badge variant="outline" className="bg-blue-100 text-blue-800 font-semibold">
-                                  {analysis.news_articles?.author || 'Fonte'}
+                    <div className="grid gap-6">
+                      {analyses.slice(0, 12).map((analysis) => (
+                        <div 
+                          key={analysis.id} 
+                          className="group border-2 rounded-xl p-6 bg-gradient-to-r from-slate-50 to-slate-100 hover:from-blue-50 hover:to-purple-50 transition-all duration-300 cursor-pointer hover:shadow-xl hover:scale-[1.02]"
+                          onClick={() => {
+                            setSelectedAnalysis(analysis);
+                            setModalOpen(true);
+                          }}
+                        >
+                          {/* Header com Badges */}
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant="outline" className="bg-white border-blue-200 text-blue-800 font-semibold px-3 py-1">
+                                📰 {analysis.news_articles?.author || 'Portal de Notícias'}
+                              </Badge>
+                              <Badge 
+                                variant={analysis.sentiment_score > 0.3 ? 'default' : analysis.sentiment_score < -0.3 ? 'destructive' : 'secondary'}
+                                className="px-3 py-1 text-sm font-bold"
+                              >
+                                {analysis.sentiment_score > 0.3 ? '😊 POSITIVA' : 
+                                 analysis.sentiment_score < -0.3 ? '😞 NEGATIVA' : '😐 NEUTRA'}
+                              </Badge>
+                              {(analysis.urgency_level === 'high' || analysis.urgency_level === 'critical') && (
+                                <Badge variant="destructive" className="animate-pulse px-3 py-1 font-bold">
+                                  🚨 {analysis.urgency_level === 'critical' ? 'CRÍTICA' : 'URGENTE'}
                                 </Badge>
-                                <Badge variant={
-                                  analysis.sentiment_score > 0.3 ? 'default' : 
-                                  analysis.sentiment_score < -0.3 ? 'destructive' : 'secondary'
-                                } className="text-xs">
-                                  {analysis.sentiment_score > 0.3 ? '😊 POSITIVA' : 
-                                   analysis.sentiment_score < -0.3 ? '😞 NEGATIVA' : '😐 NEUTRA'}
-                                </Badge>
-                                {analysis.urgency_level === 'high' && (
-                                  <Badge variant="destructive" className="animate-pulse">🚨 URGENTE</Badge>
-                                )}
-                                {analysis.mentions_mayor && (
-                                  <Badge className="bg-purple-100 text-purple-700">👨‍💼 Prefeito</Badge>
-                                )}
-                                {analysis.crisis_potential && (
-                                  <Badge variant="destructive" className="animate-bounce">⚠️ CRISE</Badge>
-                                )}
-                              </div>
-                              <h3 className="font-bold text-lg mb-2 line-clamp-2">{analysis.news_articles?.title}</h3>
-                              <p className="text-sm text-gray-600 mb-3 line-clamp-3">{analysis.summary}</p>
-                              
-                              {analysis.recommended_action && (
-                                <div className="mb-3 p-3 bg-yellow-100 border-l-4 border-yellow-500 rounded">
-                                  <p className="text-sm font-semibold text-yellow-800">Ação Recomendada:</p>
-                                  <p className="text-sm text-yellow-700">{analysis.recommended_action}</p>
-                                </div>
                               )}
-                              
-                              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  📊 Relevância: {Math.round((analysis.relevance_score || 0) * 10)}%
-                                </span>
-                                <span>{formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true, locale: ptBR })}</span>
-                              </div>
+                              {analysis.mentions_mayor && (
+                                <Badge className="bg-purple-500 hover:bg-purple-600 px-3 py-1 font-bold">
+                                  👨‍💼 PREFEITO
+                                </Badge>
+                              )}
+                              {analysis.crisis_potential && (
+                                <Badge variant="destructive" className="animate-bounce px-3 py-1 font-bold">
+                                  ⚠️ POTENCIAL DE CRISE
+                                </Badge>
+                              )}
                             </div>
                             
-                            {analysis.news_articles?.url && (
+                            <div className="flex items-center gap-2">
                               <Button 
                                 size="sm" 
-                                onClick={() => window.open(analysis.news_articles.url, '_blank')}
-                                className="ml-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (analysis.news_articles?.url) {
+                                    window.open(analysis.news_articles.url, '_blank');
+                                  }
+                                }}
+                                className="opacity-70 group-hover:opacity-100 transition-opacity"
                               >
                                 <ExternalLink className="h-4 w-4" />
                               </Button>
-                            )}
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedAnalysis(analysis);
+                                  setModalOpen(true);
+                                }}
+                                className="opacity-70 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                Analisar
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Título da Notícia */}
+                          <h2 className="text-xl font-bold text-gray-800 mb-3 line-clamp-2 group-hover:text-blue-800 transition-colors">
+                            {analysis.news_articles?.title}
+                          </h2>
+
+                          {/* Resumo */}
+                          <p className="text-gray-600 mb-4 line-clamp-3 leading-relaxed">
+                            {analysis.summary}
+                          </p>
+
+                          {/* Ação Recomendada (destaque visual) */}
+                          {analysis.recommended_action && (
+                            <div className="mb-4 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-400 rounded-lg">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Target className="h-4 w-4 text-yellow-600" />
+                                <span className="font-semibold text-yellow-800">Ação Recomendada para a Gestão:</span>
+                              </div>
+                              <p className="text-yellow-700 font-medium">{analysis.recommended_action}</p>
+                            </div>
+                          )}
+
+                          {/* Footer com Métricas */}
+                          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                            <div className="flex items-center gap-4 text-sm">
+                              <div className="flex items-center gap-1">
+                                <TrendingUp className="h-4 w-4 text-blue-500" />
+                                <span className="font-medium">Relevância: {Math.round((analysis.relevance_score || 0) * 10)}%</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4 text-purple-500" />
+                                <span className="font-medium">Impacto: {analysis.sentiment_score > 0 ? 'Positivo' : analysis.sentiment_score < 0 ? 'Negativo' : 'Neutro'}</span>
+                              </div>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true, locale: ptBR })}
+                            </span>
                           </div>
                         </div>
                       ))}
@@ -477,6 +589,16 @@ export default function NewsMonitoring() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal de Análise Detalhada */}
+      <AnalysisModal 
+        analysis={selectedAnalysis}
+        isOpen={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setSelectedAnalysis(null);
+        }}
+      />
     </div>
   );
 }
