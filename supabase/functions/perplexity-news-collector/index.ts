@@ -26,9 +26,7 @@ serve(async (req) => {
     const newsQueries = [
       'São Paulo prefeito Ricardo Nunes últimas notícias',
       'prefeitura São Paulo política decisões recentes',
-      'São Paulo cidade problemas urbanos infraestrutura',
-      'São Paulo transporte público metrô ônibus',
-      'São Paulo segurança pública criminalidade'
+      'São Paulo cidade problemas urbanos infraestrutura'
     ];
 
     const processedArticles = [];
@@ -48,38 +46,83 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: 'Você é um assistente especializado em encontrar notícias recentes. Forneça informações detalhadas sobre as notícias mais recentes incluindo título, fonte, data, URL e resumo do conteúdo.'
+              content: 'Você é um jornalista especializado em encontrar notícias recentes sobre São Paulo. Sempre inclua URLs completas e válidas das notícias. Formate sua resposta como uma lista de notícias com título, fonte, URL e resumo.'
             },
             {
               role: 'user',
-              content: `Encontre as 3 notícias mais recentes sobre: ${query}. Para cada notícia, forneça: título, fonte/veículo, data de publicação, URL, e um resumo detalhado do conteúdo. Foque em veículos brasileiros como G1, Folha, Estadão, UOL, R7, Band, SBT, Record.`
+              content: `Encontre as 3 notícias mais recentes de hoje sobre: "${query}". Para cada notícia, forneça no formato:
+
+TÍTULO: [título da notícia]
+FONTE: [nome do veículo]
+URL: [link completo da notícia]
+RESUMO: [resumo da notícia]
+---
+
+Busque em portais brasileiros como G1, Folha, Estadão, UOL, R7, CNN Brasil.`
             }
           ],
-          temperature: 0.2,
+          temperature: 0.1,
           max_tokens: 2000,
-          search_domain_filter: ['g1.globo.com', 'folha.uol.com.br', 'estadao.com.br', 'uol.com.br', 'r7.com', 'band.uol.com.br'],
+          search_domain_filter: ['g1.globo.com', 'folha.uol.com.br', 'estadao.com.br', 'uol.com.br', 'r7.com', 'cnnbrasil.com.br'],
           search_recency_filter: 'day'
         }),
       });
 
       if (!perplexityResponse.ok) {
-        console.error('Erro na API Perplexity:', await perplexityResponse.text());
+        const errorText = await perplexityResponse.text();
+        console.error('Erro na API Perplexity:', errorText);
         continue;
       }
 
       const perplexityData = await perplexityResponse.json();
       const newsContent = perplexityData.choices[0].message.content;
       
-      console.log('Conteúdo encontrado:', newsContent.substring(0, 500) + '...');
+      console.log('Conteúdo encontrado:', newsContent);
 
-      // Extrair URLs e informações das notícias usando regex
-      const urlRegex = /https?:\/\/[^\s\)]+/g;
-      const urls = newsContent.match(urlRegex) || [];
+      // Processar o conteúdo estruturado
+      const newsBlocks = newsContent.split('---').filter(block => block.trim());
       
-      // Processar cada URL encontrada
-      for (const url of urls.slice(0, 3)) { // Limitar a 3 por query
+      for (const block of newsBlocks) {
         try {
-          // Verificar se a notícia já existe
+          const lines = block.trim().split('\n');
+          let title = '';
+          let source = '';
+          let url = '';
+          let content = '';
+          
+          for (const line of lines) {
+            if (line.startsWith('TÍTULO:')) {
+              title = line.replace('TÍTULO:', '').trim();
+            } else if (line.startsWith('FONTE:')) {
+              source = line.replace('FONTE:', '').trim();
+            } else if (line.startsWith('URL:')) {
+              url = line.replace('URL:', '').trim();
+            } else if (line.startsWith('RESUMO:')) {
+              content = line.replace('RESUMO:', '').trim();
+            }
+          }
+
+          // Se não conseguiu extrair do formato estruturado, tenta regex
+          if (!url || !title) {
+            const urlMatch = block.match(/https?:\/\/[^\s\)]+/);
+            if (urlMatch) {
+              url = urlMatch[0];
+              // Tentar extrair título das linhas próximas
+              const titleMatch = block.match(/(?:TÍTULO:|Título:)?\s*(.+?)(?:\n|$)/);
+              if (titleMatch) {
+                title = titleMatch[1].trim();
+              }
+            }
+          }
+
+          if (!url || !title || title.length < 10) {
+            console.log('Notícia incompleta, pulando:', { title, url });
+            continue;
+          }
+
+          console.log('Processando notícia:', { title: title.substring(0, 50), url, source });
+
+          // Verificar se já existe
           const { data: existingArticle } = await supabase
             .from('news_articles')
             .select('id')
@@ -91,43 +134,24 @@ serve(async (req) => {
             continue;
           }
 
-          // Extrair informações básicas da notícia do conteúdo
-          const lines = newsContent.split('\n');
-          const urlLine = lines.find(line => line.includes(url));
-          const urlIndex = lines.indexOf(urlLine || '');
-          
-          let title = 'Notícia encontrada via Perplexity';
-          let source = 'Fonte não identificada';
-          
-          // Tentar extrair título e fonte das linhas próximas
-          for (let i = Math.max(0, urlIndex - 3); i <= Math.min(lines.length - 1, urlIndex + 3); i++) {
-            const line = lines[i]?.trim();
-            if (line && line.length > 20 && !line.includes('http') && line.includes(':')) {
-              title = line.split(':')[1]?.trim() || title;
-            }
-            if (line && (line.includes('G1') || line.includes('Folha') || line.includes('Estadão') || line.includes('UOL') || line.includes('R7'))) {
-              source = line;
-            }
+          // Determinar a fonte baseada na URL se não foi extraída
+          if (!source) {
+            if (url.includes('g1.globo.com')) source = 'G1';
+            else if (url.includes('folha.uol.com.br')) source = 'Folha de S.Paulo';
+            else if (url.includes('estadao.com.br')) source = 'O Estado de S. Paulo';
+            else if (url.includes('uol.com.br')) source = 'UOL';
+            else if (url.includes('r7.com')) source = 'R7';
+            else if (url.includes('cnnbrasil.com.br')) source = 'CNN Brasil';
+            else source = 'Portal de Notícias';
           }
-
-          // Determinar a fonte baseada na URL
-          if (url.includes('g1.globo.com')) source = 'G1';
-          else if (url.includes('folha.uol.com.br')) source = 'Folha de S.Paulo';
-          else if (url.includes('estadao.com.br')) source = 'O Estado de S. Paulo';
-          else if (url.includes('uol.com.br')) source = 'UOL';
-          else if (url.includes('r7.com')) source = 'R7';
-          else if (url.includes('band.uol.com.br')) source = 'Band';
 
           // Salvar artigo
           const { data: article, error: articleError } = await supabase
             .from('news_articles')
             .insert({
-              title: title.length > 10 ? title : `Notícia sobre ${query}`,
+              title: title,
               url: url,
-              content: newsContent.substring(
-                Math.max(0, newsContent.indexOf(url) - 200),
-                Math.min(newsContent.length, newsContent.indexOf(url) + 500)
-              ),
+              content: content || 'Conteúdo coletado via Perplexity',
               author: source,
               published_at: new Date().toISOString(),
             })
@@ -242,12 +266,12 @@ Responda em formato JSON válido.`
           });
 
         } catch (error) {
-          console.error('Erro ao processar URL:', url, error);
+          console.error('Erro ao processar notícia:', error);
         }
       }
 
       // Pequena pausa entre queries
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 3000));
     }
 
     return new Response(
