@@ -242,7 +242,6 @@ serve(async (req) => {
                     "citizen_impact": "como esta notícia afeta diretamente a vida dos cidadãos paulistanos"
                   }`
                 }
-                }
               ],
               temperature: 0.2,
               max_tokens: 2000 // Aumentado para análises mais elaboradas
