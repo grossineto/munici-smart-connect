@@ -99,6 +99,12 @@ function NewsMonitoring() {
   const loadDataForMayor = async (mayor: any) => {
     try {
       setLoading(true);
+      
+      // LIMPAR DADOS ANTIGOS PRIMEIRO para evitar mostrar dados de outro prefeito
+      setAlerts([]);
+      setAnalyses([]);
+      setFilteredAnalyses([]);
+      
       console.log(`🔍 Carregando dados FILTRADOS para: ${mayor.nome} - ${mayor.cidade}/${mayor.uf}`);
       
       // Filtros corrigidos para alertas - usando sintaxe correta do Supabase
@@ -290,6 +296,13 @@ function NewsMonitoring() {
   // Função para selecionar cidade
   const selectCity = async (city: any) => {
     console.log('🏙️ Cidade selecionada:', city.nome);
+    
+    // LIMPAR DADOS ANTIGOS IMEDIATAMENTE
+    setAlerts([]);
+    setAnalyses([]);
+    setFilteredAnalyses([]);
+    setSelectedMayor(null);
+    
     setSelectedCity(city);
     setSearchQuery('');
     setSearchResults([]);
