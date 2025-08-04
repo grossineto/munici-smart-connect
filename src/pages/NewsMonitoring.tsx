@@ -322,9 +322,40 @@ export default function NewsMonitoring() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Campo de busca de cidade */}
+            {/* Seleção Rápida de Principais Cidades */}
             <div className="space-y-2">
-              <Label htmlFor="search-city" className="text-sm font-medium">Buscar Município</Label>
+              <Label className="text-sm font-medium">Selecionar Cidade Principal</Label>
+              <Select
+                value={selectedCity?.nome || ''}
+                onValueChange={(cityName) => {
+                  const city = { nome: cityName, uf: 'SP', id: Math.random() }; // uf será ajustado pelo mayorData
+                  selectCity(city);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Escolha uma cidade..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {Object.keys(mayorData).map((cityName) => {
+                    const mayor = mayorData[cityName as keyof typeof mayorData];
+                    return (
+                      <SelectItem key={cityName} value={cityName}>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-blue-500" />
+                          <span className="font-medium">{cityName}</span>
+                          <span className="text-sm text-gray-500">• {mayor.nome} ({mayor.partido})</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-blue-600">✅ {Object.keys(mayorData).length} cidades disponíveis na base</p>
+            </div>
+            
+            {/* Busca Manual (alternativa) */}
+            <div className="space-y-2">
+              <Label htmlFor="search-city" className="text-sm font-medium">Ou Buscar Outras Cidades</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -338,49 +369,59 @@ export default function NewsMonitoring() {
                   className="pl-10"
                 />
                 
-                {/* Dropdown de resultados */}
+                {/* Dropdown de resultados da busca manual */}
                 {cities.length > 0 && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                    {cities.map((city) => (
-                      <div
-                        key={city.id}
-                        onClick={() => selectCity(city)}
-                        className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center gap-2"
-                      >
-                        <MapPin className="h-4 w-4 text-gray-400" />
-                        <span className="font-medium">{city.nome}</span>
-                        <span className="text-sm text-gray-500">- {city.uf}</span>
-                      </div>
-                    ))}
+                    {cities.map((city) => {
+                      const hasData = mayorData[city.nome as keyof typeof mayorData];
+                      return (
+                        <div
+                          key={city.id}
+                          onClick={() => selectCity(city)}
+                          className={`px-4 py-2 cursor-pointer flex items-center gap-2 ${
+                            hasData 
+                              ? 'hover:bg-green-50 border-l-4 border-green-400' 
+                              : 'hover:bg-gray-50 opacity-60'
+                          }`}
+                        >
+                          <MapPin className={`h-4 w-4 ${hasData ? 'text-green-500' : 'text-gray-400'}`} />
+                          <span className="font-medium">{city.nome}</span>
+                          <span className="text-sm text-gray-500">- {city.uf}</span>
+                          {hasData && <Badge variant="outline" className="ml-auto text-xs bg-green-50 text-green-700">✓ Disponível</Badge>}
+                          {!hasData && <span className="ml-auto text-xs text-red-500">Não disponível</span>}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
+              <p className="text-xs text-gray-500">💡 Use o seletor acima para cidades principais</p>
             </div>
-            
-            {/* Prefeito Selecionado */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Prefeito Atual</Label>
-              {selectedMayor ? (
-                <div className="p-4 bg-white border border-green-200 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                      <User className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-green-800">{selectedMayor.nome}</p>
-                      <p className="text-sm text-green-600">{selectedMayor.partido} • {selectedMayor.cidade}/{selectedMayor.uf}</p>
-                      <p className="text-xs text-gray-500">Mandato: {selectedMayor.mandato}</p>
-                    </div>
+          </div>
+          
+          {/* Prefeito Selecionado */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Prefeito Atual</Label>
+            {selectedMayor ? (
+              <div className="p-4 bg-white border border-green-200 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <User className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-green-800">{selectedMayor.nome}</p>
+                    <p className="text-sm text-green-600">{selectedMayor.partido} • {selectedMayor.cidade}/{selectedMayor.uf}</p>
+                    <p className="text-xs text-gray-500">Mandato: {selectedMayor.mandato}</p>
                   </div>
                 </div>
-              ) : (
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                  <User className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">Nenhum prefeito selecionado</p>
-                  <p className="text-xs text-gray-400">Busque por uma cidade para selecionar</p>
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                <User className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Nenhum prefeito selecionado</p>
+                <p className="text-xs text-gray-400">Use o seletor acima para escolher uma cidade</p>
+              </div>
+            )}
           </div>
           
           {/* Informações do Sistema */}
@@ -395,7 +436,7 @@ export default function NewsMonitoring() {
               </span>
             </div>
             <Badge variant="secondary" className="bg-blue-200 text-blue-800">
-              {mayorData ? Object.keys(mayorData).length : 10} prefeitos na base
+              {Object.keys(mayorData).length} prefeitos na base
             </Badge>
           </div>
         </CardContent>
