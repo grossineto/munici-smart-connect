@@ -15,33 +15,52 @@ const openaiApiKey = Deno.env.get('OPENAI_API_KEY')!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 serve(async (req) => {
+  console.log('🚀 [INICIO] Função chamada!');
+  
   if (req.method === 'OPTIONS') {
+    console.log('📋 [CORS] Retornando headers CORS');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('🚀 [DEBUG] Iniciando coleta inteligente de notícias para gestão municipal...');
-    console.log('🔑 [DEBUG] Chaves disponíveis:', {
-      perplexity: !!perplexityApiKey,
-      openai: !!openaiApiKey,
-      supabase: !!supabaseUrl
+    console.log('🚀 [DEBUG] Iniciando teste básico...');
+    console.log('🔑 [DEBUG] Verificando chaves:', {
+      perplexity: !!perplexityApiKey ? 'OK' : 'FALTA',
+      openai: !!openaiApiKey ? 'OK' : 'FALTA',
+      supabase: !!supabaseUrl ? 'OK' : 'FALTA'
     });
 
     const processedArticles = [];
 
-    // Simplificar para testar - apenas 3 temas mais importantes
-    const municipalTopics = [
-      "prefeito Ricardo Nunes São Paulo notícias hoje",
-      "São Paulo transporte público problemas metrô",
-      "São Paulo saúde hospitais UBS crise"
-    ];
+    // Teste 1: Inserir uma notícia simples
+    console.log('📝 [TESTE] Tentando inserir notícia de teste...');
+    
+    const testTitle = `Teste de notícia - ${new Date().toLocaleString('pt-BR')}`;
+    const testUrl = `https://teste.com/noticia-${Date.now()}`;
+    
+    const { data: testArticle, error: testError } = await supabase
+      .from('news_articles')
+      .insert({
+        title: testTitle,
+        url: testUrl,
+        author: 'Teste Portal',
+        content: 'Conteúdo de teste para verificar se a inserção funciona',
+        published_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
 
-    for (let i = 0; i < municipalTopics.length; i++) {
-      const topic = municipalTopics[i];
-      console.log(`🔍 [DEBUG] Buscando ${i+1}/${municipalTopics.length}: ${topic}`);
-      
-      // 1. PERPLEXITY: Encontrar notícias relevantes (simplificado)
-      console.log('📡 [DEBUG] Fazendo chamada Perplexity...');
+    if (testError) {
+      console.error('❌ [ERRO] Falha ao inserir notícia de teste:', testError);
+      throw new Error(`Erro no banco: ${testError.message}`);
+    }
+
+    console.log('✅ [SUCESSO] Notícia de teste inserida:', testArticle.id);
+
+    // Teste 2: Chamada simples Perplexity
+    console.log('🔍 [TESTE] Testando Perplexity...');
+    
+    try {
       const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
         headers: {
@@ -53,22 +72,11 @@ serve(async (req) => {
           messages: [
             {
               role: 'user',
-              content: `Encontre 2 notícias recentes sobre "${topic}" de sites brasileiros como G1, Folha, UOL, R7.
-              
-              Para cada notícia, responda EXATAMENTE assim:
-              NOTÍCIA 1:
-              Título: [título da notícia]
-              URL: [link completo]
-              Fonte: [G1, Folha, UOL, etc]
-              
-              NOTÍCIA 2:
-              Título: [título da notícia]  
-              URL: [link completo]
-              Fonte: [G1, Folha, UOL, etc]`
+              content: 'Diga apenas: "Teste Perplexity funcionando"'
             }
           ],
           temperature: 0.1,
-          max_tokens: 600
+          max_tokens: 50
         }),
       });
 
@@ -76,207 +84,99 @@ serve(async (req) => {
 
       if (!perplexityResponse.ok) {
         const errorText = await perplexityResponse.text();
-        console.error('❌ [DEBUG] Erro Perplexity:', errorText);
-        continue;
+        console.error('❌ [ERRO] Resposta Perplexity:', errorText);
+        throw new Error(`Perplexity falhou: ${errorText}`);
       }
 
       const perplexityData = await perplexityResponse.json();
-      const content = perplexityData.choices[0].message.content;
+      console.log('✅ [SUCESSO] Perplexity respondeu:', perplexityData.choices[0].message.content);
       
-      console.log('📰 [DEBUG] Resposta Perplexity completa:', content);
-
-      // Extrair notícias usando formato simples NOTÍCIA X:
-      const newsBlocks = content.split(/NOTÍCIA \d+:/).filter(block => 
-        block.trim() && block.includes('Título:') && block.includes('URL:')
-      );
-
-      console.log(`📊 [DEBUG] Blocos encontrados: ${newsBlocks.length}`);
-      if (newsBlocks.length > 0) {
-        console.log('📋 [DEBUG] Primeiro bloco:', newsBlocks[0]);
-      }
-
-      for (const block of newsBlocks) {
-        try {
-          console.log('🔍 [DEBUG] Processando bloco:', block.substring(0, 100));
-          const titleMatch = block.match(/Título:\s*(.+)/i);
-          const urlMatch = block.match(/URL:\s*(https?:\/\/[^\s\n]+)/i);
-          const sourceMatch = block.match(/Fonte:\s*(.+)/i);
-
-          if (!titleMatch || !urlMatch) {
-            console.log('⚠️ [DEBUG] Notícia incompleta:', { 
-              hasTitle: !!titleMatch, 
-              hasUrl: !!urlMatch,
-              block: block.substring(0, 200)
-            });
-            continue;
-          }
-
-          const title = titleMatch[1].trim();
-          const url = urlMatch[1].trim();
-          const source = sourceMatch ? sourceMatch[1].trim() : 'Portal de Notícias';
-          const content = `Notícia sobre ${title} - coletada via Perplexity`;
-
-          console.log(`✅ [DEBUG] Processando: ${title.substring(0, 50)}...`);
-
-          // Verificar se já existe
-          const { data: existing } = await supabase
-            .from('news_articles')
-            .select('id')
-            .eq('url', url)
-            .single();
-
-          if (existing) {
-            console.log('📝 Notícia já existe, pulando');
-            continue;
-          }
-
-          // Inserir notícia
-          const { data: article, error: articleError } = await supabase
-            .from('news_articles')
-            .insert({
-              title,
-              url,
-              author: source,
-              content,
-              published_at: new Date().toISOString(),
-            })
-            .select()
-            .single();
-
-          if (articleError) {
-            console.error('❌ Erro ao inserir notícia:', articleError);
-            continue;
-          }
-
-          // 2. OPENAI: Análise específica para gestão municipal
-          const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${openaiApiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'gpt-4o-mini',
-              messages: [
-                {
-                  role: 'system',
-                  content: `Você é um analista especializado em gestão municipal para o prefeito Ricardo Nunes de São Paulo. 
-                  
-                  Analise notícias considerando:
-                  - Impacto na gestão municipal
-                  - Urgência para ação da prefeitura
-                  - Sentimento público
-                  - Potencial de crise
-                  - Oportunidades políticas
-                  - Zeladoria e serviços públicos`
-                },
-                {
-                  role: 'user',
-                  content: `Analise esta notícia:
-                  
-                  TÍTULO: ${title}
-                  CONTEÚDO: ${content}
-                  FONTE: ${source}
-                  
-                  Retorne um JSON com:
-                  {
-                    "sentiment_score": [número de -1 a 1],
-                    "urgency_level": ["low", "medium", "high", "critical"],
-                    "relevance_score": [número de 0 a 10],
-                    "mentions_mayor": [true/false],
-                    "crisis_potential": [true/false],
-                    "keywords": [array de palavras-chave],
-                    "summary": "resumo em 1 frase",
-                    "impact_analysis": "análise do impacto para a gestão municipal",
-                    "recommended_action": "ação recomendada para a prefeitura"
-                  }`
-                }
-              ],
-              temperature: 0.3,
-              max_tokens: 800
-            }),
-          });
-
-          if (!openaiResponse.ok) {
-            console.error('❌ Erro OpenAI:', await openaiResponse.text());
-            continue;
-          }
-
-          const openaiData = await openaiResponse.json();
-          let analysis;
-          
-          try {
-            analysis = JSON.parse(openaiData.choices[0].message.content);
-          } catch (e) {
-            console.error('❌ Erro ao parsear análise JSON');
-            continue;
-          }
-
-          // Inserir análise
-          const { error: analysisError } = await supabase
-            .from('news_analysis')
-            .insert({
-              article_id: article.id,
-              sentiment_score: analysis.sentiment_score,
-              urgency_level: analysis.urgency_level,
-              relevance_score: analysis.relevance_score,
-              mentions_mayor: analysis.mentions_mayor,
-              mentions_city: true,
-              crisis_potential: analysis.crisis_potential,
-              keywords: analysis.keywords,
-              summary: analysis.summary,
-              impact_analysis: analysis.impact_analysis,
-              recommended_action: analysis.recommended_action
-            });
-
-          if (analysisError) {
-            console.error('❌ Erro ao inserir análise:', analysisError);
-            continue;
-          }
-
-          // Criar alerta se necessário
-          if (analysis.urgency_level === 'high' || analysis.urgency_level === 'critical') {
-            await supabase
-              .from('news_alerts')
-              .insert({
-                article_id: article.id,
-                alert_type: analysis.crisis_potential ? 'crisis' : 'urgent',
-                severity: analysis.urgency_level === 'critical' ? 'critical' : 'high',
-                title: `ALERTA: ${title.substring(0, 60)}...`,
-                message: analysis.impact_analysis,
-                acknowledged: false
-              });
-
-            console.log('🚨 Alerta criado para notícia urgente');
-          }
-
-          processedArticles.push({
-            title,
-            url,
-            source,
-            analysis: analysis.summary
-          });
-
-          console.log('✅ Notícia processada com sucesso');
-
-        } catch (error) {
-          console.error('❌ [DEBUG] Erro ao processar notícia:', error);
-          continue;
-        }
-      }
-
-      // Pausa entre tópicos
-      console.log('⏸️ [DEBUG] Pausando 2s antes do próximo tópico...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+    } catch (perplexityError) {
+      console.error('❌ [ERRO] Falha Perplexity:', perplexityError);
     }
 
-    console.log(`🎉 Processadas ${processedArticles.length} notícias com análise municipal`);
+    // Teste 3: Chamada simples OpenAI
+    console.log('🤖 [TESTE] Testando OpenAI...');
+    
+    try {
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'user',
+              content: 'Diga apenas: "Teste OpenAI funcionando"'
+            }
+          ],
+          temperature: 0.1,
+          max_tokens: 50
+        }),
+      });
+
+      console.log('📊 [DEBUG] Status OpenAI:', openaiResponse.status);
+
+      if (!openaiResponse.ok) {
+        const errorText = await openaiResponse.text();
+        console.error('❌ [ERRO] Resposta OpenAI:', errorText);
+        throw new Error(`OpenAI falhou: ${errorText}`);
+      }
+
+      const openaiData = await openaiResponse.json();
+      console.log('✅ [SUCESSO] OpenAI respondeu:', openaiData.choices[0].message.content);
+      
+    } catch (openaiError) {
+      console.error('❌ [ERRO] Falha OpenAI:', openaiError);
+    }
+
+    // Inserir análise de teste
+    console.log('📊 [TESTE] Inserindo análise de teste...');
+    
+    const { error: analysisError } = await supabase
+      .from('news_analysis')
+      .insert({
+        article_id: testArticle.id,
+        sentiment_score: 0.5,
+        urgency_level: 'low',
+        relevance_score: 5.0,
+        mentions_mayor: false,
+        mentions_city: true,
+        crisis_potential: false,
+        keywords: ['teste', 'noticia'],
+        summary: 'Análise de teste funcionando',
+        impact_analysis: 'Teste de impacto',
+        recommended_action: 'Acompanhar teste'
+      });
+
+    if (analysisError) {
+      console.error('❌ [ERRO] Falha ao inserir análise:', analysisError);
+    } else {
+      console.log('✅ [SUCESSO] Análise de teste inserida');
+    }
+
+    processedArticles.push({
+      title: testTitle,
+      url: testUrl,
+      source: 'Teste Portal',
+      analysis: 'Teste funcionando'
+    });
+
+    console.log('🎉 [FINAL] Teste concluído com sucesso!');
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Coletadas e analisadas ${processedArticles.length} notícias relevantes para gestão municipal`,
-        articles: processedArticles
+        message: `Teste concluído - ${processedArticles.length} notícia processada`,
+        articles: processedArticles,
+        debug: {
+          perplexity: 'testado',
+          openai: 'testado',
+          database: 'testado'
+        }
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -284,11 +184,12 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ Erro geral:', error);
+    console.error('❌ [ERRO GERAL]:', error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: error.message,
+        debug: 'Falha durante execução'
       }),
       {
         status: 500,
