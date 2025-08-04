@@ -22,17 +22,23 @@ serve(async (req) => {
   }
 
   try {
-    // Ler parâmetros do corpo da requisição
-    const body = await req.json().catch(() => ({}));
-    const mayor = body.mayor;
-    
-    if (mayor) {
-      console.log(`📊 COLETA PERSONALIZADA PARA: ${mayor.mayorName} - ${mayor.cityName}/${mayor.state}`);
-    } else {
-      console.log('📊 COLETA PADRÃO PARA: Ricardo Nunes - São Paulo/SP');
-    }
-    
-    console.log('✅ Iniciando coleta de notícias...');
+    // Timeout de 3 minutos para toda a operação
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Timeout: Operação excedeu 3 minutos')), 180000);
+    });
+
+    const mainOperation = async () => {
+      // Ler parâmetros do corpo da requisição
+      const body = await req.json().catch(() => ({}));
+      const mayor = body.mayor;
+      
+      if (mayor) {
+        console.log(`📊 COLETA PERSONALIZADA PARA: ${mayor.nome || mayor.mayorName} - ${mayor.cidade || mayor.cityName}/${mayor.uf || mayor.state}`);
+      } else {
+        console.log('📊 COLETA PADRÃO PARA: Ricardo Nunes - São Paulo/SP');
+      }
+      
+      console.log('✅ Iniciando coleta de notícias...');
     
     const processedArticles = [];
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
@@ -487,15 +493,21 @@ serve(async (req) => {
 
     console.log(`🎉 COLETA CONCLUÍDA: ${processedArticles.length} notícias processadas para ${targetInfo}`);
 
+    return {
+      success: true,
+      message: `Coleta personalizada: ${processedArticles.length} notícias sobre ${targetInfo} com análises elaboradas`,
+      articles: processedArticles,
+      target: targetInfo,
+      date: today,
+      debug: 'Coleta personalizada executada com sucesso'
+    };
+    };
+
+    // Executar operação principal com timeout
+    const result = await Promise.race([mainOperation(), timeoutPromise]);
+    
     return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Coleta personalizada: ${processedArticles.length} notícias sobre ${targetInfo} com análises elaboradas`,
-        articles: processedArticles,
-        target: targetInfo,
-        date: today,
-        debug: 'Coleta personalizada executada com sucesso'
-      }),
+      JSON.stringify(result),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
@@ -506,7 +518,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: error.message,
+        debug: 'Erro na execução da edge function'
       }),
       {
         status: 500,

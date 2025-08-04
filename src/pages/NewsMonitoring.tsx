@@ -99,9 +99,9 @@ function NewsMonitoring() {
   const loadDataForMayor = async (mayor: any) => {
     try {
       setLoading(true);
-      console.log(`🔍 Carregando dados FILTRADOS para: ${mayor.nome} - ${mayor.cidade}/${mayor.estado}`);
+      console.log(`🔍 Carregando dados FILTRADOS para: ${mayor.nome} - ${mayor.cidade}/${mayor.uf}`);
       
-      // Filtros mais robustos para alertas
+      // Filtros corrigidos para alertas - usando sintaxe correta do Supabase
       const { data: alertsData, error: alertsError } = await supabase
         .from('news_alerts')
         .select(`
@@ -115,19 +115,26 @@ function NewsMonitoring() {
             published_at
           )
         `)
-        .or(`title.ilike.%${mayor.nome}%,title.ilike.%${mayor.cidade}%,message.ilike.%${mayor.nome}%,message.ilike.%${mayor.cidade}%,news_articles.title.ilike.%${mayor.nome}%,news_articles.title.ilike.%${mayor.cidade}%,news_articles.content.ilike.%${mayor.nome}%,news_articles.content.ilike.%${mayor.cidade}%`)
+        .or(`title.ilike.%${mayor.nome}%,title.ilike.%${mayor.cidade}%,message.ilike.%${mayor.nome}%,message.ilike.%${mayor.cidade}%`)
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (alertsError) {
         console.error('Erro ao carregar alertas filtrados:', alertsError);
-        setAlerts([]);
+        // Fallback: buscar alertas sem join se der erro
+        const { data: fallbackAlerts } = await supabase
+          .from('news_alerts')
+          .select('*')
+          .or(`title.ilike.%${mayor.nome}%,title.ilike.%${mayor.cidade}%,message.ilike.%${mayor.nome}%,message.ilike.%${mayor.cidade}%`)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        setAlerts(fallbackAlerts || []);
       } else {
         console.log(`📊 Alertas filtrados carregados: ${alertsData?.length || 0}`);
         setAlerts(alertsData || []);
       }
 
-      // Filtros mais robustos para análises
+      // Filtros corrigidos para análises - usando sintaxe correta do Supabase
       const { data: analysesData, error: analysesError } = await supabase
         .from('news_analysis')
         .select(`
@@ -141,13 +148,20 @@ function NewsMonitoring() {
             published_at
           )
         `)
-        .or(`summary.ilike.%${mayor.nome}%,summary.ilike.%${mayor.cidade}%,impact_analysis.ilike.%${mayor.nome}%,impact_analysis.ilike.%${mayor.cidade}%,keywords::text.ilike.%${mayor.nome}%,keywords::text.ilike.%${mayor.cidade}%,news_articles.title.ilike.%${mayor.nome}%,news_articles.title.ilike.%${mayor.cidade}%,news_articles.content.ilike.%${mayor.nome}%,news_articles.content.ilike.%${mayor.cidade}%`)
+        .or(`summary.ilike.%${mayor.nome}%,summary.ilike.%${mayor.cidade}%,impact_analysis.ilike.%${mayor.nome}%,impact_analysis.ilike.%${mayor.cidade}%`)
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (analysesError) {
         console.error('Erro ao carregar análises filtradas:', analysesError);
-        setAnalyses([]);
+        // Fallback: buscar análises sem join se der erro
+        const { data: fallbackAnalyses } = await supabase
+          .from('news_analysis')
+          .select('*')
+          .or(`summary.ilike.%${mayor.nome}%,summary.ilike.%${mayor.cidade}%,impact_analysis.ilike.%${mayor.nome}%,impact_analysis.ilike.%${mayor.cidade}%`)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        setAnalyses(fallbackAnalyses || []);
       } else {
         console.log(`📊 Análises filtradas carregadas: ${analysesData?.length || 0}`);
         setAnalyses(analysesData || []);
@@ -293,17 +307,25 @@ function NewsMonitoring() {
       
       const mayorWithCorrectState = {
         ...mayor,
-        uf: correctedState
+        uf: correctedState,
+        estado: correctedState,
+        cidade: city.nome
       };
       
       setSelectedMayor(mayorWithCorrectState);
       
-      // Automaticamente iniciar coleta para o prefeito selecionado
       console.log('🚀 Iniciando coleta automática para:', mayor.nome);
-      await runPerplexityNewsForMayor(mayorWithCorrectState);
+      console.log('📍 Dados completos do prefeito:', mayorWithCorrectState);
       
-      // Carregar dados filtrados
+      // Carregar dados filtrados primeiro (mais rápido)
       await loadDataForMayor(mayorWithCorrectState);
+      
+      // Depois tentar coleta automática (pode falhar, mas não bloqueia)
+      try {
+        await runPerplexityNewsForMayor(mayorWithCorrectState);
+      } catch (collectError) {
+        console.warn('⚠️ Coleta automática falhou, mas dados filtrados foram carregados:', collectError);
+      }
       
       toast({
         title: "Cidade Selecionada ✅",
@@ -384,12 +406,17 @@ function NewsMonitoring() {
   // Função para executar coleta para prefeito específico
   const runPerplexityNewsForMayor = async (mayor: any) => {
     try {
+      console.log('🚀 Iniciando coleta para prefeito:', mayor);
+      
       const { data, error } = await supabase.functions.invoke('perplexity-news-collector', {
         body: { 
           mayor: {
-            mayorName: mayor.nome,
-            cityName: mayor.cidade,
-            state: mayor.uf
+            nome: mayor.nome,
+            cidade: mayor.cidade,
+            uf: mayor.uf,
+            mayorName: mayor.nome,  // Compatibilidade
+            cityName: mayor.cidade, // Compatibilidade
+            state: mayor.uf        // Compatibilidade
           }
         },
       });
@@ -399,6 +426,14 @@ function NewsMonitoring() {
       if (error) {
         console.error('Perplexity news error:', error);
         return;
+      }
+      
+      if (data?.success) {
+        console.log('✅ Coleta concluída:', data.message);
+        toast({
+          title: "Coleta Concluída ✅",
+          description: data.message,
+        });
       }
     } catch (error) {
       console.error('Perplexity news failed:', error);
