@@ -43,7 +43,7 @@ serve(async (req) => {
       try {
         console.log(`Crawling ${source.name}...`);
 
-        // Use Firecrawl to scrape the news source
+        // Use Firecrawl to scrape the news source with better options
         const crawlResponse = await fetch('https://api.firecrawl.dev/v0/scrape', {
           method: 'POST',
           headers: {
@@ -54,9 +54,10 @@ serve(async (req) => {
             url: source.url,
             formats: ['markdown'],
             options: {
-              excludeTags: ['script', 'style', 'nav', 'footer', 'aside', 'advertisement'],
+              excludeTags: ['script', 'style', 'nav', 'footer', 'aside', 'advertisement', 'header'],
               includeLinks: true,
-              onlyMainContent: true
+              onlyMainContent: true,
+              removeBase64Images: true
             }
           }),
         });
@@ -73,29 +74,41 @@ serve(async (req) => {
           continue;
         }
 
-        // 3. Extract article links from the crawled content
+        // Extract article links from the crawled content with better filtering
         const content = crawlData.data?.markdown || '';
-        const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+        const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
         const articleLinks = [];
         let match;
 
         while ((match = linkRegex.exec(content)) !== null) {
-          const title = match[1];
+          const title = match[1].trim();
           const url = match[2];
           
-          // Filter for news articles (basic heuristics)
-          if (url.includes(source.url.replace('https://', '')) && 
-              title.length > 20 && 
+          // Better filtering for news articles
+          if (title.length > 30 && // Titles should be substantial
+              title.length < 200 && // But not too long
               !url.includes('/video/') && 
-              !url.includes('/galeria/')) {
+              !url.includes('/galeria/') &&
+              !url.includes('/fotos/') &&
+              !url.includes('javascript:') &&
+              !title.toLowerCase().includes('clique') &&
+              !title.toLowerCase().includes('assine') &&
+              !title.toLowerCase().includes('publicidade') &&
+              (title.toLowerCase().includes('são paulo') || 
+               title.toLowerCase().includes('sp') ||
+               title.toLowerCase().includes('prefeito') ||
+               title.toLowerCase().includes('prefeitura') ||
+               title.toLowerCase().includes('ricardo nunes') ||
+               title.toLowerCase().includes('política') ||
+               title.toLowerCase().includes('governo'))) {
             articleLinks.push({ title, url });
           }
         }
 
-        console.log(`Found ${articleLinks.length} potential articles from ${source.name}`);
+        console.log(`Found ${articleLinks.length} relevant articles from ${source.name}`);
 
-        // 4. Process up to 5 recent articles per source
-        const limitedArticles = articleLinks.slice(0, 5);
+        // Process up to 3 recent articles per source to avoid rate limits
+        const limitedArticles = articleLinks.slice(0, 3);
         
         for (const article of limitedArticles) {
           try {
@@ -167,11 +180,12 @@ serve(async (req) => {
                 messages: [
                   {
                     role: 'system',
-                    content: `Você é um analista especializado em monitoramento de notícias para gestão pública municipal de Bauru. 
+                    content: `Você é um analista especializado em monitoramento de notícias para gestão pública municipal de São Paulo. 
                     Analise a notícia procurando especificamente por menções a:
-                    - "prefeita de bauru", "Suéllen Silva Rosim", "Suéllen Rosim", "prefeitura de bauru"
-                    - Palavras relacionadas à gestão municipal, políticas públicas
-                    - Situações que possam afetar a imagem da prefeita ou da prefeitura
+                    - "prefeito de são paulo", "Ricardo Nunes", "prefeito ricardo nunes", "prefeitura de são paulo"
+                    - Palavras relacionadas à gestão municipal, políticas públicas, saúde, educação, transporte
+                    - Situações que possam afetar a imagem do prefeito ou da prefeitura
+                    - Críticas, protestos, escândalos ou problemas na gestão
                     
                     Retorne APENAS um JSON válido com esta estrutura:
                     {
@@ -236,8 +250,8 @@ serve(async (req) => {
               }
             }
 
-            // Rate limiting - wait between requests
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Rate limiting - wait between requests (increased for real sites)
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
           } catch (articleError) {
             console.error(`Error processing article: ${article.title}`, articleError);
@@ -249,6 +263,9 @@ serve(async (req) => {
           .from('news_sources')
           .update({ last_crawled_at: new Date().toISOString() })
           .eq('id', source.id);
+
+        // Rate limiting between sources
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
       } catch (sourceError) {
         console.error(`Error crawling source ${source.name}:`, sourceError);
