@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Insights", url: "/insights", icon: Brain },
+  { title: "Monitoramento de Notícias", url: "/news-monitoring", icon: Newspaper },
   { title: "Gabinete de Urgência", url: "/urgency-office", icon: AlertTriangle },
   { title: "Relatórios", url: "/reports", icon: BarChart3 },
   { title: "WhatsApp", url: "/whatsapp", icon: Phone },
