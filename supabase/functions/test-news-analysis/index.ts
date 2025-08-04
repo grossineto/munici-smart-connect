@@ -25,19 +25,19 @@ serve(async (req) => {
     // Sample articles for testing
     const testArticles = [
       {
-        title: "Prefeita de Bauru Suéllen Silva Rosim anuncia nova obra de infraestrutura",
-        content: "A prefeita de Bauru, Suéllen Silva Rosim, anunciou hoje o início das obras de revitalização do centro da cidade. O projeto prevê investimento de R$ 50 milhões e deve ser concluído em 18 meses. 'Esta é uma obra importante para melhorar a qualidade de vida dos bauruenses', disse a prefeita durante coletiva de imprensa realizada na Prefeitura de Bauru.",
-        url: "https://test.com/article1"
+        title: "Prefeito de São Paulo Ricardo Nunes anuncia nova linha de metrô para zona sul",
+        content: "O prefeito de São Paulo, Ricardo Nunes, anunciou hoje o início das obras da nova linha de metrô que ligará a zona sul ao centro da cidade. O projeto prevê investimento de R$ 8 bilhões e deve ser concluído em 5 anos. 'Esta é uma obra fundamental para melhorar a mobilidade urbana dos paulistanos', disse o prefeito durante evento na Prefeitura de São Paulo. A obra beneficiará mais de 2 milhões de pessoas.",
+        url: "https://test.com/sp-article1"
       },
       {
-        title: "Moradores de Bauru reclamam de falta de água em bairros da periferia",
-        content: "Moradores de vários bairros periféricos de Bauru estão há três dias sem água. A situação tem gerado protestos e críticas à gestão da prefeita Suéllen Rosim. O vereador João Silva criticou a falta de planejamento da prefeitura. 'É inadmissível que em pleno século XXI tenhamos famílias sem água', declarou. A prefeitura ainda não se manifestou sobre o problema.",
-        url: "https://test.com/article2"
+        title: "Crise na saúde: São Paulo enfrenta falta de médicos em UBS da periferia",
+        content: "Moradores da zona leste de São Paulo denunciam a falta de médicos em várias Unidades Básicas de Saúde. A situação tem gerado críticas à gestão do prefeito Ricardo Nunes. O vereador Carlos Santos afirmou que 'a prefeitura está negligenciando a saúde da população mais vulnerável'. Manifestantes se reuniram em frente à Prefeitura pedindo soluções urgentes. A gestão Ricardo Nunes ainda não apresentou um plano para resolver a crise.",
+        url: "https://test.com/sp-article2"
       },
       {
-        title: "Bauru registra aumento na arrecadação de impostos no primeiro semestre",
-        content: "A cidade de Bauru registrou crescimento de 15% na arrecadação de impostos no primeiro semestre deste ano, segundo dados da Secretaria de Finanças. O bom resultado é atribuído às políticas de modernização fiscal implementadas pela gestão atual. A prefeita Suéllen Silva Rosim comemorou os números e disse que os recursos serão aplicados em melhorias para a população.",
-        url: "https://test.com/article3"
+        title: "São Paulo lidera ranking de cidades mais inovadoras do Brasil",
+        content: "A cidade de São Paulo conquistou o primeiro lugar no ranking nacional de inovação urbana, segundo estudo divulgado hoje. O resultado é atribuído às políticas de digitalização e modernização implementadas pela atual gestão. O prefeito Ricardo Nunes comemorou o resultado: 'São Paulo está se consolidando como a capital da inovação no país'. A prefeitura de São Paulo investiu R$ 500 milhões em tecnologia nos últimos dois anos.",
+        url: "https://test.com/sp-article3"
       }
     ];
 
@@ -88,11 +88,11 @@ serve(async (req) => {
             messages: [
               {
                 role: 'system',
-                content: `Você é um analista especializado em monitoramento de notícias para gestão pública municipal de Bauru. 
+                content: `Você é um analista especializado em monitoramento de notícias para gestão pública municipal de São Paulo. 
                 Analise a notícia procurando especificamente por menções a:
-                - "prefeita de bauru", "Suéllen Silva Rosim", "Suéllen Rosim", "prefeitura de bauru"
+                - "prefeito de são paulo", "Ricardo Nunes", "prefeito ricardo nunes", "prefeitura de são paulo"
                 - Palavras relacionadas à gestão municipal, políticas públicas
-                - Situações que possam afetar a imagem da prefeita ou da prefeitura
+                - Situações que possam afetar a imagem do prefeito ou da prefeitura
                 
                 Retorne APENAS um JSON válido com esta estrutura:
                 {

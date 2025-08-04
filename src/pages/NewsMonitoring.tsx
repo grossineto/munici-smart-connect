@@ -110,7 +110,7 @@ export default function NewsMonitoring() {
         <div className="flex gap-2">
           <Button onClick={runTestAnalysis} disabled={crawling} variant="outline" className="flex items-center gap-2">
             <RefreshCw className={`h-4 w-4 ${crawling ? 'animate-spin' : ''}`} />
-            {crawling ? 'Testando...' : 'Teste com Bauru'}
+            {crawling ? 'Testando...' : 'Teste São Paulo'}
           </Button>
           <Button onClick={runNewsCrawler} disabled={crawling} className="flex items-center gap-2">
             <RefreshCw className={`h-4 w-4 ${crawling ? 'animate-spin' : ''}`} />
