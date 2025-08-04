@@ -26,34 +26,62 @@ export default function NewsMonitoring() {
     try {
       console.log('Loading news data...');
       
-      const { data: alertsData, error: alertsError } = await supabase
+      // Buscar alertas com dados dos artigos
+      const { data: alertsRaw, error: alertsError } = await supabase
         .from('news_alerts')
-        .select(`*, news_articles(title, url, published_at, news_sources(name))`)
+        .select(`
+          *,
+          news_articles!inner (
+            title,
+            url,
+            published_at,
+            news_sources (name)
+          )
+        `)
         .order('created_at', { ascending: false })
         .limit(50);
 
-      console.log('Alerts data:', alertsData);
+      console.log('Alerts raw:', alertsRaw);
       console.log('Alerts error:', alertsError);
 
-      const { data: analysesData, error: analysesError } = await supabase
+      // Buscar análises com dados dos artigos  
+      const { data: analysesRaw, error: analysesError } = await supabase
         .from('news_analysis')
-        .select(`*, news_articles(title, url, published_at, news_sources(name))`)
+        .select(`
+          *,
+          news_articles!inner (
+            title,
+            url,
+            published_at,
+            news_sources (name)
+          )
+        `)
         .order('created_at', { ascending: false })
         .limit(100);
 
-      console.log('Analyses data:', analysesData);
+      console.log('Analyses raw:', analysesRaw);
       console.log('Analyses error:', analysesError);
 
       if (alertsError) {
         console.error('Error loading alerts:', alertsError);
       } else {
-        setAlerts(alertsData || []);
+        // Transformar dados para o formato esperado
+        const alertsData = alertsRaw?.map(alert => ({
+          ...alert,
+          news_articles: alert.news_articles
+        })) || [];
+        setAlerts(alertsData);
       }
 
       if (analysesError) {
         console.error('Error loading analyses:', analysesError);
       } else {
-        setAnalyses(analysesData || []);
+        // Transformar dados para o formato esperado
+        const analysesData = analysesRaw?.map(analysis => ({
+          ...analysis,
+          news_articles: analysis.news_articles
+        })) || [];
+        setAnalyses(analysesData);
       }
     } catch (error) {
       console.error('Error loading data:', error);
