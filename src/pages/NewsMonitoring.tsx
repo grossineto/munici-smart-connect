@@ -24,20 +24,37 @@ export default function NewsMonitoring() {
 
   const loadData = async () => {
     try {
-      const { data: alertsData } = await supabase
+      console.log('Loading news data...');
+      
+      const { data: alertsData, error: alertsError } = await supabase
         .from('news_alerts')
         .select(`*, news_articles(title, url, published_at, news_sources(name))`)
         .order('created_at', { ascending: false })
         .limit(50);
 
-      const { data: analysesData } = await supabase
+      console.log('Alerts data:', alertsData);
+      console.log('Alerts error:', alertsError);
+
+      const { data: analysesData, error: analysesError } = await supabase
         .from('news_analysis')
         .select(`*, news_articles(title, url, published_at, news_sources(name))`)
         .order('created_at', { ascending: false })
         .limit(100);
 
-      setAlerts(alertsData || []);
-      setAnalyses(analysesData || []);
+      console.log('Analyses data:', analysesData);
+      console.log('Analyses error:', analysesError);
+
+      if (alertsError) {
+        console.error('Error loading alerts:', alertsError);
+      } else {
+        setAlerts(alertsData || []);
+      }
+
+      if (analysesError) {
+        console.error('Error loading analyses:', analysesError);
+      } else {
+        setAnalyses(analysesData || []);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -77,21 +94,35 @@ export default function NewsMonitoring() {
   const runTestAnalysis = async () => {
     setCrawling(true);
     try {
+      console.log('Starting test analysis...');
       const { data, error } = await supabase.functions.invoke('test-news-analysis');
-      if (error) throw error;
+      
+      console.log('Test analysis response:', { data, error });
+      
+      if (error) {
+        console.error('Test analysis error:', error);
+        throw error;
+      }
       
       toast({ 
         title: "Teste Executado", 
-        description: `Processados ${data.processed_articles || 0} artigos de teste com palavras-chave específicas` 
+        description: `Processados ${data?.processed_articles || 0} artigos de teste com palavras-chave específicas` 
       });
       
-      setTimeout(loadData, 2000);
+      console.log('Reloading data in 3 seconds...');
+      setTimeout(() => {
+        console.log('Reloading data now...');
+        loadData();
+      }, 3000);
     } catch (error) {
+      console.error('Test analysis failed:', error);
       toast({ title: "Erro", description: "Erro ao executar teste", variant: "destructive" });
     } finally {
       setCrawling(false);
     }
   };
+
+  console.log('Current state:', { alerts: alerts.length, analyses: analyses.length, loading });
 
   if (loading) {
     return <div className="p-6">Carregando...</div>;
