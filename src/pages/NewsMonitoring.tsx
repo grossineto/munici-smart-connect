@@ -266,7 +266,7 @@ function NewsMonitoring() {
   const mayorData: Record<string, any> = {
     "São Paulo": { nome: "Ricardo Nunes", partido: "MDB", mandato: "2021-2024", cidade: "São Paulo", uf: "SP" },
     "Rio de Janeiro": { nome: "Eduardo Paes", partido: "PSD", mandato: "2021-2024", cidade: "Rio de Janeiro", uf: "RJ" },
-    "Belo Horizonte": { nome: "Fuad Noman", partido: "PSD", mandato: "2021-2024", cidade: "Belo Horizonte", uf: "MG" },
+    "Belo Horizonte": { nome: "Prefeito Interino", partido: "PSD", mandato: "2024", cidade: "Belo Horizonte", uf: "MG" },
     "Curitiba": { nome: "Rafael Greca", partido: "PMN", mandato: "2017-2024", cidade: "Curitiba", uf: "PR" },
     "Recife": { nome: "João Campos", partido: "PSB", mandato: "2021-2024", cidade: "Recife", uf: "PE" },
     "Porto Alegre": { nome: "Sebastião Melo", partido: "MDB", mandato: "2021-2024", cidade: "Porto Alegre", uf: "RS" },
@@ -274,10 +274,10 @@ function NewsMonitoring() {
     "Fortaleza": { nome: "José Sarto", partido: "PDT", mandato: "2021-2024", cidade: "Fortaleza", uf: "CE" },
     "Brasília": { nome: "Ibaneis Rocha", partido: "MDB", mandato: "2019-2026", cidade: "Brasília", uf: "DF" },
     "Manaus": { nome: "David Almeida", partido: "Avante", mandato: "2021-2024", cidade: "Manaus", uf: "AM" },
-    "Bauru": { nome: "Suélcio Macedo", partido: "MDB", mandato: "2021-2024", cidade: "Bauru", uf: "SP" },
-    "Pederneiras": { nome: "Fábio Ceschini", partido: "PSDB", mandato: "2021-2024", cidade: "Pederneiras", uf: "SP" },
+    "Bauru": { nome: "Suéllen Rosim", partido: "PSB", mandato: "2021-2024", cidade: "Bauru", uf: "SP" },
+    "Pederneiras": { nome: "Ivana Camarinha", partido: "PSB", mandato: "2021-2024", cidade: "Pederneiras", uf: "SP" },
     "Botucatu": { nome: "Mário Pardini", partido: "PSDB", mandato: "2021-2024", cidade: "Botucatu", uf: "SP" },
-    "São Roque": { nome: "Dr. Marco Aurélio", partido: "PSB", mandato: "2021-2024", cidade: "São Roque", uf: "SP" }
+    "São Roque": { nome: "Guto Issa", partido: "PSD", mandato: "2021-2024", cidade: "São Roque", uf: "SP" }
   };
 
   // Correção de estados para algumas cidades
