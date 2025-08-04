@@ -373,6 +373,19 @@ export default function NewsMonitoring() {
                               <Badge variant="outline" className="bg-white border-blue-200 text-blue-800 font-semibold px-3 py-1">
                                 📰 {analysis.news_articles?.author || 'Portal de Notícias'}
                               </Badge>
+                              {/* Data de Publicação */}
+                              <Badge variant="outline" className="bg-gray-50 border-gray-200 text-gray-700 px-3 py-1">
+                                🕐 {analysis.news_articles?.published_at 
+                                  ? new Date(analysis.news_articles.published_at).toLocaleDateString('pt-BR', {
+                                      day: '2-digit',
+                                      month: '2-digit', 
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })
+                                  : 'Data não disponível'
+                                }
+                              </Badge>
                               <Badge 
                                 variant={analysis.sentiment_score > 0.3 ? 'default' : analysis.sentiment_score < -0.3 ? 'destructive' : 'secondary'}
                                 className="px-3 py-1 text-sm font-bold"

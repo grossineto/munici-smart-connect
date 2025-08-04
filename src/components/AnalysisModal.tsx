@@ -45,12 +45,25 @@ export function AnalysisModal({ analysis, isOpen, onClose }: AnalysisModalProps)
           {/* Título da Notícia */}
           <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
             <h3 className="text-lg font-bold mb-2">{analysis.news_articles?.title}</h3>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
               <Badge variant="outline" className="bg-blue-100 text-blue-800">
                 {analysis.news_articles?.author || 'Fonte'}
               </Badge>
               <span>•</span>
-              <span>{formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true, locale: ptBR })}</span>
+              <Badge variant="outline" className="bg-gray-100 text-gray-700">
+                🕐 Publicado: {analysis.news_articles?.published_at 
+                  ? new Date(analysis.news_articles.published_at).toLocaleDateString('pt-BR', {
+                      day: '2-digit',
+                      month: '2-digit', 
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })
+                  : 'Data não disponível'
+                }
+              </Badge>
+              <span>•</span>
+              <span>Analisado {formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true, locale: ptBR })}</span>
               {analysis.news_articles?.url && (
                 <>
                   <span>•</span>
