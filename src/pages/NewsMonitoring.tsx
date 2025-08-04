@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AnalysisModal } from "@/components/AnalysisModal";
+import { SummaryModal } from "@/components/SummaryModal";
 
 export default function NewsMonitoring() {
   const [alerts, setAlerts] = useState<any[]>([]);
@@ -17,7 +18,9 @@ export default function NewsMonitoring() {
   const [loading, setLoading] = useState(true);
   const [crawling, setCrawling] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState<any>(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
+  const [summaryType, setSummaryType] = useState<'critical' | 'pending' | 'analyses' | 'sources'>('critical');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -165,43 +168,81 @@ export default function NewsMonitoring() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+          onClick={() => {
+            setSummaryType('critical');
+            setSummaryModalOpen(true);
+          }}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Alertas Críticos</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{criticalAlerts.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {criticalAlerts.length > 0 ? 'Requerem ação imediata' : 'Nenhuma situação crítica'}
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+          onClick={() => {
+            setSummaryType('pending');
+            setSummaryModalOpen(true);
+          }}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Alertas Pendentes</CardTitle>
             <Bell className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{unacknowledgedAlerts.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {unacknowledgedAlerts.length > 0 ? 'Aguardando verificação' : 'Todos verificados'}
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+          onClick={() => {
+            setSummaryType('analyses');
+            setSummaryModalOpen(true);
+          }}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Análises</CardTitle>
+            <CardTitle className="text-sm font-medium">Análises Hoje</CardTitle>
             <TrendingUp className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analyses.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {analyses.filter(a => a.mentions_mayor).length} mencionam Ricardo Nunes
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+          onClick={() => {
+            setSummaryType('sources');
+            setSummaryModalOpen(true);
+          }}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Fontes Ativas</CardTitle>
             <Eye className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">5</div>
+            <div className="text-2xl font-bold">
+              {[...new Set(analyses.map(a => a.news_articles?.author).filter(Boolean))].length}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Portais monitorados em tempo real
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -294,7 +335,7 @@ export default function NewsMonitoring() {
                           className="group border-2 rounded-xl p-6 bg-gradient-to-r from-slate-50 to-slate-100 hover:from-blue-50 hover:to-purple-50 transition-all duration-300 cursor-pointer hover:shadow-xl hover:scale-[1.02]"
                           onClick={() => {
                             setSelectedAnalysis(analysis);
-                            setModalOpen(true);
+                            setAnalysisModalOpen(true);
                           }}
                         >
                           {/* Header com Badges */}
@@ -360,7 +401,7 @@ export default function NewsMonitoring() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedAnalysis(analysis);
-                                  setModalOpen(true);
+                                  setAnalysisModalOpen(true);
                                 }}
                                 className="opacity-70 group-hover:opacity-100 transition-opacity"
                               >
@@ -533,14 +574,23 @@ export default function NewsMonitoring() {
         </TabsContent>
       </Tabs>
 
-      {/* Modal de Análise Detalhada */}
+      {/* Modais */}
       <AnalysisModal 
         analysis={selectedAnalysis}
-        isOpen={modalOpen}
+        isOpen={analysisModalOpen}
         onClose={() => {
-          setModalOpen(false);
+          setAnalysisModalOpen(false);
           setSelectedAnalysis(null);
         }}
+      />
+      
+      <SummaryModal 
+        type={summaryType}
+        data={summaryType === 'critical' ? criticalAlerts : 
+              summaryType === 'pending' ? unacknowledgedAlerts : 
+              summaryType === 'analyses' ? analyses : analyses}
+        isOpen={summaryModalOpen}
+        onClose={() => setSummaryModalOpen(false)}
       />
     </div>
   );

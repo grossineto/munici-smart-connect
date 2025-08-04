@@ -24,11 +24,15 @@ serve(async (req) => {
 
     const processedArticles = [];
 
-    // Queries específicas para São Paulo e gestão municipal
+    // Queries específicas para São Paulo e gestão municipal - expandidas para mais cobertura
     const queries = [
-      "São Paulo prefeito Ricardo Nunes notícias hoje",
-      "São Paulo prefeitura problemas urbanos hoje",
-      "São Paulo transporte público metrô hoje"
+      "São Paulo prefeito Ricardo Nunes notícias hoje última hora",
+      "prefeitura São Paulo políticas públicas Ricardo Nunes decisões",
+      "São Paulo transporte público metrô CPTM EMTU problemas",
+      "São Paulo saúde pública hospitais UBS Ricardo Nunes",
+      "São Paulo educação escolas municipais ensino Ricardo Nunes",
+      "São Paulo segurança pública criminalidade violência centro",
+      "São Paulo habitação moradia popular COHAB Ricardo Nunes"
     ];
 
     for (const query of queries) {
@@ -45,7 +49,7 @@ serve(async (req) => {
           messages: [
             {
               role: 'user',
-              content: `Encontre 2 notícias recentes sobre "${query}" dos últimos 2 dias. 
+              content: `Encontre 3 notícias recentes sobre "${query}" dos últimos 2 dias. 
               
               Retorne APENAS notícias reais de sites brasileiros como G1, Folha, Estadão, UOL, R7, CNN Brasil.
               
