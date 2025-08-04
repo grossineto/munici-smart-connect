@@ -4,7 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, TrendingUp, Eye, Bell, RefreshCw, ExternalLink, Target, Users, Zap, Globe } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertTriangle, TrendingUp, Eye, Bell, RefreshCw, ExternalLink, Target, Users, Zap, Globe, Search, MapPin, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -21,6 +24,14 @@ export default function NewsMonitoring() {
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [summaryType, setSummaryType] = useState<'critical' | 'pending' | 'analyses' | 'sources'>('critical');
+  
+  // Estados para busca de prefeitos
+  const [searchCity, setSearchCity] = useState('');
+  const [cities, setCities] = useState<any[]>([]);
+  const [selectedCity, setSelectedCity] = useState<any>(null);
+  const [selectedMayor, setSelectedMayor] = useState<any>(null);
+  const [searchingCities, setSearchingCities] = useState(false);
+  
   const { toast } = useToast();
 
   useEffect(() => {
@@ -112,11 +123,92 @@ export default function NewsMonitoring() {
     return () => supabase.removeChannel(channel);
   };
 
+  
+  // Função para buscar cidades brasileiras via API do IBGE
+  const searchCities = async (query: string) => {
+    if (query.length < 3) {
+      setCities([]);
+      return;
+    }
+    
+    setSearchingCities(true);
+    try {
+      const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      
+      // Formatar dados das cidades
+      const formattedCities = data.slice(0, 10).map((city: any) => ({
+        id: city.id,
+        nome: city.nome,
+        uf: city.microrregiao.mesorregiao.UF.sigla,
+        estado: city.microrregiao.mesorregiao.UF.nome,
+        displayName: `${city.nome} - ${city.microrregiao.mesorregiao.UF.sigla}`
+      }));
+      
+      setCities(formattedCities);
+    } catch (error) {
+      console.error('Erro ao buscar cidades:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar cidades",
+        variant: "destructive",
+      });
+    } finally {
+      setSearchingCities(false);
+    }
+  };
+
+  // Dados dos prefeitos atuais (base simplificada - em produção seria um banco de dados)
+  const mayorData = {
+    'São Paulo': { nome: 'Ricardo Nunes', partido: 'MDB', mandato: '2021-2024' },
+    'Rio de Janeiro': { nome: 'Eduardo Paes', partido: 'PSD', mandato: '2021-2024' },
+    'Belo Horizonte': { nome: 'Alexandre Kalil', partido: 'PSD', mandato: '2017-2024' },
+    'Curitiba': { nome: 'Rafael Greca', partido: 'PDT', mandato: '2017-2024' },
+    'Recife': { nome: 'João Campos', partido: 'PSB', mandato: '2021-2024' },
+    'Porto Alegre': { nome: 'Sebastião Melo', partido: 'MDB', mandato: '2021-2024' },
+    'Salvador': { nome: 'Bruno Reis', partido: 'DEM', mandato: '2021-2024' },
+    'Fortaleza': { nome: 'José Sarto', partido: 'PDT', mandato: '2021-2024' },
+    'Brasília': { nome: 'Ibaneis Rocha', partido: 'MDB', mandato: '2019-2022' },
+    'Manaus': { nome: 'David Almeida', partido: 'Avante', mandato: '2021-2024' }
+  };
+
+  const selectCity = (city: any) => {
+    setSelectedCity(city);
+    const mayor = mayorData[city.nome as keyof typeof mayorData];
+    if (mayor) {
+      setSelectedMayor({ ...mayor, cidade: city.nome, uf: city.uf });
+      toast({
+        title: "Prefeito Encontrado",
+        description: `${mayor.nome} (${mayor.partido}) - ${city.nome}/${city.uf}`,
+      });
+    } else {
+      setSelectedMayor(null);
+      toast({
+        title: "Prefeito Não Encontrado",
+        description: `Dados do prefeito de ${city.nome} não disponíveis na base atual`,
+        variant: "destructive",
+      });
+    }
+    setCities([]);
+    setSearchCity('');
+  };
+
   const runPerplexityNews = async () => {
     setCrawling(true);
     try {
       console.log('Starting Perplexity news collection...');
-      const { data, error } = await supabase.functions.invoke('perplexity-news-collector');
+      
+      // Preparar dados do prefeito para a coleta personalizada
+      const mayorParams = selectedMayor ? {
+        mayorName: selectedMayor.nome,
+        cityName: selectedMayor.cidade,
+        state: selectedMayor.uf,
+        party: selectedMayor.partido
+      } : null;
+      
+      const { data, error } = await supabase.functions.invoke('perplexity-news-collector', {
+        body: { mayor: mayorParams }
+      });
       
       console.log('Perplexity news response:', { data, error });
       
@@ -125,9 +217,11 @@ export default function NewsMonitoring() {
         throw error;
       }
       
+      const targetMayor = selectedMayor ? `${selectedMayor.nome} (${selectedMayor.cidade}/${selectedMayor.uf})` : 'São Paulo';
+      
       toast({ 
         title: "Notícias Coletadas", 
-        description: `Coletadas ${data?.articles?.length || 0} notícias em tempo real dos principais portais brasileiros` 
+        description: `Coletadas ${data?.articles?.length || 0} notícias sobre ${targetMayor}` 
       });
       
       console.log('Reloading data in 3 seconds...');
@@ -166,6 +260,96 @@ export default function NewsMonitoring() {
           </Button>
         </div>
       </div>
+
+      {/* Sistema de Busca de Prefeitos */}
+      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-blue-800">
+            <Search className="h-5 w-5" />
+            Buscar Prefeito por Município
+          </CardTitle>
+          <p className="text-sm text-blue-600">Monitore notícias específicas de qualquer prefeito do Brasil</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Campo de busca de cidade */}
+            <div className="space-y-2">
+              <Label htmlFor="search-city" className="text-sm font-medium">Buscar Município</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="search-city"
+                  placeholder="Digite o nome da cidade..."
+                  value={searchCity}
+                  onChange={(e) => {
+                    setSearchCity(e.target.value);
+                    searchCities(e.target.value);
+                  }}
+                  className="pl-10"
+                />
+                
+                {/* Dropdown de resultados */}
+                {cities.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {cities.map((city) => (
+                      <div
+                        key={city.id}
+                        onClick={() => selectCity(city)}
+                        className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center gap-2"
+                      >
+                        <MapPin className="h-4 w-4 text-gray-400" />
+                        <span className="font-medium">{city.nome}</span>
+                        <span className="text-sm text-gray-500">- {city.uf}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Prefeito Selecionado */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Prefeito Atual</Label>
+              {selectedMayor ? (
+                <div className="p-4 bg-white border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <User className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-green-800">{selectedMayor.nome}</p>
+                      <p className="text-sm text-green-600">{selectedMayor.partido} • {selectedMayor.cidade}/{selectedMayor.uf}</p>
+                      <p className="text-xs text-gray-500">Mandato: {selectedMayor.mandato}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                  <User className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">Nenhum prefeito selecionado</p>
+                  <p className="text-xs text-gray-400">Busque por uma cidade para selecionar</p>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Informações do Sistema */}
+          <div className="flex items-center justify-between p-3 bg-blue-100 rounded-lg">
+            <div className="flex items-center gap-2 text-blue-700">
+              <Globe className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                {selectedMayor 
+                  ? `Coletando notícias sobre ${selectedMayor.nome} - ${selectedMayor.cidade}/${selectedMayor.uf}`
+                  : 'Coletando notícias sobre Ricardo Nunes - São Paulo/SP (padrão)'
+                }
+              </span>
+            </div>
+            <Badge variant="secondary" className="bg-blue-200 text-blue-800">
+              {mayorData ? Object.keys(mayorData).length : 10} prefeitos na base
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card 

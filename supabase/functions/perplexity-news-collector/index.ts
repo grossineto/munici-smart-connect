@@ -15,26 +15,49 @@ const openaiApiKey = Deno.env.get('OPENAI_API_KEY')!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 serve(async (req) => {
-  console.log('🚀 FORÇANDO COLETA DE NOTÍCIAS DE HOJE');
+  console.log('🚀 INICIANDO COLETA PERSONALIZADA DE NOTÍCIAS');
   
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('✅ Iniciando coleta FORÇADA de notícias de hoje...');
+    // Ler parâmetros do corpo da requisição
+    const body = await req.json().catch(() => ({}));
+    const mayor = body.mayor;
+    
+    if (mayor) {
+      console.log(`📊 COLETA PERSONALIZADA PARA: ${mayor.mayorName} - ${mayor.cityName}/${mayor.state}`);
+    } else {
+      console.log('📊 COLETA PADRÃO PARA: Ricardo Nunes - São Paulo/SP');
+    }
+    
+    console.log('✅ Iniciando coleta de notícias...');
     
     const processedArticles = [];
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
-    // Queries específicas para hoje
-    const todayQueries = [
-      `Ricardo Nunes prefeito São Paulo notícias hoje ${today}`,
-      `São Paulo transporte público problemas hoje ${today}`,
-      `São Paulo saúde hospitais notícias hoje ${today}`,
-      `São Paulo segurança criminalidade hoje ${today}`,
-      `São Paulo educação escolas hoje ${today}`
-    ];
+    // Queries dinâmicas baseadas no prefeito selecionado
+    let todayQueries;
+    
+    if (mayor) {
+      todayQueries = [
+        `${mayor.mayorName} prefeito ${mayor.cityName} notícias hoje ${today}`,
+        `${mayor.cityName} ${mayor.state} transporte público problemas hoje ${today}`,
+        `${mayor.cityName} ${mayor.state} saúde hospitais notícias hoje ${today}`,
+        `${mayor.cityName} ${mayor.state} segurança criminalidade hoje ${today}`,
+        `${mayor.cityName} ${mayor.state} educação escolas hoje ${today}`
+      ];
+    } else {
+      // Queries padrão para São Paulo
+      todayQueries = [
+        `Ricardo Nunes prefeito São Paulo notícias hoje ${today}`,
+        `São Paulo transporte público problemas hoje ${today}`,
+        `São Paulo saúde hospitais notícias hoje ${today}`,
+        `São Paulo segurança criminalidade hoje ${today}`,
+        `São Paulo educação escolas hoje ${today}`
+      ];
+    }
 
     for (let i = 0; i < todayQueries.length; i++) {
       const query = todayQueries[i];
@@ -144,8 +167,8 @@ serve(async (req) => {
 
             console.log(`✅ Notícia inserida: ${article.id}`);
 
-            // OpenAI: Análise SUPER ELABORADA
-            console.log('🤖 Gerando análise elaborada...');
+            // OpenAI: Análise PERSONALIZADA
+            console.log('🤖 Gerando análise personalizada...');
             
             const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
               method: 'POST',
@@ -158,19 +181,31 @@ serve(async (req) => {
                 messages: [
                   {
                     role: 'system',
-                    content: `Você é o consultor sênior do prefeito Ricardo Nunes de São Paulo. 
-                    
-                    CONTEXTO:
-                    - Ricardo Nunes governa SP (12M habitantes) desde 2021
-                    - Principais desafios: transporte, saúde, educação, segurança
-                    - Próximas eleições são importantes
-                    - Mídia paulista influencia muito a opinião pública
-                    
-                    FORNEÇA ANÁLISE ESTRATÉGICA COMPLETA para o gabinete.`
+                    content: mayor 
+                      ? `Você é o consultor sênior do prefeito ${mayor.mayorName} de ${mayor.cityName}/${mayor.state}. 
+                      
+                      CONTEXTO:
+                      - ${mayor.mayorName} (${mayor.party}) governa ${mayor.cityName} no estado ${mayor.state}
+                      - Principais desafios municipais: transporte, saúde, educação, segurança
+                      - Próximas eleições municipais são importantes
+                      - Mídia local e nacional influencia a opinião pública
+                      
+                      FORNEÇA ANÁLISE ESTRATÉGICA COMPLETA para o gabinete.`
+                      : `Você é o consultor sênior do prefeito Ricardo Nunes de São Paulo. 
+                      
+                      CONTEXTO:
+                      - Ricardo Nunes governa SP (12M habitantes) desde 2021
+                      - Principais desafios: transporte, saúde, educação, segurança
+                      - Próximas eleições são importantes
+                      - Mídia paulista influencia muito a opinião pública
+                      
+                      FORNEÇA ANÁLISE ESTRATÉGICA COMPLETA para o gabinete.`
                   },
                   {
                     role: 'user',
-                    content: `Analise esta notícia de hoje para o prefeito Ricardo Nunes:
+                    content: (mayor
+                      ? `Analise esta notícia de hoje para o prefeito ${mayor.mayorName} de ${mayor.cityName}/${mayor.state}:`
+                      : `Analise esta notícia de hoje para o prefeito Ricardo Nunes:`) + `
                     
                     📰 NOTÍCIA:
                     Título: ${title}
@@ -189,11 +224,11 @@ serve(async (req) => {
                       "summary": "resumo executivo em 1-2 frases",
                       "impact_analysis": "análise detalhada de 3-4 parágrafos sobre impacto municipal, político e administrativo",
                       "recommended_action": "ação específica e detalhada que a prefeitura deve tomar",
-                      "public_sentiment_prediction": "como os cidadãos paulistanos reagirão a esta notícia",
+                      "public_sentiment_prediction": "como os cidadãos reagirão a esta notícia",
                       "communication_strategy": "estratégia de comunicação para o gabinete do prefeito",
                       "risk_assessment": "análise de riscos e como mitigá-los",
                       "political_opportunity": "oportunidades políticas ou 'nenhuma'",
-                      "citizen_impact": "como esta notícia afeta a vida dos paulistanos",
+                      "citizen_impact": "como esta notícia afeta a vida dos cidadãos",
                       "media_monitoring_focus": "pontos para monitorar na mídia sobre este tema"
                     }`
                   }
@@ -230,7 +265,7 @@ serve(async (req) => {
                   mentions_mayor: analysis.mentions_mayor || false,
                   mentions_city: true,
                   crisis_potential: analysis.crisis_potential || false,
-                  keywords: analysis.keywords || ['são paulo'],
+                  keywords: analysis.keywords || [mayor?.cityName || 'são paulo'],
                   summary: analysis.summary || 'Análise da notícia',
                   impact_analysis: analysis.impact_analysis || 'Análise de impacto municipal',
                   recommended_action: analysis.recommended_action || 'Acompanhar desenvolvimento',
@@ -246,7 +281,7 @@ serve(async (req) => {
               if (analysisError) {
                 console.error('❌ Erro ao inserir análise:', analysisError);
               } else {
-                console.log('✅ ANÁLISE ELABORADA INSERIDA COM SUCESSO!');
+                console.log('✅ ANÁLISE PERSONALIZADA INSERIDA COM SUCESSO!');
                 
                 // Criar alerta se necessário
                 if (analysis.urgency_level === 'high' || analysis.urgency_level === 'critical') {
@@ -294,15 +329,20 @@ serve(async (req) => {
       }
     }
 
-    console.log(`🎉 COLETA CONCLUÍDA: ${processedArticles.length} notícias processadas`);
+    const targetInfo = mayor 
+      ? `${mayor.mayorName} - ${mayor.cityName}/${mayor.state}` 
+      : 'Ricardo Nunes - São Paulo/SP';
+
+    console.log(`🎉 COLETA CONCLUÍDA: ${processedArticles.length} notícias processadas para ${targetInfo}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Coleta forçada: ${processedArticles.length} notícias de hoje com análises elaboradas`,
+        message: `Coleta personalizada: ${processedArticles.length} notícias sobre ${targetInfo} com análises elaboradas`,
         articles: processedArticles,
+        target: targetInfo,
         date: today,
-        debug: 'Coleta forçada executada com sucesso'
+        debug: 'Coleta personalizada executada com sucesso'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
