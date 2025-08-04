@@ -15,158 +15,98 @@ const openaiApiKey = Deno.env.get('OPENAI_API_KEY')!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 serve(async (req) => {
+  console.log('🚀 FUNÇÃO CHAMADA - Iniciando teste');
+  
   if (req.method === 'OPTIONS') {
+    console.log('📋 Retornando CORS headers');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('🚀 Iniciando Coleta Inteligente de Notícias - Sistema Maximizado');
+    console.log('✅ Iniciando coleta simplificada...');
+    console.log('🔑 Verificando chaves API:', {
+      perplexity: !!perplexityApiKey,
+      openai: !!openaiApiKey,
+      supabase: !!supabaseUrl
+    });
 
     const processedArticles = [];
 
-    // FASE 1: PERPLEXITY PARA DESCOBERTA AVANÇADA DE NOTÍCIAS
-    const advancedTopics = [
-      {
-        query: "Ricardo Nunes prefeito São Paulo decisões política gestão municipal últimas 48 horas",
-        priority: "critical",
-        category: "gestao_municipal"
-      },
-      {
-        query: "São Paulo transporte público metrô CPTM EMTU problemas greve obras últimas notícias",
-        priority: "high", 
-        category: "transporte"
-      },
-      {
-        query: "São Paulo saúde pública hospitais UBS AMA atendimento falta médicos sistema",
-        priority: "high",
-        category: "saude"
-      },
-      {
-        query: "São Paulo educação escolas municipais ensino infraestrutura professores",
-        priority: "medium",
-        category: "educacao"
-      },
-      {
-        query: "São Paulo segurança pública criminalidade violência centro cidade polícia",
-        priority: "high",
-        category: "seguranca"
-      },
-      {
-        query: "São Paulo habitação moradia popular ocupações COHAB déficit habitacional",
-        priority: "medium",
-        category: "habitacao"
-      },
-      {
-        query: "São Paulo zeladoria limpeza urbana coleta lixo manutenção vias públicas",
-        priority: "medium",
-        category: "zeladoria"
-      },
-      {
-        query: "São Paulo economia emprego desemprego desenvolvimento urbano investimentos",
-        priority: "medium",
-        category: "economia"
-      }
-    ];
-
-    for (const topic of advancedTopics) {
-      console.log(`🔍 Buscando: ${topic.category} (${topic.priority})`);
-      
-      // PERPLEXITY: Busca especializada por categoria
-      const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
+    // Teste direto com uma consulta simples
+    console.log('📡 Fazendo teste Perplexity...');
+    
+    try {
+      const testResponse = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${perplexityApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama-3.1-sonar-large-128k-online', // Modelo mais poderoso
+          model: 'llama-3.1-sonar-small-128k-online',
           messages: [
             {
-              role: 'system',
-              content: `Você é um especialista em jornalismo político brasileiro focado em gestão municipal de São Paulo. 
-              Encontre notícias relevantes dos principais portais brasileiros que possam impactar a gestão municipal.`
-            },
-            {
               role: 'user',
-              content: `Encontre 3-5 notícias recentes sobre "${topic.query}" dos últimos 2-3 dias.
+              content: `Encontre 1 notícia recente sobre "Ricardo Nunes prefeito São Paulo" dos últimos 2 dias.
               
-              FOQUE EM: G1, Folha de S.Paulo, Estadão, UOL, R7, CNN Brasil, Metrópoles, Band
+              Retorne EXATAMENTE neste formato:
               
-              Para cada notícia REAL encontrada, retorne EXATAMENTE neste formato:
-              
-              [NOTICIA]
-              Título: [título completo da notícia]
-              URL: [link direto e completo]
-              Fonte: [nome do portal/veículo]
-              Data: [data de publicação]
-              Resumo: [resumo de 2-3 linhas explicando o impacto municipal]
-              [/NOTICIA]
-              
-              IMPORTANTE: Apenas notícias REAIS que existem nos sites mencionados.`
+              Título: [título da notícia]
+              URL: [link completo]
+              Fonte: [nome do portal]
+              Resumo: [resumo em 2 linhas]`
             }
           ],
-          temperature: 0.2,
-          max_tokens: 1500
+          temperature: 0.1,
+          max_tokens: 300
         }),
       });
 
-      if (!perplexityResponse.ok) {
-        console.error(`❌ Erro Perplexity para ${topic.category}:`, await perplexityResponse.text());
-        continue;
+      console.log('📊 Status Perplexity:', testResponse.status);
+
+      if (!testResponse.ok) {
+        const errorText = await testResponse.text();
+        console.error('❌ Erro Perplexity:', errorText);
+        throw new Error(`Perplexity falhou: ${errorText}`);
       }
 
-      const perplexityData = await perplexityResponse.json();
+      const perplexityData = await testResponse.json();
       const content = perplexityData.choices[0].message.content;
       
-      console.log(`📰 Resposta ${topic.category}:`, content.substring(0, 200));
+      console.log('📰 RESPOSTA COMPLETA PERPLEXITY:', content);
 
-      // Parse mais robusto das notícias
-      const newsBlocks = content.split('[NOTICIA]').filter(block => 
-        block.includes('[/NOTICIA]') && block.includes('Título:') && block.includes('URL:')
-      );
+      // Parse simples
+      const titleMatch = content.match(/Título:\s*(.+)/i);
+      const urlMatch = content.match(/URL:\s*(https?:\/\/[^\s\n]+)/i);
+      const sourceMatch = content.match(/Fonte:\s*(.+)/i);
+      const resumoMatch = content.match(/Resumo:\s*(.+)/i);
 
-      console.log(`📊 ${topic.category}: ${newsBlocks.length} notícias encontradas`);
+      if (titleMatch && urlMatch) {
+        const title = titleMatch[1].trim();
+        const url = urlMatch[1].trim();
+        const source = sourceMatch ? sourceMatch[1].trim() : 'Portal de Notícias';
+        const resumo = resumoMatch ? resumoMatch[1].trim() : 'Resumo não disponível';
 
-      for (const block of newsBlocks) {
-        try {
-          const cleanBlock = block.replace('[/NOTICIA]', '');
+        console.log('✅ Notícia encontrada:', { title, url, source });
+
+        // Verificar se já existe
+        const { data: existing } = await supabase
+          .from('news_articles')
+          .select('id')
+          .eq('url', url)
+          .maybeSingle();
+
+        if (existing) {
+          console.log('📝 Notícia já existe, usando timestamp único');
+          // Criar URL única para teste
+          const uniqueUrl = `${url}?t=${Date.now()}`;
           
-          const titleMatch = cleanBlock.match(/Título:\s*(.+)/i);
-          const urlMatch = cleanBlock.match(/URL:\s*(https?:\/\/[^\s\n]+)/i);
-          const sourceMatch = cleanBlock.match(/Fonte:\s*(.+)/i);
-          const dateMatch = cleanBlock.match(/Data:\s*(.+)/i);
-          const resumoMatch = cleanBlock.match(/Resumo:\s*(.+)/i);
-
-          if (!titleMatch || !urlMatch) {
-            console.log(`⚠️ ${topic.category}: Notícia incompleta`);
-            continue;
-          }
-
-          const title = titleMatch[1].trim();
-          const url = urlMatch[1].trim();
-          const source = sourceMatch ? sourceMatch[1].trim() : 'Portal de Notícias';
-          const resumo = resumoMatch ? resumoMatch[1].trim() : '';
-
-          console.log(`✅ Processando: ${title.substring(0, 50)}...`);
-
-          // Verificar se já existe
-          const { data: existing } = await supabase
-            .from('news_articles')
-            .select('id')
-            .eq('url', url)
-            .maybeSingle();
-
-          if (existing) {
-            console.log('📝 Notícia já existe, pulando');
-            continue;
-          }
-
-          // Inserir notícia
+          // Inserir notícia com URL única
           const { data: article, error: articleError } = await supabase
             .from('news_articles')
             .insert({
-              title,
-              url,
+              title: `${title} - TESTE ${new Date().toLocaleString('pt-BR')}`,
+              url: uniqueUrl,
               author: source,
               content: resumo,
               published_at: new Date().toISOString(),
@@ -176,218 +116,132 @@ serve(async (req) => {
 
           if (articleError) {
             console.error('❌ Erro ao inserir notícia:', articleError);
-            continue;
-          }
+          } else {
+            console.log('✅ Notícia inserida:', article.id);
 
-          // OPENAI: Análise SUPER ELABORADA para Gestão Municipal
-          const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${openaiApiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'gpt-4o-mini',
-              messages: [
-                {
-                  role: 'system',
-                  content: `Você é o consultor sênior em gestão pública da Prefeitura de São Paulo, especialista em comunicação política e gestão de crises. 
-
-                  CONTEXTO ESPECÍFICO:
-                  - Ricardo Nunes é prefeito de São Paulo desde 2021
-                  - São Paulo tem 12 milhões de habitantes
-                  - Principais desafios: transporte, saúde, educação, segurança, habitação
-                  - Próximas eleições são fator importante
-                  - Mídia local é muito influente na opinião pública
-                  
-                  SUA MISSÃO: Fornecer análises detalhadas e estratégicas que ajudem na:
-                  1. Tomada de decisões informadas
-                  2. Antecipação e prevenção de crises
-                  3. Identificação de oportunidades políticas
-                  4. Gestão da comunicação pública
-                  5. Melhoria dos serviços municipais
-                  
-                  CATEGORIA ATUAL: ${topic.category}
-                  NÍVEL DE PRIORIDADE: ${topic.priority}`
-                },
-                {
-                  role: 'user',
-                  content: `Analise profundamente esta notícia para o gabinete do prefeito Ricardo Nunes:
-                  
-                  📰 NOTÍCIA:
-                  Título: ${title}
-                  Conteúdo: ${resumo}
-                  Fonte: ${source}
-                  Categoria: ${topic.category}
-                  
-                  🎯 FORNEÇA UMA ANÁLISE COMPLETA E ELABORADA:
-                  
-                  Retorne um JSON válido e completo:
+            // Teste OpenAI simples
+            console.log('🤖 Testando OpenAI...');
+            
+            const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${openaiApiKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
                   {
-                    "sentiment_score": [número de -1 a 1, sendo -1=muito negativo para gestão, 0=neutro, 1=muito positivo],
-                    "urgency_level": ["low", "medium", "high", "critical"],
-                    "relevance_score": [número de 0 a 10, onde 10=extremamente relevante para gestão municipal],
-                    "mentions_mayor": [true se menciona Ricardo Nunes especificamente],
-                    "crisis_potential": [true se tem potencial de virar crise política/administrativa],
-                    "keywords": [array de 5-8 palavras-chave estratégicas],
-                    "summary": "resumo executivo em 1-2 frases claras e diretas",
-                    "impact_analysis": "análise detalhada de 3-4 parágrafos sobre o impacto específico desta notícia na gestão municipal, considerando aspectos políticos, administrativos e de opinião pública",
-                    "recommended_action": "ação detalhada e prática que a prefeitura deve tomar, incluindo departamentos responsáveis e cronograma",
-                    "political_opportunity": "análise de oportunidades políticas que podem ser aproveitadas ou 'nenhuma oportunidade identificada'",
-                    "public_sentiment_prediction": "como o público paulistano provavelmente reagirá a esta notícia e seus desdobramentos",
-                    "communication_strategy": "estratégia de comunicação recomendada para o gabinete do prefeito",
-                    "risk_assessment": "avaliação detalhada dos riscos associados e como mitigá-los",
-                    "related_municipal_areas": [array das secretarias/órgãos municipais que devem ser envolvidos],
-                    "media_monitoring_focus": "pontos específicos que devem ser monitorados na mídia sobre este assunto",
-                    "citizen_impact": "como esta notícia afeta diretamente a vida dos cidadãos paulistanos"
-                  }`
-                }
-              ],
-              temperature: 0.2,
-              max_tokens: 2000 // Aumentado para análises mais elaboradas
-            }),
-          });
-
-          if (!openaiResponse.ok) {
-            console.error('❌ Erro OpenAI:', await openaiResponse.text());
-            continue;
-          }
-
-          const openaiData = await openaiResponse.json();
-          let analysis;
-          
-          try {
-            const analysisText = openaiData.choices[0].message.content;
-            // Extrair JSON do texto se necessário
-            const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
-            analysis = JSON.parse(jsonMatch ? jsonMatch[0] : analysisText);
-          } catch (e) {
-            console.error('❌ Erro ao parsear análise JSON:', e);
-            continue;
-          }
-
-          // Inserir análise SUPER ELABORADA
-          const { error: analysisError } = await supabase
-            .from('news_analysis')
-            .insert({
-              article_id: article.id,
-              sentiment_score: analysis.sentiment_score,
-              urgency_level: analysis.urgency_level,
-              relevance_score: analysis.relevance_score,
-              mentions_mayor: analysis.mentions_mayor,
-              mentions_city: true,
-              crisis_potential: analysis.crisis_potential,
-              keywords: analysis.keywords,
-              summary: analysis.summary,
-              impact_analysis: analysis.impact_analysis,
-              recommended_action: analysis.recommended_action,
-              // Novos campos elaborados
-              public_sentiment_prediction: analysis.public_sentiment_prediction,
-              communication_strategy: analysis.communication_strategy,
-              risk_assessment: analysis.risk_assessment,
-              related_municipal_areas: analysis.related_municipal_areas,
-              media_monitoring_focus: analysis.media_monitoring_focus,
-              citizen_impact: analysis.citizen_impact,
-              political_opportunity: analysis.political_opportunity
+                    role: 'system',
+                    content: 'Você é um analista político especializado em São Paulo.'
+                  },
+                  {
+                    role: 'user',
+                    content: `Analise esta notícia para o prefeito Ricardo Nunes:
+                    
+                    Título: ${title}
+                    Resumo: ${resumo}
+                    
+                    Retorne um JSON simples:
+                    {
+                      "sentiment_score": 0.5,
+                      "urgency_level": "medium",
+                      "relevance_score": 7,
+                      "mentions_mayor": true,
+                      "crisis_potential": false,
+                      "keywords": ["ricardo", "nunes", "são paulo"],
+                      "summary": "Resumo executivo em 1 frase",
+                      "impact_analysis": "Análise detalhada do impacto municipal",
+                      "recommended_action": "Ação recomendada",
+                      "public_sentiment_prediction": "Como o público reagirá",
+                      "communication_strategy": "Estratégia de comunicação",
+                      "risk_assessment": "Avaliação de riscos",
+                      "political_opportunity": "Oportunidade política",
+                      "citizen_impact": "Impacto nos cidadãos",
+                      "media_monitoring_focus": "Foco do monitoramento"
+                    }`
+                  }
+                ],
+                temperature: 0.2,
+                max_tokens: 800
+              }),
             });
 
-          if (analysisError) {
-            console.error('❌ Erro ao inserir análise:', analysisError);
-            continue;
+            if (!openaiResponse.ok) {
+              console.error('❌ Erro OpenAI:', await openaiResponse.text());
+            } else {
+              const openaiData = await openaiResponse.json();
+              const analysisText = openaiData.choices[0].message.content;
+              
+              console.log('🤖 RESPOSTA OPENAI:', analysisText);
+              
+              try {
+                const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+                const analysis = JSON.parse(jsonMatch ? jsonMatch[0] : analysisText);
+                
+                console.log('📊 Análise parseada:', analysis);
+
+                // Inserir análise completa
+                const { error: analysisError } = await supabase
+                  .from('news_analysis')
+                  .insert({
+                    article_id: article.id,
+                    sentiment_score: analysis.sentiment_score || 0.5,
+                    urgency_level: analysis.urgency_level || 'medium',
+                    relevance_score: analysis.relevance_score || 7,
+                    mentions_mayor: analysis.mentions_mayor || false,
+                    mentions_city: true,
+                    crisis_potential: analysis.crisis_potential || false,
+                    keywords: analysis.keywords || ['teste'],
+                    summary: analysis.summary || 'Análise teste',
+                    impact_analysis: analysis.impact_analysis || 'Análise de impacto teste',
+                    recommended_action: analysis.recommended_action || 'Ação teste',
+                    public_sentiment_prediction: analysis.public_sentiment_prediction,
+                    communication_strategy: analysis.communication_strategy,
+                    risk_assessment: analysis.risk_assessment,
+                    related_municipal_areas: ['Secretaria de Comunicação'],
+                    media_monitoring_focus: analysis.media_monitoring_focus,
+                    citizen_impact: analysis.citizen_impact,
+                    political_opportunity: analysis.political_opportunity
+                  });
+
+                if (analysisError) {
+                  console.error('❌ Erro ao inserir análise:', analysisError);
+                } else {
+                  console.log('✅ Análise inserida com sucesso!');
+                  
+                  processedArticles.push({
+                    title,
+                    url: uniqueUrl,
+                    source,
+                    analysis: analysis.summary
+                  });
+                }
+              } catch (parseError) {
+                console.error('❌ Erro ao parsear análise:', parseError);
+              }
+            }
           }
-
-          // Sistema de Alertas Inteligente
-          let shouldCreateAlert = false;
-          let alertType = 'info';
-          let alertSeverity = 'low';
-          let alertMessage = analysis.impact_analysis;
-
-          if (analysis.urgency_level === 'critical' || analysis.crisis_potential) {
-            shouldCreateAlert = true;
-            alertType = 'crisis';
-            alertSeverity = 'critical';
-            alertMessage = `🚨 CRISE POTENCIAL: ${analysis.impact_analysis}`;
-          } else if (analysis.urgency_level === 'high' || analysis.relevance_score >= 8) {
-            shouldCreateAlert = true;
-            alertType = 'urgent';
-            alertSeverity = 'high';
-            alertMessage = `⚠️ ATENÇÃO URGENTE: ${analysis.impact_analysis}`;
-          } else if (analysis.mentions_mayor && analysis.sentiment_score < -0.5) {
-            shouldCreateAlert = true;
-            alertType = 'political';
-            alertSeverity = 'medium';
-            alertMessage = `👤 MENÇÃO NEGATIVA AO PREFEITO: ${analysis.impact_analysis}`;
-          }
-
-          if (shouldCreateAlert) {
-            await supabase
-              .from('news_alerts')
-              .insert({
-                article_id: article.id,
-                alert_type: alertType,
-                severity: alertSeverity,
-                title: `${alertType.toUpperCase()}: ${title.substring(0, 60)}...`,
-                message: alertMessage,
-                acknowledged: false
-              });
-
-            console.log(`🚨 Alerta ${alertSeverity} criado: ${alertType}`);
-          }
-
-          processedArticles.push({
-            title,
-            url,
-            source,
-            category: topic.category,
-            priority: topic.priority,
-            analysis: analysis.summary,
-            urgency: analysis.urgency_level,
-            relevance: analysis.relevance_score
-          });
-
-          console.log(`✅ ${topic.category}: Notícia processada com sucesso`);
-
-        } catch (error) {
-          console.error(`❌ Erro ao processar notícia de ${topic.category}:`, error);
-          continue;
+        } else {
+          console.log('🆕 Notícia nova, processando...');
+          // Processar normalmente se não existir
         }
+      } else {
+        console.log('❌ Não conseguiu extrair notícia da resposta Perplexity');
       }
 
-      // Pausa inteligente entre categorias
-      await new Promise(resolve => setTimeout(resolve, 1500));
+    } catch (perplexityError) {
+      console.error('❌ Falha total Perplexity:', perplexityError);
     }
 
-    console.log(`🎉 COLETA FINALIZADA: ${processedArticles.length} notícias processadas`);
-    
-    // Estatísticas da coleta
-    const stats = {
-      total: processedArticles.length,
-      porCategoria: {},
-      porPrioridade: {},
-      urgentes: processedArticles.filter(a => a.urgency === 'high' || a.urgency === 'critical').length,
-      altaRelevancia: processedArticles.filter(a => a.relevance >= 8).length
-    };
-
-    advancedTopics.forEach(topic => {
-      const count = processedArticles.filter(a => a.category === topic.category).length;
-      stats.porCategoria[topic.category] = count;
-      
-      const priorityCount = processedArticles.filter(a => a.priority === topic.priority).length;
-      stats.porPrioridade[topic.priority] = (stats.porPrioridade[topic.priority] || 0) + priorityCount;
-    });
+    console.log('🎉 TESTE CONCLUÍDO');
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Sistema maximizado: ${processedArticles.length} notícias analisadas com IA`,
+        message: `Teste concluído - ${processedArticles.length} notícia processada`,
         articles: processedArticles,
-        statistics: stats,
-        capabilities: {
-          perplexity: "Busca avançada em tempo real",
-          openai: "Análise estratégica para gestão",
-          alerts: "Sistema de alertas inteligente",
-          categories: "8 categorias municipais"
-        }
+        debug: 'Função executada com sucesso'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -395,11 +249,12 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ Erro geral:', error);
+    console.error('❌ ERRO GERAL:', error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: error.message,
+        debug: 'Falha na execução'
       }),
       {
         status: 500,
