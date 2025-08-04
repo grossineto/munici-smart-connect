@@ -35,16 +35,18 @@ export function SummaryModal({ type, data, isOpen, onClose }: SummaryModalProps)
     }
   };
 
-  const renderCriticalAlerts = () => (
+  const renderCriticalAlerts = () => {
+    const safeData = Array.isArray(data) ? data : [];
+    return (
     <div className="space-y-4">
-      {data.length === 0 ? (
+      {safeData.length === 0 ? (
         <div className="text-center py-8">
           <div className="text-6xl mb-4">✅</div>
           <h3 className="text-lg font-semibold text-green-600">Nenhuma Situação Crítica</h3>
           <p className="text-sm text-muted-foreground">Todas as situações estão sob controle</p>
         </div>
       ) : (
-        data.map((alert) => (
+        safeData.map((alert) => (
           <Card key={alert.id} className="border-red-200 bg-red-50">
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-2">
@@ -64,18 +66,21 @@ export function SummaryModal({ type, data, isOpen, onClose }: SummaryModalProps)
         ))
       )}
     </div>
-  );
+    );
+  };
 
-  const renderPendingAlerts = () => (
+  const renderPendingAlerts = () => {
+    const safeData = Array.isArray(data) ? data : [];
+    return (
     <div className="space-y-4">
-      {data.length === 0 ? (
+      {safeData.length === 0 ? (
         <div className="text-center py-8">
           <div className="text-6xl mb-4">✅</div>
           <h3 className="text-lg font-semibold text-green-600">Todos Verificados</h3>
           <p className="text-sm text-muted-foreground">Não há alertas pendentes de verificação</p>
         </div>
       ) : (
-        data.map((alert) => (
+        safeData.map((alert) => (
           <Card key={alert.id} className="border-orange-200 bg-orange-50">
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-2">
@@ -97,13 +102,17 @@ export function SummaryModal({ type, data, isOpen, onClose }: SummaryModalProps)
         ))
       )}
     </div>
-  );
+    );
+  };
 
   const renderAnalysesSummary = () => {
-    const positive = data.filter(a => a.sentiment_score > 0.3);
-    const negative = data.filter(a => a.sentiment_score < -0.3);
-    const mayorMentions = data.filter(a => a.mentions_mayor);
-    const urgent = data.filter(a => a.urgency_level === 'high' || a.urgency_level === 'critical');
+    // Verificar se data existe e é um array
+    const safeData = Array.isArray(data) ? data : [];
+    
+    const positive = safeData.filter(a => a?.sentiment_score > 0.3);
+    const negative = safeData.filter(a => a?.sentiment_score < -0.3);
+    const mayorMentions = safeData.filter(a => a?.mentions_mayor);
+    const urgent = safeData.filter(a => a?.urgency_level === 'high' || a?.urgency_level === 'critical');
 
     return (
       <div className="space-y-6">
@@ -188,13 +197,16 @@ export function SummaryModal({ type, data, isOpen, onClose }: SummaryModalProps)
   };
 
   const renderSourcesSummary = () => {
+    // Verificar se data existe e é um array
+    const safeData = Array.isArray(data) ? data : [];
+    
     // Fontes reais detectadas nas análises
-    const realSources = [...new Set(data.map(a => a.news_articles?.author).filter(Boolean))];
+    const realSources = [...new Set(safeData.map(a => a?.news_articles?.author).filter(Boolean))];
     const sourceStats = realSources.map(source => ({
       name: source,
-      count: data.filter(a => a.news_articles?.author === source).length,
-      positive: data.filter(a => a.news_articles?.author === source && a.sentiment_score > 0.3).length,
-      negative: data.filter(a => a.news_articles?.author === source && a.sentiment_score < -0.3).length
+      count: safeData.filter(a => a?.news_articles?.author === source).length,
+      positive: safeData.filter(a => a?.news_articles?.author === source && a?.sentiment_score > 0.3).length,
+      negative: safeData.filter(a => a?.news_articles?.author === source && a?.sentiment_score < -0.3).length
     }));
 
     // Fontes configuradas para monitoramento
