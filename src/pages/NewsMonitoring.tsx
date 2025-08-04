@@ -126,18 +126,25 @@ export default function NewsMonitoring() {
   
   // Função para buscar cidades brasileiras via API do IBGE
   const searchCities = async (query: string) => {
-    if (query.length < 3) {
+    if (query.length < 2) {
       setCities([]);
       return;
     }
     
     setSearchingCities(true);
     try {
+      console.log('🔍 Buscando cidades para:', query);
       const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodeURIComponent(query)}`);
+      
+      if (!response.ok) {
+        throw new Error(`Erro na API IBGE: ${response.status}`);
+      }
+      
       const data = await response.json();
+      console.log('📊 Cidades encontradas:', data.length);
       
       // Formatar dados das cidades
-      const formattedCities = data.slice(0, 10).map((city: any) => ({
+      const formattedCities = data.slice(0, 15).map((city: any) => ({
         id: city.id,
         nome: city.nome,
         uf: city.microrregiao.mesorregiao.UF.sigla,
@@ -145,14 +152,16 @@ export default function NewsMonitoring() {
         displayName: `${city.nome} - ${city.microrregiao.mesorregiao.UF.sigla}`
       }));
       
+      console.log('✅ Cidades formatadas:', formattedCities.map(c => c.displayName));
       setCities(formattedCities);
     } catch (error) {
-      console.error('Erro ao buscar cidades:', error);
+      console.error('❌ Erro ao buscar cidades:', error);
       toast({
         title: "Erro",
-        description: "Erro ao buscar cidades",
+        description: "Erro ao buscar cidades. Tente novamente.",
         variant: "destructive",
       });
+      setCities([]);
     } finally {
       setSearchingCities(false);
     }
