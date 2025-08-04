@@ -273,7 +273,11 @@ function NewsMonitoring() {
     "Salvador": { nome: "Bruno Reis", partido: "União Brasil", mandato: "2021-2024", cidade: "Salvador", uf: "BA" },
     "Fortaleza": { nome: "José Sarto", partido: "PDT", mandato: "2021-2024", cidade: "Fortaleza", uf: "CE" },
     "Brasília": { nome: "Ibaneis Rocha", partido: "MDB", mandato: "2019-2026", cidade: "Brasília", uf: "DF" },
-    "Manaus": { nome: "David Almeida", partido: "Avante", mandato: "2021-2024", cidade: "Manaus", uf: "AM" }
+    "Manaus": { nome: "David Almeida", partido: "Avante", mandato: "2021-2024", cidade: "Manaus", uf: "AM" },
+    "Bauru": { nome: "Suélcio Macedo", partido: "MDB", mandato: "2021-2024", cidade: "Bauru", uf: "SP" },
+    "Pederneiras": { nome: "Fábio Ceschini", partido: "PSDB", mandato: "2021-2024", cidade: "Pederneiras", uf: "SP" },
+    "Botucatu": { nome: "Mário Pardini", partido: "PSDB", mandato: "2021-2024", cidade: "Botucatu", uf: "SP" },
+    "São Roque": { nome: "Dr. Marco Aurélio", partido: "PSB", mandato: "2021-2024", cidade: "São Roque", uf: "SP" }
   };
 
   // Correção de estados para algumas cidades
