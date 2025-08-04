@@ -119,10 +119,18 @@ export default function NewsMonitoring() {
     try {
       console.log(`🔍 Carregando dados para: ${mayor.nome} - ${mayor.cidade}/${mayor.uf}`);
       
-      const mayorKeywords = [mayor.nome, mayor.cidade, mayor.uf];
+      // Construir condições OR corretamente para o Supabase
+      const mayorConditions = [
+        `news_articles.title.ilike.%${mayor.nome}%`,
+        `news_articles.content.ilike.%${mayor.nome}%`,
+        `news_articles.title.ilike.%${mayor.cidade}%`,
+        `news_articles.content.ilike.%${mayor.cidade}%`,
+        `news_articles.title.ilike.%${mayor.uf}%`,
+        `news_articles.content.ilike.%${mayor.uf}%`
+      ].join(',');
       
       // Buscar alertas relacionados ao prefeito
-      let alertsQuery = supabase
+      const { data: alertsRaw, error: alertsError } = await supabase
         .from('news_alerts')
         .select(`
           *,
@@ -133,17 +141,22 @@ export default function NewsMonitoring() {
             news_sources (name)
           )
         `)
-        .order('created_at', { ascending: false });
+        .or(mayorConditions)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-      // Filtrar por palavras-chave do prefeito
-      for (const keyword of mayorKeywords) {
-        alertsQuery = alertsQuery.or(`news_articles.title.ilike.%${keyword}%,news_articles.content.ilike.%${keyword}%`);
-      }
-
-      const { data: alertsRaw, error: alertsError } = await alertsQuery.limit(50);
+      // Construir condições para análises
+      const analysisConditions = [
+        `news_articles.title.ilike.%${mayor.nome}%`,
+        `keywords.cs.{${mayor.nome}}`,
+        `news_articles.title.ilike.%${mayor.cidade}%`,
+        `keywords.cs.{${mayor.cidade}}`,
+        `news_articles.title.ilike.%${mayor.uf}%`,
+        `keywords.cs.{${mayor.uf}}`
+      ].join(',');
 
       // Buscar análises relacionadas ao prefeito
-      let analysesQuery = supabase
+      const { data: analysesRaw, error: analysesError } = await supabase
         .from('news_analysis')
         .select(`
           *,
@@ -154,14 +167,9 @@ export default function NewsMonitoring() {
             author
           )
         `)
-        .order('created_at', { ascending: false });
-
-      // Filtrar por palavras-chave do prefeito
-      for (const keyword of mayorKeywords) {
-        analysesQuery = analysesQuery.or(`news_articles.title.ilike.%${keyword}%,keywords.cs.{${keyword}}`);
-      }
-
-      const { data: analysesRaw, error: analysesError } = await analysesQuery.limit(100);
+        .or(analysisConditions)
+        .order('created_at', { ascending: false })
+        .limit(100);
 
       console.log(`📊 Alertas encontrados para ${mayor.nome}:`, alertsRaw?.length || 0);
       console.log(`📊 Análises encontradas para ${mayor.nome}:`, analysesRaw?.length || 0);
@@ -254,6 +262,55 @@ export default function NewsMonitoring() {
     }
   };
 
+  // Mapeamento cidade -> estado para correção
+  const cityToState: { [key: string]: string } = {
+    'São Paulo': 'SP',
+    'Rio de Janeiro': 'RJ',
+    'Belo Horizonte': 'MG',
+    'Curitiba': 'PR',
+    'Recife': 'PE',
+    'Porto Alegre': 'RS',
+    'Salvador': 'BA',
+    'Fortaleza': 'CE',
+    'Brasília': 'DF',
+    'Manaus': 'AM',
+    'Goiânia': 'GO',
+    'Belém': 'PA',
+    'Guarulhos': 'SP',
+    'Campinas': 'SP',
+    'São Luís': 'MA',
+    'Maceió': 'AL',
+    'Duque de Caxias': 'RJ',
+    'Natal': 'RN',
+    'Campo Grande': 'MS',
+    'Teresina': 'PI',
+    'São Bernardo do Campo': 'SP',
+    'Nova Iguaçu': 'RJ',
+    'João Pessoa': 'PB',
+    'Santo André': 'SP',
+    'Ribeirão Preto': 'SP',
+    'Contagem': 'MG',
+    'Aracaju': 'SE',
+    'Feira de Santana': 'BA',
+    'Cuiabá': 'MT',
+    'Joinville': 'SC',
+    'Aparecida de Goiânia': 'GO',
+    'Londrina': 'PR',
+    'Ananindeua': 'PA',
+    'Porto Velho': 'RO',
+    'Serra': 'ES',
+    'Niterói': 'RJ',
+    'Caxias do Sul': 'RS',
+    'Macapá': 'AP',
+    'Mauá': 'SP',
+    'São João de Meriti': 'RJ',
+    'Florianópolis': 'SC',
+    'Vila Velha': 'ES',
+    'Cariacica': 'ES',
+    'Santos': 'SP',
+    'Boa Vista': 'RR'
+  };
+
   // Base expandida dos prefeitos atuais (principais cidades brasileiras)
   const mayorData = {
     'São Paulo': { nome: 'Ricardo Nunes', partido: 'MDB', mandato: '2021-2024' },
@@ -311,20 +368,25 @@ export default function NewsMonitoring() {
     
     const mayor = mayorData[city.nome as keyof typeof mayorData];
     if (mayor) {
-      setSelectedMayor({ ...mayor, cidade: city.nome, uf: city.uf });
+      // 🎯 CORREÇÃO: Usar estado correto do mapeamento
+      const correctState = cityToState[city.nome] || city.uf;
+      const mayorData = { ...mayor, cidade: city.nome, uf: correctState };
+      
+      setSelectedMayor(mayorData);
       console.log('✅ Prefeito encontrado:', mayor.nome);
+      console.log('🗺️ Estado corrigido:', city.nome, '->', correctState);
       
       toast({
         title: "Prefeito Selecionado",
-        description: `${mayor.nome} (${mayor.partido}) - ${city.nome}/${city.uf}. Coletando notícias...`,
+        description: `${mayor.nome} (${mayor.partido}) - ${city.nome}/${correctState}. Coletando notícias...`,
       });
 
       // 🚀 AUTOMÁTICO: Coletar notícias imediatamente após seleção
       console.log('🚀 Iniciando coleta automática para:', mayor.nome);
-      await runPerplexityNewsForMayor({ ...mayor, cidade: city.nome, uf: city.uf });
+      await runPerplexityNewsForMayor(mayorData);
       
       // 🔄 Atualizar dashboard com filtro
-      await loadDataForMayor({ ...mayor, cidade: city.nome, uf: city.uf });
+      await loadDataForMayor(mayorData);
       
     } else {
       setSelectedMayor(null);

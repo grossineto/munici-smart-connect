@@ -278,6 +278,46 @@ serve(async (req) => {
 
             if (!openaiResponse.ok) {
               console.error('❌ Erro OpenAI:', await openaiResponse.text());
+              
+              // 🚨 FALLBACK: Criar análise básica sem OpenAI
+              console.log('⚡ Criando análise básica sem OpenAI...');
+              const { error: analysisError } = await supabase
+                .from('news_analysis')
+                .insert({
+                  article_id: article.id,
+                  sentiment_score: 0,
+                  urgency_level: 'medium',
+                  relevance_score: 5,
+                  mentions_mayor: title.toLowerCase().includes(mayor?.mayorName?.toLowerCase() || ''),
+                  mentions_city: true,
+                  crisis_potential: false,
+                  keywords: [mayor?.cityName || 'são paulo', mayor?.mayorName || 'prefeito'],
+                  summary: `Notícia coletada: ${title.substring(0, 100)}...`,
+                  impact_analysis: `Notícia sobre ${mayor?.cityName || 'São Paulo'} que pode impactar a gestão municipal. Requer análise mais detalhada.`,
+                  recommended_action: 'Monitorar desenvolvimento da situação',
+                  public_sentiment_prediction: 'Aguardando análise detalhada',
+                  communication_strategy: 'Preparar resposta baseada no desenvolvimento',
+                  risk_assessment: 'Risco moderado - monitorar',
+                  related_municipal_areas: ['Gabinete do Prefeito'],
+                  media_monitoring_focus: 'Acompanhar repercussão',
+                  citizen_impact: 'Impacto a ser avaliado',
+                  political_opportunity: 'Aguardando análise'
+                });
+
+              if (analysisError) {
+                console.error('❌ Erro ao inserir análise básica:', analysisError);
+              } else {
+                console.log('✅ ANÁLISE BÁSICA INSERIDA (sem OpenAI)');
+                
+                processedArticles.push({
+                  title,
+                  url: uniqueUrl,
+                  source,
+                  analysis: `Análise básica: ${title.substring(0, 50)}...`,
+                  urgency: 'medium',
+                  relevance: 5
+                });
+              }
               continue;
             }
 
