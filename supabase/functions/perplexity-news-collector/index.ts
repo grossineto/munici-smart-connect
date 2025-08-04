@@ -179,7 +179,7 @@ serve(async (req) => {
             continue;
           }
 
-          // OPENAI: Análise Especializada para Gestão Municipal
+          // OPENAI: Análise SUPER ELABORADA para Gestão Municipal
           const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -191,45 +191,61 @@ serve(async (req) => {
               messages: [
                 {
                   role: 'system',
-                  content: `Você é um consultor sênior em gestão pública especializado na Prefeitura de São Paulo.
+                  content: `Você é o consultor sênior em gestão pública da Prefeitura de São Paulo, especialista em comunicação política e gestão de crises. 
+
+                  CONTEXTO ESPECÍFICO:
+                  - Ricardo Nunes é prefeito de São Paulo desde 2021
+                  - São Paulo tem 12 milhões de habitantes
+                  - Principais desafios: transporte, saúde, educação, segurança, habitação
+                  - Próximas eleições são fator importante
+                  - Mídia local é muito influente na opinião pública
                   
-                  CONTEXTO: Ricardo Nunes é o prefeito e precisa de análises práticas para:
-                  - Tomar decisões informadas
-                  - Antecipar crises
-                  - Identificar oportunidades políticas
-                  - Gerenciar serviços públicos
-                  - Comunicação estratégica
+                  SUA MISSÃO: Fornecer análises detalhadas e estratégicas que ajudem na:
+                  1. Tomada de decisões informadas
+                  2. Antecipação e prevenção de crises
+                  3. Identificação de oportunidades políticas
+                  4. Gestão da comunicação pública
+                  5. Melhoria dos serviços municipais
                   
-                  CATEGORIAS: ${topic.category}
-                  PRIORIDADE: ${topic.priority}`
+                  CATEGORIA ATUAL: ${topic.category}
+                  NÍVEL DE PRIORIDADE: ${topic.priority}`
                 },
                 {
                   role: 'user',
-                  content: `Analise esta notícia para o gabinete do prefeito:
+                  content: `Analise profundamente esta notícia para o gabinete do prefeito Ricardo Nunes:
                   
-                  TÍTULO: ${title}
-                  CONTEÚDO: ${resumo}
-                  FONTE: ${source}
-                  CATEGORIA: ${topic.category}
+                  📰 NOTÍCIA:
+                  Título: ${title}
+                  Conteúdo: ${resumo}
+                  Fonte: ${source}
+                  Categoria: ${topic.category}
                   
-                  Retorne um JSON válido:
+                  🎯 FORNEÇA UMA ANÁLISE COMPLETA E ELABORADA:
+                  
+                  Retorne um JSON válido e completo:
                   {
-                    "sentiment_score": [número de -1 a 1, onde -1=muito negativo, 0=neutro, 1=muito positivo],
+                    "sentiment_score": [número de -1 a 1, sendo -1=muito negativo para gestão, 0=neutro, 1=muito positivo],
                     "urgency_level": ["low", "medium", "high", "critical"],
-                    "relevance_score": [número de 0 a 10, onde 10=extremamente relevante],
-                    "mentions_mayor": [true se menciona Ricardo Nunes diretamente],
-                    "crisis_potential": [true se pode virar crise],
-                    "keywords": [array de 3-5 palavras-chave principais],
-                    "summary": "resumo executivo em 1 frase",
-                    "impact_analysis": "análise do impacto específico para a gestão municipal",
-                    "recommended_action": "ação prática recomendada para a prefeitura",
-                    "political_opportunity": "oportunidade política identificada ou 'nenhuma'",
-                    "public_sentiment": "como o público provavelmente reagirá"
+                    "relevance_score": [número de 0 a 10, onde 10=extremamente relevante para gestão municipal],
+                    "mentions_mayor": [true se menciona Ricardo Nunes especificamente],
+                    "crisis_potential": [true se tem potencial de virar crise política/administrativa],
+                    "keywords": [array de 5-8 palavras-chave estratégicas],
+                    "summary": "resumo executivo em 1-2 frases claras e diretas",
+                    "impact_analysis": "análise detalhada de 3-4 parágrafos sobre o impacto específico desta notícia na gestão municipal, considerando aspectos políticos, administrativos e de opinião pública",
+                    "recommended_action": "ação detalhada e prática que a prefeitura deve tomar, incluindo departamentos responsáveis e cronograma",
+                    "political_opportunity": "análise de oportunidades políticas que podem ser aproveitadas ou 'nenhuma oportunidade identificada'",
+                    "public_sentiment_prediction": "como o público paulistano provavelmente reagirá a esta notícia e seus desdobramentos",
+                    "communication_strategy": "estratégia de comunicação recomendada para o gabinete do prefeito",
+                    "risk_assessment": "avaliação detalhada dos riscos associados e como mitigá-los",
+                    "related_municipal_areas": [array das secretarias/órgãos municipais que devem ser envolvidos],
+                    "media_monitoring_focus": "pontos específicos que devem ser monitorados na mídia sobre este assunto",
+                    "citizen_impact": "como esta notícia afeta diretamente a vida dos cidadãos paulistanos"
                   }`
                 }
+                }
               ],
-              temperature: 0.3,
-              max_tokens: 1000
+              temperature: 0.2,
+              max_tokens: 2000 // Aumentado para análises mais elaboradas
             }),
           });
 
