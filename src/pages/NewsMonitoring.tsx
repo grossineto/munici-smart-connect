@@ -158,7 +158,7 @@ export default function NewsMonitoring() {
     }
   };
 
-  // Dados dos prefeitos atuais (base simplificada - em produção seria um banco de dados)
+  // Base expandida dos prefeitos atuais (principais cidades brasileiras)
   const mayorData = {
     'São Paulo': { nome: 'Ricardo Nunes', partido: 'MDB', mandato: '2021-2024' },
     'Rio de Janeiro': { nome: 'Eduardo Paes', partido: 'PSD', mandato: '2021-2024' },
@@ -166,10 +166,45 @@ export default function NewsMonitoring() {
     'Curitiba': { nome: 'Rafael Greca', partido: 'PDT', mandato: '2017-2024' },
     'Recife': { nome: 'João Campos', partido: 'PSB', mandato: '2021-2024' },
     'Porto Alegre': { nome: 'Sebastião Melo', partido: 'MDB', mandato: '2021-2024' },
-    'Salvador': { nome: 'Bruno Reis', partido: 'DEM', mandato: '2021-2024' },
+    'Salvador': { nome: 'Bruno Reis', partido: 'União', mandato: '2021-2024' },
     'Fortaleza': { nome: 'José Sarto', partido: 'PDT', mandato: '2021-2024' },
-    'Brasília': { nome: 'Ibaneis Rocha', partido: 'MDB', mandato: '2019-2022' },
-    'Manaus': { nome: 'David Almeida', partido: 'Avante', mandato: '2021-2024' }
+    'Brasília': { nome: 'Ibaneis Rocha', partido: 'MDB', mandato: '2019-2026' },
+    'Manaus': { nome: 'David Almeida', partido: 'Avante', mandato: '2021-2024' },
+    'Goiânia': { nome: 'Rogério Cruz', partido: 'Republicanos', mandato: '2021-2024' },
+    'Belém': { nome: 'Edmilson Rodrigues', partido: 'PSOL', mandato: '2021-2024' },
+    'Guarulhos': { nome: 'Guti', partido: 'PSD', mandato: '2021-2024' },
+    'Campinas': { nome: 'Dário Saadi', partido: 'Republicanos', mandato: '2021-2024' },
+    'São Luís': { nome: 'Eduardo Braide', partido: 'Podemos', mandato: '2021-2024' },
+    'Maceió': { nome: 'JHC', partido: 'PSB', mandato: '2021-2024' },
+    'Duque de Caxias': { nome: 'Wilson Reis', partido: 'DEM', mandato: '2021-2024' },
+    'Natal': { nome: 'Álvaro Dias', partido: 'PSDB', mandato: '2021-2024' },
+    'Campo Grande': { nome: 'Marquinhos Trad', partido: 'PSD', mandato: '2021-2024' },
+    'Teresina': { nome: 'Dr. Pessoa', partido: 'MDB', mandato: '2021-2024' },
+    'São Bernardo do Campo': { nome: 'Orlando Morando', partido: 'PSDB', mandato: '2017-2024' },
+    'Nova Iguaçu': { nome: 'Rogerio Lisboa', partido: 'PR', mandato: '2021-2024' },
+    'João Pessoa': { nome: 'Cícero Lucena', partido: 'PP', mandato: '2021-2024' },
+    'Santo André': { nome: 'Paulo Serra', partido: 'PSDB', mandato: '2021-2024' },
+    'Ribeirão Preto': { nome: 'Duarte Nogueira', partido: 'PSDB', mandato: '2021-2024' },
+    'Contagem': { nome: 'Marília Campos', partido: 'PT', mandato: '2021-2024' },
+    'Aracaju': { nome: 'Edvaldo Nogueira', partido: 'PDT', mandato: '2021-2024' },
+    'Feira de Santana': { nome: 'Colbert Martins', partido: 'MDB', mandato: '2021-2024' },
+    'Cuiabá': { nome: 'Emanuel Pinheiro', partido: 'MDB', mandato: '2021-2024' },
+    'Joinville': { nome: 'Adriano Silva', partido: 'Novo', mandato: '2021-2024' },
+    'Aparecida de Goiânia': { nome: 'Vilmar Mariano', partido: 'DEM', mandato: '2021-2024' },
+    'Londrina': { nome: 'Marcelo Belinati', partido: 'PP', mandato: '2021-2024' },
+    'Ananindeua': { nome: 'Daniel Santos', partido: 'MDB', mandato: '2021-2024' },
+    'Porto Velho': { nome: 'Hildon Chaves', partido: 'PSDB', mandato: '2021-2024' },
+    'Serra': { nome: 'Sergio Vidigal', partido: 'PDT', mandato: '2021-2024' },
+    'Niterói': { nome: 'Axel Grael', partido: 'PDT', mandato: '2021-2024' },
+    'Caxias do Sul': { nome: 'Adiló Didomenico', partido: 'PSDB', mandato: '2021-2024' },
+    'Macapá': { nome: 'Dr. Furlan', partido: 'MDB', mandato: '2021-2024' },
+    'Mauá': { nome: 'Marcelo Oliveira', partido: 'PT', mandato: '2021-2024' },
+    'São João de Meriti': { nome: 'Dr. João', partido: 'DEM', mandato: '2021-2024' },
+    'Florianópolis': { nome: 'Topázio Neto', partido: 'PSD', mandato: '2021-2024' },
+    'Vila Velha': { nome: 'Arnaldinho Borgo', partido: 'Podemos', mandato: '2021-2024' },
+    'Cariacica': { nome: 'Euclério Sampaio', partido: 'DEM', mandato: '2021-2024' },
+    'Santos': { nome: 'Rogério Santos', partido: 'PSDB', mandato: '2021-2024' },
+    'Boa Vista': { nome: 'Arthur Henrique', partido: 'MDB', mandato: '2021-2024' }
   };
 
   const selectCity = (city: any) => {
