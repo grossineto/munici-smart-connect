@@ -137,6 +137,37 @@ export default function NewsMonitoring() {
     }
   };
 
+  const runPerplexityNews = async () => {
+    setCrawling(true);
+    try {
+      console.log('Starting Perplexity news collection...');
+      const { data, error } = await supabase.functions.invoke('perplexity-news-collector');
+      
+      console.log('Perplexity news response:', { data, error });
+      
+      if (error) {
+        console.error('Perplexity news error:', error);
+        throw error;
+      }
+      
+      toast({ 
+        title: "Notícias em Tempo Real", 
+        description: `Coletadas ${data?.articles?.length || 0} notícias em tempo real via Perplexity` 
+      });
+      
+      console.log('Reloading data in 3 seconds...');
+      setTimeout(() => {
+        console.log('Reloading data now...');
+        loadData();
+      }, 3000);
+    } catch (error) {
+      console.error('Perplexity news failed:', error);
+      toast({ title: "Erro", description: "Erro ao coletar notícias em tempo real", variant: "destructive" });
+    } finally {
+      setCrawling(false);
+    }
+  };
+
   const runTestAnalysis = async () => {
     setCrawling(true);
     try {
@@ -189,9 +220,13 @@ export default function NewsMonitoring() {
             <RefreshCw className={`h-4 w-4 ${crawling ? 'animate-spin' : ''}`} />
             {crawling ? 'Testando...' : 'Teste São Paulo'}
           </Button>
-          <Button onClick={runNewsCrawler} disabled={crawling} className="flex items-center gap-2">
+          <Button onClick={runNewsCrawler} disabled={crawling} variant="outline" className="flex items-center gap-2">
             <RefreshCw className={`h-4 w-4 ${crawling ? 'animate-spin' : ''}`} />
             {crawling ? 'Coletando...' : 'Coletar Notícias Reais'}
+          </Button>
+          <Button onClick={runPerplexityNews} disabled={crawling} className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+            <RefreshCw className={`h-4 w-4 ${crawling ? 'animate-spin' : ''}`} />
+            {crawling ? 'Coletando...' : 'Tempo Real (Perplexity)'}
           </Button>
         </div>
       </div>
