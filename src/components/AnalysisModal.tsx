@@ -47,11 +47,10 @@ export function AnalysisModal({ analysis, isOpen, onClose }: AnalysisModalProps)
             <h3 className="text-lg font-bold mb-2">{analysis.news_articles?.title}</h3>
             <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
               <Badge variant="outline" className="bg-blue-100 text-blue-800">
-                {analysis.news_articles?.author || 'Fonte'}
+                📰 {analysis.news_articles?.author || 'Fonte'}
               </Badge>
-              <span>•</span>
               <Badge variant="outline" className="bg-gray-100 text-gray-700">
-                🕐 Publicado: {analysis.news_articles?.published_at 
+                📅 {analysis.news_articles?.published_at 
                   ? new Date(analysis.news_articles.published_at).toLocaleDateString('pt-BR', {
                       day: '2-digit',
                       month: '2-digit', 
@@ -62,153 +61,84 @@ export function AnalysisModal({ analysis, isOpen, onClose }: AnalysisModalProps)
                   : 'Data não disponível'
                 }
               </Badge>
-              <span>•</span>
-              <span>Analisado {formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true, locale: ptBR })}</span>
               {analysis.news_articles?.url && (
-                <>
-                  <span>•</span>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    onClick={() => window.open(analysis.news_articles.url, '_blank')}
-                    className="h-auto p-1 text-blue-600 hover:text-blue-800"
-                  >
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    Ver notícia original
-                  </Button>
-                </>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => window.open(analysis.news_articles.url, '_blank')}
+                  className="bg-white"
+                >
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  Ver Notícia Original
+                </Button>
               )}
             </div>
           </div>
 
           {/* Métricas Principais */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  {getSentimentIcon(analysis.sentiment_score)} Sentimento
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {analysis.sentiment_score > 0.3 ? 'POSITIVO' : 
-                   analysis.sentiment_score < -0.3 ? 'NEGATIVO' : 'NEUTRO'}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Score: {(analysis.sentiment_score * 100).toFixed(0)}%
-                </div>
-              </CardContent>
+            <Card className="p-4 text-center">
+              <div className="text-2xl mb-2">{getSentimentIcon(analysis.sentiment_score)}</div>
+              <div className="text-lg font-bold">
+                {analysis.sentiment_score > 0.3 ? 'POSITIVA' : 
+                 analysis.sentiment_score < -0.3 ? 'NEGATIVA' : 'NEUTRA'}
+              </div>
+              <div className="text-sm text-muted-foreground">Sentimento</div>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" /> Relevância
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
-                  {Math.round((analysis.relevance_score || 0) * 10)}%
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Gestão Municipal
-                </div>
-              </CardContent>
+            <Card className={`p-4 text-center ${getUrgencyColor(analysis.urgency_level)}`}>
+              <div className="text-2xl mb-2">⚡</div>
+              <div className="text-lg font-bold">{analysis.urgency_level?.toUpperCase()}</div>
+              <div className="text-sm opacity-75">Urgência</div>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" /> Urgência
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Badge className={`${getUrgencyColor(analysis.urgency_level)} text-xs px-2 py-1`}>
-                  {analysis.urgency_level?.toUpperCase() || 'MÉDIO'}
-                </Badge>
-                {analysis.crisis_potential && (
-                  <div className="mt-1">
-                    <Badge variant="destructive" className="text-xs">🚨 POTENCIAL DE CRISE</Badge>
-                  </div>
-                )}
-              </CardContent>
+            <Card className="p-4 text-center">
+              <div className="text-2xl mb-2">🎯</div>
+              <div className="text-lg font-bold">{analysis.relevance_score || 0}/10</div>
+              <div className="text-sm text-muted-foreground">Relevância</div>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Eye className="h-4 w-4" /> Visibilidade
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-1">
-                  {analysis.mentions_mayor && (
-                    <Badge className="bg-purple-100 text-purple-700 text-xs">👨‍💼 Menciona Prefeito</Badge>
-                  )}
-                  {analysis.mentions_city && (
-                    <Badge className="bg-blue-100 text-blue-700 text-xs">🏙️ Menciona SP</Badge>
-                  )}
-                </div>
-              </CardContent>
+            <Card className="p-4 text-center">
+              <div className="text-2xl mb-2">{analysis.crisis_potential ? '🚨' : '✅'}</div>
+              <div className="text-lg font-bold">
+                {analysis.crisis_potential ? 'RISCO' : 'SEGURO'}
+              </div>
+              <div className="text-sm text-muted-foreground">Potencial de Crise</div>
             </Card>
           </div>
 
-          {/* Resumo Executivo */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-600" />
-                Resumo Executivo
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700 leading-relaxed">{analysis.summary}</p>
-            </CardContent>
-          </Card>
-
-          {/* Análise de Impacto */}
-          {analysis.impact_analysis && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-orange-600" />
-                  Análise de Impacto na Gestão
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 leading-relaxed">{analysis.impact_analysis}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Ação Recomendada */}
-          {analysis.recommended_action && (
-            <Card className="border-yellow-200 bg-yellow-50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-yellow-800">
-                  <AlertTriangle className="h-5 w-5" />
-                  Ação Recomendada para a Gestão
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-yellow-700 font-medium leading-relaxed">{analysis.recommended_action}</p>
-              </CardContent>
-            </Card>
-          )}
+          {/* Badges Especiais */}
+          <div className="flex flex-wrap gap-2">
+            {analysis.mentions_mayor && (
+              <Badge className="bg-purple-500 hover:bg-purple-600 px-3 py-1">
+                👨‍💼 Menciona Prefeito Ricardo Nunes
+              </Badge>
+            )}
+            {analysis.crisis_potential && (
+              <Badge variant="destructive" className="animate-pulse px-3 py-1">
+                ⚠️ Potencial de Crise
+              </Badge>
+            )}
+            {analysis.relevance_score >= 8 && (
+              <Badge className="bg-green-500 hover:bg-green-600 px-3 py-1">
+                🔥 Alta Relevância
+              </Badge>
+            )}
+          </div>
 
           {/* Palavras-chave */}
           {analysis.keywords && analysis.keywords.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-purple-600" />
-                  Palavras-chave Identificadas
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Palavras-chave Estratégicas
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {analysis.keywords.map((keyword: string, index: number) => (
-                    <Badge key={index} variant="outline" className="bg-purple-50 text-purple-700">
+                  {analysis.keywords.map((keyword, index) => (
+                    <Badge key={index} variant="outline" className="bg-blue-50">
                       {keyword}
                     </Badge>
                   ))}
@@ -217,35 +147,183 @@ export function AnalysisModal({ analysis, isOpen, onClose }: AnalysisModalProps)
             </Card>
           )}
 
-          {/* Detalhes Técnicos */}
+          {/* Resumo Executivo */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-gray-600" />
-                Detalhes da Análise
+              <CardTitle className="text-lg flex items-center gap-2">
+                📋 Resumo Executivo
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium">Score de Sentimento:</span>
-                  <span className="ml-2">{(analysis.sentiment_score || 0).toFixed(3)}</span>
-                </div>
-                <div>
-                  <span className="font-medium">Score de Relevância:</span>
-                  <span className="ml-2">{(analysis.relevance_score || 0).toFixed(1)}/10</span>
-                </div>
-                <div>
-                  <span className="font-medium">Nível de Urgência:</span>
-                  <span className="ml-2">{analysis.urgency_level || 'Não definido'}</span>
-                </div>
-                <div>
-                  <span className="font-medium">Potencial de Crise:</span>
-                  <span className="ml-2">{analysis.crisis_potential ? 'SIM' : 'NÃO'}</span>
-                </div>
+              <p className="text-gray-700 leading-relaxed font-medium">
+                {analysis.summary || 'Resumo não disponível'}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Análise de Impacto ELABORADA */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                🎯 Análise de Impacto Municipal
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose max-w-none">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                  {analysis.impact_analysis || 'Análise de impacto não disponível'}
+                </p>
               </div>
             </CardContent>
           </Card>
+
+          {/* Ação Recomendada */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                🚀 Ação Recomendada para a Prefeitura
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <p className="text-blue-800 font-medium leading-relaxed">
+                  {analysis.recommended_action || 'Nenhuma ação específica recomendada'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Análises Elaboradas - Seção Principal */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Predição de Sentimento Público */}
+            {analysis.public_sentiment_prediction && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    👥 Reação Pública Esperada
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-700 leading-relaxed">
+                    {analysis.public_sentiment_prediction}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Estratégia de Comunicação */}
+            {analysis.communication_strategy && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    📢 Estratégia de Comunicação
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-700 leading-relaxed">
+                    {analysis.communication_strategy}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Avaliação de Riscos */}
+            {analysis.risk_assessment && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    ⚠️ Avaliação de Riscos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-700 leading-relaxed">
+                    {analysis.risk_assessment}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Oportunidade Política */}
+            {analysis.political_opportunity && analysis.political_opportunity !== 'nenhuma oportunidade identificada' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    🎯 Oportunidade Política
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <p className="text-green-800 font-medium leading-relaxed">
+                      {analysis.political_opportunity}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Áreas Municipais Envolvidas */}
+          {analysis.related_municipal_areas && analysis.related_municipal_areas.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  🏛️ Secretarias e Órgãos Municipais Envolvidos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {analysis.related_municipal_areas.map((area, index) => (
+                    <Badge key={index} variant="outline" className="bg-purple-50 text-purple-700 px-3 py-1">
+                      {area}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Monitoramento de Mídia */}
+          {analysis.media_monitoring_focus && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  📺 Foco do Monitoramento de Mídia
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                  <p className="text-yellow-800 font-medium leading-relaxed">
+                    {analysis.media_monitoring_focus}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Impacto no Cidadão */}
+          {analysis.citizen_impact && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  🏠 Impacto na Vida dos Cidadãos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <p className="text-blue-800 font-medium leading-relaxed">
+                    {analysis.citizen_impact}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Timestamp */}
+          <div className="text-center text-sm text-muted-foreground">
+            <Clock className="h-4 w-4 inline mr-1" />
+            Análise gerada em {formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true, locale: ptBR })}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

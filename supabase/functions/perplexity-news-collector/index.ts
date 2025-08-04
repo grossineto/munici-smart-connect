@@ -267,7 +267,7 @@ serve(async (req) => {
             continue;
           }
 
-          // Inserir análise enriquecida
+          // Inserir análise SUPER ELABORADA
           const { error: analysisError } = await supabase
             .from('news_analysis')
             .insert({
@@ -281,7 +281,15 @@ serve(async (req) => {
               keywords: analysis.keywords,
               summary: analysis.summary,
               impact_analysis: analysis.impact_analysis,
-              recommended_action: analysis.recommended_action
+              recommended_action: analysis.recommended_action,
+              // Novos campos elaborados
+              public_sentiment_prediction: analysis.public_sentiment_prediction,
+              communication_strategy: analysis.communication_strategy,
+              risk_assessment: analysis.risk_assessment,
+              related_municipal_areas: analysis.related_municipal_areas,
+              media_monitoring_focus: analysis.media_monitoring_focus,
+              citizen_impact: analysis.citizen_impact,
+              political_opportunity: analysis.political_opportunity
             });
 
           if (analysisError) {

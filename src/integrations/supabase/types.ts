@@ -273,15 +273,22 @@ export type Database = {
       news_analysis: {
         Row: {
           article_id: string | null
+          citizen_impact: string | null
+          communication_strategy: string | null
           created_at: string
           crisis_potential: boolean | null
           id: string
           impact_analysis: string | null
           keywords: string[] | null
+          media_monitoring_focus: string | null
           mentions_city: boolean | null
           mentions_mayor: boolean | null
+          political_opportunity: string | null
+          public_sentiment_prediction: string | null
           recommended_action: string | null
+          related_municipal_areas: string[] | null
           relevance_score: number | null
+          risk_assessment: string | null
           sentiment_score: number | null
           summary: string | null
           updated_at: string
@@ -289,15 +296,22 @@ export type Database = {
         }
         Insert: {
           article_id?: string | null
+          citizen_impact?: string | null
+          communication_strategy?: string | null
           created_at?: string
           crisis_potential?: boolean | null
           id?: string
           impact_analysis?: string | null
           keywords?: string[] | null
+          media_monitoring_focus?: string | null
           mentions_city?: boolean | null
           mentions_mayor?: boolean | null
+          political_opportunity?: string | null
+          public_sentiment_prediction?: string | null
           recommended_action?: string | null
+          related_municipal_areas?: string[] | null
           relevance_score?: number | null
+          risk_assessment?: string | null
           sentiment_score?: number | null
           summary?: string | null
           updated_at?: string
@@ -305,15 +319,22 @@ export type Database = {
         }
         Update: {
           article_id?: string | null
+          citizen_impact?: string | null
+          communication_strategy?: string | null
           created_at?: string
           crisis_potential?: boolean | null
           id?: string
           impact_analysis?: string | null
           keywords?: string[] | null
+          media_monitoring_focus?: string | null
           mentions_city?: boolean | null
           mentions_mayor?: boolean | null
+          political_opportunity?: string | null
+          public_sentiment_prediction?: string | null
           recommended_action?: string | null
+          related_municipal_areas?: string[] | null
           relevance_score?: number | null
+          risk_assessment?: string | null
           sentiment_score?: number | null
           summary?: string | null
           updated_at?: string
