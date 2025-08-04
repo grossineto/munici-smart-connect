@@ -32,7 +32,14 @@ serve(async (req) => {
       "São Paulo saúde pública hospitais UBS Ricardo Nunes",
       "São Paulo educação escolas municipais ensino Ricardo Nunes",
       "São Paulo segurança pública criminalidade violência centro",
-      "São Paulo habitação moradia popular COHAB Ricardo Nunes"
+      "São Paulo habitação moradia popular COHAB Ricardo Nunes",
+      "São Paulo meio ambiente parques sustentabilidade Ricardo Nunes",
+      "São Paulo cultura eventos turismo Ricardo Nunes programação",
+      "São Paulo economia emprego desenvolvimento urbano Ricardo Nunes",
+      "São Paulo orçamento público transparência Ricardo Nunes finanças",
+      "São Paulo assistência social vulnerabilidade Ricardo Nunes programas",
+      "São Paulo obras viárias trânsito marginais Ricardo Nunes mobilidade",
+      "São Paulo zeladoria limpeza urbana Ricardo Nunes serviços públicos"
     ];
 
     for (const query of queries) {

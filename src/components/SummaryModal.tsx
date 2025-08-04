@@ -147,7 +147,9 @@ export function SummaryModal({ type, data, isOpen, onClose }: SummaryModalProps)
                   <h4 className="font-semibold text-red-800">🚨 Situações Urgentes:</h4>
                   <ul className="text-sm text-red-700 mt-1">
                     {urgent.slice(0, 3).map((analysis, index) => (
-                      <li key={index}>• {analysis.news_articles?.title?.substring(0, 80)}...</li>
+                      <li key={index}>• {analysis.news_articles?.title?.substring(0, 60)}... 
+                        <span className="text-xs text-red-600 ml-2">({analysis.news_articles?.author || 'Fonte desconhecida'})</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -158,7 +160,9 @@ export function SummaryModal({ type, data, isOpen, onClose }: SummaryModalProps)
                   <h4 className="font-semibold text-purple-800">👨‍💼 Menções ao Prefeito Ricardo Nunes:</h4>
                   <ul className="text-sm text-purple-700 mt-1">
                     {mayorMentions.slice(0, 3).map((analysis, index) => (
-                      <li key={index}>• {analysis.news_articles?.title?.substring(0, 80)}...</li>
+                      <li key={index}>• {analysis.news_articles?.title?.substring(0, 60)}... 
+                        <span className="text-xs text-purple-600 ml-2">({analysis.news_articles?.author || 'Fonte desconhecida'})</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -169,7 +173,9 @@ export function SummaryModal({ type, data, isOpen, onClose }: SummaryModalProps)
                   <h4 className="font-semibold text-green-800">😊 Notícias Positivas:</h4>
                   <ul className="text-sm text-green-700 mt-1">
                     {positive.slice(0, 3).map((analysis, index) => (
-                      <li key={index}>• {analysis.news_articles?.title?.substring(0, 80)}...</li>
+                      <li key={index}>• {analysis.news_articles?.title?.substring(0, 60)}... 
+                        <span className="text-xs text-green-600 ml-2">({analysis.news_articles?.author || 'Fonte desconhecida'})</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
