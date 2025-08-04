@@ -39,7 +39,7 @@ function NewsMonitoring() {
   const [analysisFilters, setAnalysisFilters] = useState({
     cityFilter: '',
     mayorFilter: '',
-    urgencyFilter: '',
+    urgencyFilter: 'all',
     mentionsMayor: false,
     crisisPotential: false
   });
@@ -398,7 +398,7 @@ function NewsMonitoring() {
       );
     }
 
-    if (analysisFilters.urgencyFilter) {
+    if (analysisFilters.urgencyFilter && analysisFilters.urgencyFilter !== 'all') {
       filtered = filtered.filter(analysis => analysis.urgency_level === analysisFilters.urgencyFilter);
     }
 
@@ -418,7 +418,7 @@ function NewsMonitoring() {
     setAnalysisFilters({
       cityFilter: '',
       mayorFilter: '',
-      urgencyFilter: '',
+      urgencyFilter: 'all',
       mentionsMayor: false,
       crisisPotential: false
     });
@@ -1021,7 +1021,7 @@ function NewsMonitoring() {
                     {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
                     {showFilters ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                   </Button>
-                  {(analysisFilters.cityFilter || analysisFilters.mayorFilter || analysisFilters.urgencyFilter || analysisFilters.mentionsMayor || analysisFilters.crisisPotential) && (
+                  {(analysisFilters.cityFilter || analysisFilters.mayorFilter || (analysisFilters.urgencyFilter && analysisFilters.urgencyFilter !== 'all') || analysisFilters.mentionsMayor || analysisFilters.crisisPotential) && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -1059,25 +1059,25 @@ function NewsMonitoring() {
                     />
                   </div>
 
-                  {/* Filtro por urgência */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-purple-700">Urgência</Label>
-                    <Select 
-                      value={analysisFilters.urgencyFilter} 
-                      onValueChange={(value) => setAnalysisFilters(prev => ({ ...prev, urgencyFilter: value }))}
-                    >
-                      <SelectTrigger className="text-sm">
-                        <SelectValue placeholder="Selecionar urgência" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">Todas</SelectItem>
-                        <SelectItem value="critical">🚨 Crítico</SelectItem>
-                        <SelectItem value="high">⚠️ Alto</SelectItem>
-                        <SelectItem value="medium">📊 Médio</SelectItem>
-                        <SelectItem value="low">📝 Baixo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    {/* Filtro por urgência */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-purple-700">Urgência</Label>
+                      <Select 
+                        value={analysisFilters.urgencyFilter} 
+                        onValueChange={(value) => setAnalysisFilters(prev => ({ ...prev, urgencyFilter: value === 'all' ? '' : value }))}
+                      >
+                        <SelectTrigger className="text-sm">
+                          <SelectValue placeholder="Selecionar urgência" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todas</SelectItem>
+                          <SelectItem value="critical">🚨 Crítico</SelectItem>
+                          <SelectItem value="high">⚠️ Alto</SelectItem>
+                          <SelectItem value="medium">📊 Médio</SelectItem>
+                          <SelectItem value="low">📝 Baixo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
                   {/* Filtros booleanos */}
                   <div className="space-y-3">
