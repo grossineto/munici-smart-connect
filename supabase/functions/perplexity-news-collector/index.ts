@@ -54,22 +54,22 @@ serve(async (req) => {
               - URL completa e funcional
               - Fonte/veículo
               - Resumo do conteúdo
-              - Data de publicação
+              - Data e hora EXATA de publicação da notícia no site original
               
               Formato:
               NOTÍCIA 1:
               Título: [título]
               URL: [link]
               Fonte: [veículo]
+              Data: [data completa: DD/MM/AAAA HH:MM]
               Resumo: [conteúdo]
-              Data: [data]
               
               NOTÍCIA 2:
               Título: [título]
               URL: [link]
               Fonte: [veículo]  
-              Resumo: [conteúdo]
-              Data: [data]`
+              Data: [data completa: DD/MM/AAAA HH:MM]
+              Resumo: [conteúdo]`
             }
           ],
           temperature: 0.1,
@@ -95,6 +95,7 @@ serve(async (req) => {
         const titleMatch = block.match(/Título:\s*(.+)/i);
         const urlMatch = block.match(/URL:\s*(https?:\/\/[^\s\n]+)/i);
         const sourceMatch = block.match(/Fonte:\s*(.+)/i);
+        const dataMatch = block.match(/Data:\s*(.+)/i);
         const resumoMatch = block.match(/Resumo:\s*(.+)/i);
         
         if (!titleMatch || !urlMatch) {
@@ -105,10 +106,28 @@ serve(async (req) => {
         const title = titleMatch[1].trim();
         const url = urlMatch[1].trim();
         const source = sourceMatch ? sourceMatch[1].trim() : 'Portal de Notícias';
+        const dateStr = dataMatch ? dataMatch[1].trim() : null;
         const content = resumoMatch ? resumoMatch[1].trim() : 'Conteúdo via Perplexity';
+
+        // Processar data de publicação
+        let publishedAt = new Date();
+        if (dateStr) {
+          try {
+            // Tentar converter formato DD/MM/AAAA HH:MM
+            const [datePart, timePart] = dateStr.split(' ');
+            if (datePart && datePart.includes('/')) {
+              const [day, month, year] = datePart.split('/');
+              const [hour, minute] = timePart ? timePart.split(':') : ['12', '00'];
+              publishedAt = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
+            }
+          } catch (e) {
+            console.log('⚠️ Erro ao processar data, usando atual');
+          }
+        }
 
         console.log(`✅ Processando: ${title.substring(0, 50)}...`);
         console.log(`🔗 URL: ${url}`);
+        console.log(`📅 Data: ${publishedAt.toLocaleString('pt-BR')}`);
 
         // Verificar se já existe
         const { data: existing } = await supabase
@@ -122,7 +141,7 @@ serve(async (req) => {
           continue;
         }
 
-        // Salvar artigo
+        // Salvar artigo com data real de publicação
         const { data: article, error: articleError } = await supabase
           .from('news_articles')
           .insert({
@@ -130,7 +149,7 @@ serve(async (req) => {
             url,
             content,
             author: source,
-            published_at: new Date().toISOString(),
+            published_at: publishedAt.toISOString(),
           })
           .select()
           .single();

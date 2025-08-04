@@ -109,37 +109,6 @@ export default function NewsMonitoring() {
     return () => supabase.removeChannel(channel);
   };
 
-  const runNewsCrawler = async () => {
-    setCrawling(true);
-    try {
-      console.log('Starting real news collection...');
-      const { data, error } = await supabase.functions.invoke('real-news-collector');
-      
-      console.log('Real news collection response:', { data, error });
-      
-      if (error) {
-        console.error('Real news collection error:', error);
-        throw error;
-      }
-      
-      toast({ 
-        title: "Notícias Coletadas", 
-        description: `Coletadas ${data?.processed_articles || 0} notícias reais dos principais portais` 
-      });
-      
-      console.log('Reloading data in 3 seconds...');
-      setTimeout(() => {
-        console.log('Reloading data now...');
-        loadData();
-      }, 3000);
-    } catch (error) {
-      console.error('Real news collection failed:', error);
-      toast({ title: "Erro", description: "Erro ao coletar notícias reais", variant: "destructive" });
-    } finally {
-      setCrawling(false);
-    }
-  };
-
   const runPerplexityNews = async () => {
     setCrawling(true);
     try {
@@ -154,8 +123,8 @@ export default function NewsMonitoring() {
       }
       
       toast({ 
-        title: "Notícias em Tempo Real", 
-        description: `Coletadas ${data?.articles?.length || 0} notícias em tempo real via Perplexity` 
+        title: "Notícias Coletadas", 
+        description: `Coletadas ${data?.articles?.length || 0} notícias em tempo real dos principais portais brasileiros` 
       });
       
       console.log('Reloading data in 3 seconds...');
@@ -166,37 +135,6 @@ export default function NewsMonitoring() {
     } catch (error) {
       console.error('Perplexity news failed:', error);
       toast({ title: "Erro", description: "Erro ao coletar notícias em tempo real", variant: "destructive" });
-    } finally {
-      setCrawling(false);
-    }
-  };
-
-  const runTestAnalysis = async () => {
-    setCrawling(true);
-    try {
-      console.log('Starting test analysis...');
-      const { data, error } = await supabase.functions.invoke('test-news-analysis');
-      
-      console.log('Test analysis response:', { data, error });
-      
-      if (error) {
-        console.error('Test analysis error:', error);
-        throw error;
-      }
-      
-      toast({ 
-        title: "Teste Executado", 
-        description: `Processados ${data?.processed_articles || 0} artigos de teste com palavras-chave específicas` 
-      });
-      
-      console.log('Reloading data in 3 seconds...');
-      setTimeout(() => {
-        console.log('Reloading data now...');
-        loadData();
-      }, 3000);
-    } catch (error) {
-      console.error('Test analysis failed:', error);
-      toast({ title: "Erro", description: "Erro ao executar teste", variant: "destructive" });
     } finally {
       setCrawling(false);
     }
@@ -219,17 +157,9 @@ export default function NewsMonitoring() {
           <p className="text-muted-foreground">Acompanhe notícias relevantes e alertas em tempo real</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={runTestAnalysis} disabled={crawling} variant="outline" className="flex items-center gap-2">
-            <RefreshCw className={`h-4 w-4 ${crawling ? 'animate-spin' : ''}`} />
-            {crawling ? 'Testando...' : 'Teste São Paulo'}
-          </Button>
-          <Button onClick={runNewsCrawler} disabled={crawling} variant="outline" className="flex items-center gap-2">
-            <RefreshCw className={`h-4 w-4 ${crawling ? 'animate-spin' : ''}`} />
-            {crawling ? 'Coletando...' : 'Coletar Notícias Reais'}
-          </Button>
           <Button onClick={runPerplexityNews} disabled={crawling} className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
             <RefreshCw className={`h-4 w-4 ${crawling ? 'animate-spin' : ''}`} />
-            {crawling ? 'Coletando...' : 'Tempo Real (Perplexity)'}
+            {crawling ? 'Coletando...' : 'Coletar Notícias'}
           </Button>
         </div>
       </div>
@@ -350,10 +280,10 @@ export default function NewsMonitoring() {
                     <div className="text-center py-12">
                       <Globe className="h-16 w-16 mx-auto text-gray-300 mb-4" />
                       <h3 className="text-lg font-semibold text-gray-600 mb-2">Nenhuma notícia encontrada</h3>
-                      <p className="text-sm text-muted-foreground mb-6">Clique em "Tempo Real (Perplexity)" para buscar notícias atualizadas</p>
+                      <p className="text-sm text-muted-foreground mb-6">Clique em "Coletar Notícias" para buscar notícias atualizadas dos principais portais brasileiros</p>
                       <Button onClick={runPerplexityNews} disabled={crawling} className="bg-gradient-to-r from-blue-600 to-purple-600">
                         <Zap className="h-4 w-4 mr-2" />
-                        Buscar Notícias Agora
+                        {crawling ? 'Coletando...' : 'Coletar Notícias'}
                       </Button>
                     </div>
                   ) : (
