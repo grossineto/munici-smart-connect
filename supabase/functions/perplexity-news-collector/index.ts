@@ -20,26 +20,28 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🚀 Iniciando coleta inteligente de notícias para gestão municipal...');
+    console.log('🚀 [DEBUG] Iniciando coleta inteligente de notícias para gestão municipal...');
+    console.log('🔑 [DEBUG] Chaves disponíveis:', {
+      perplexity: !!perplexityApiKey,
+      openai: !!openaiApiKey,
+      supabase: !!supabaseUrl
+    });
 
     const processedArticles = [];
 
-    // Temas específicos para gestão municipal de São Paulo
+    // Simplificar para testar - apenas 3 temas mais importantes
     const municipalTopics = [
-      "transporte público São Paulo metrô CPTM problemas",
-      "saúde pública São Paulo hospitais UBS atendimento",
-      "educação escolas municipais São Paulo infraestrutura",
-      "segurança São Paulo criminalidade centro violência",
-      "habitação moradia popular São Paulo ocupações",
-      "zeladoria São Paulo limpeza urbana manutenção",
-      "trânsito São Paulo obras viárias marginais",
-      "Ricardo Nunes prefeito São Paulo decisões políticas"
+      "prefeito Ricardo Nunes São Paulo notícias hoje",
+      "São Paulo transporte público problemas metrô",
+      "São Paulo saúde hospitais UBS crise"
     ];
 
-    for (const topic of municipalTopics) {
-      console.log(`🔍 Buscando: ${topic}`);
+    for (let i = 0; i < municipalTopics.length; i++) {
+      const topic = municipalTopics[i];
+      console.log(`🔍 [DEBUG] Buscando ${i+1}/${municipalTopics.length}: ${topic}`);
       
-      // 1. PERPLEXITY: Encontrar notícias relevantes
+      // 1. PERPLEXITY: Encontrar notícias relevantes (simplificado)
+      console.log('📡 [DEBUG] Fazendo chamada Perplexity...');
       const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
         headers: {
@@ -51,59 +53,70 @@ serve(async (req) => {
           messages: [
             {
               role: 'user',
-              content: `Encontre notícias dos últimos 3 dias sobre "${topic}" em sites brasileiros.
+              content: `Encontre 2 notícias recentes sobre "${topic}" de sites brasileiros como G1, Folha, UOL, R7.
               
-              Liste apenas notícias que podem impactar a gestão municipal de São Paulo.
-              
-              Para cada notícia válida, retorne EXATAMENTE neste formato:
-              ---
-              TÍTULO: [título completo]
+              Para cada notícia, responda EXATAMENTE assim:
+              NOTÍCIA 1:
+              Título: [título da notícia]
               URL: [link completo]
-              FONTE: [nome do veículo]
-              RESUMO: [resumo de 2-3 linhas do conteúdo]
-              ---`
+              Fonte: [G1, Folha, UOL, etc]
+              
+              NOTÍCIA 2:
+              Título: [título da notícia]  
+              URL: [link completo]
+              Fonte: [G1, Folha, UOL, etc]`
             }
           ],
-          temperature: 0.2,
-          max_tokens: 1000
+          temperature: 0.1,
+          max_tokens: 600
         }),
       });
 
+      console.log('📊 [DEBUG] Status Perplexity:', perplexityResponse.status);
+
       if (!perplexityResponse.ok) {
-        console.error('❌ Erro Perplexity:', await perplexityResponse.text());
+        const errorText = await perplexityResponse.text();
+        console.error('❌ [DEBUG] Erro Perplexity:', errorText);
         continue;
       }
 
       const perplexityData = await perplexityResponse.json();
       const content = perplexityData.choices[0].message.content;
       
-      console.log('📰 Resposta Perplexity:', content.substring(0, 200));
+      console.log('📰 [DEBUG] Resposta Perplexity completa:', content);
 
-      // Extrair notícias usando o separador ---
-      const newsBlocks = content.split('---').filter(block => 
-        block.includes('TÍTULO:') && block.includes('URL:')
+      // Extrair notícias usando formato simples NOTÍCIA X:
+      const newsBlocks = content.split(/NOTÍCIA \d+:/).filter(block => 
+        block.trim() && block.includes('Título:') && block.includes('URL:')
       );
 
-      console.log(`📊 Encontradas ${newsBlocks.length} notícias para análise`);
+      console.log(`📊 [DEBUG] Blocos encontrados: ${newsBlocks.length}`);
+      if (newsBlocks.length > 0) {
+        console.log('📋 [DEBUG] Primeiro bloco:', newsBlocks[0]);
+      }
 
       for (const block of newsBlocks) {
         try {
-          const titleMatch = block.match(/TÍTULO:\s*(.+)/i);
+          console.log('🔍 [DEBUG] Processando bloco:', block.substring(0, 100));
+          const titleMatch = block.match(/Título:\s*(.+)/i);
           const urlMatch = block.match(/URL:\s*(https?:\/\/[^\s\n]+)/i);
-          const sourceMatch = block.match(/FONTE:\s*(.+)/i);
-          const resumoMatch = block.match(/RESUMO:\s*(.+)/i);
+          const sourceMatch = block.match(/Fonte:\s*(.+)/i);
 
           if (!titleMatch || !urlMatch) {
-            console.log('⚠️ Notícia incompleta, pulando');
+            console.log('⚠️ [DEBUG] Notícia incompleta:', { 
+              hasTitle: !!titleMatch, 
+              hasUrl: !!urlMatch,
+              block: block.substring(0, 200)
+            });
             continue;
           }
 
           const title = titleMatch[1].trim();
           const url = urlMatch[1].trim();
           const source = sourceMatch ? sourceMatch[1].trim() : 'Portal de Notícias';
-          const content = resumoMatch ? resumoMatch[1].trim() : '';
+          const content = `Notícia sobre ${title} - coletada via Perplexity`;
 
-          console.log(`✅ Processando: ${title.substring(0, 50)}...`);
+          console.log(`✅ [DEBUG] Processando: ${title.substring(0, 50)}...`);
 
           // Verificar se já existe
           const { data: existing } = await supabase
@@ -247,12 +260,13 @@ serve(async (req) => {
           console.log('✅ Notícia processada com sucesso');
 
         } catch (error) {
-          console.error('❌ Erro ao processar notícia:', error);
+          console.error('❌ [DEBUG] Erro ao processar notícia:', error);
           continue;
         }
       }
 
       // Pausa entre tópicos
+      console.log('⏸️ [DEBUG] Pausando 2s antes do próximo tópico...');
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
