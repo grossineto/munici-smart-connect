@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Search, Eye, BarChart3, MapPin, User, ChevronDown, ChevronUp, Brain, AlertTriangle, TrendingUp, Clock, Calendar, Filter, ExternalLink, Globe, Loader2, ArrowRight } from "lucide-react";
+import { Bell, Search, Eye, BarChart3, MapPin, User, ChevronDown, ChevronUp, Brain, AlertTriangle, TrendingUp, Clock, Calendar, Filter, ExternalLink, Globe, Loader2, ArrowRight, X, CheckCircle, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ function NewsMonitoring() {
   // Estados principais
   const [alerts, setAlerts] = useState<any[]>([]);
   const [analyses, setAnalyses] = useState<any[]>([]);
+  const [filteredAnalyses, setFilteredAnalyses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCollecting, setIsCollecting] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
@@ -33,6 +34,16 @@ function NewsMonitoring() {
   const [showOtherCities, setShowOtherCities] = useState(false);
   const [selectedCity, setSelectedCity] = useState<any>(null);
   const [selectedMayor, setSelectedMayor] = useState<any>(null);
+
+  // Estados dos filtros de análise
+  const [analysisFilters, setAnalysisFilters] = useState({
+    cityFilter: '',
+    mayorFilter: '',
+    urgencyFilter: '',
+    mentionsMayor: false,
+    crisisPotential: false
+  });
+  const [showFilters, setShowFilters] = useState(false);
 
   // Função para carregar dados gerais
   const loadData = async () => {
@@ -366,7 +377,62 @@ function NewsMonitoring() {
       console.error('Perplexity news failed:', error);
     }
   };
+  
+  // Função para aplicar filtros nas análises
+  const applyAnalysisFilters = () => {
+    let filtered = [...analyses];
 
+    if (analysisFilters.cityFilter) {
+      filtered = filtered.filter(analysis => 
+        analysis.news_articles?.title?.toLowerCase().includes(analysisFilters.cityFilter.toLowerCase()) ||
+        analysis.impact_analysis?.toLowerCase().includes(analysisFilters.cityFilter.toLowerCase()) ||
+        analysis.executive_summary?.toLowerCase().includes(analysisFilters.cityFilter.toLowerCase())
+      );
+    }
+
+    if (analysisFilters.mayorFilter) {
+      filtered = filtered.filter(analysis => 
+        analysis.news_articles?.title?.toLowerCase().includes(analysisFilters.mayorFilter.toLowerCase()) ||
+        analysis.impact_analysis?.toLowerCase().includes(analysisFilters.mayorFilter.toLowerCase()) ||
+        analysis.executive_summary?.toLowerCase().includes(analysisFilters.mayorFilter.toLowerCase())
+      );
+    }
+
+    if (analysisFilters.urgencyFilter) {
+      filtered = filtered.filter(analysis => analysis.urgency_level === analysisFilters.urgencyFilter);
+    }
+
+    if (analysisFilters.mentionsMayor) {
+      filtered = filtered.filter(analysis => analysis.mentions_mayor === true);
+    }
+
+    if (analysisFilters.crisisPotential) {
+      filtered = filtered.filter(analysis => analysis.crisis_potential === true);
+    }
+
+    setFilteredAnalyses(filtered);
+  };
+
+  // Função para limpar filtros
+  const clearAnalysisFilters = () => {
+    setAnalysisFilters({
+      cityFilter: '',
+      mayorFilter: '',
+      urgencyFilter: '',
+      mentionsMayor: false,
+      crisisPotential: false
+    });
+  };
+
+  // Efeito para aplicar filtros quando mudarem
+  useEffect(() => {
+    applyAnalysisFilters();
+  }, [analyses, analysisFilters]);
+
+  // Efeito para inicializar análises filtradas
+  useEffect(() => {
+    setFilteredAnalyses(analyses);
+  }, [analyses]);
   // Cidades principais para seleção rápida
   const mainCities = [
     { nome: "São Paulo", uf: "SP" },
@@ -934,13 +1000,123 @@ function NewsMonitoring() {
           </TabsContent>
 
           <TabsContent value="analyses" className="space-y-6">
+            {/* Filtros das análises */}
+            <Card className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-purple-600" />
+                  <h3 className="font-semibold text-purple-800">Filtros de Análise</h3>
+                  <Badge variant="outline" className="text-xs">
+                    {filteredAnalyses.length} de {analyses.length}
+                  </Badge>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="gap-1"
+                  >
+                    <Filter className="h-3 w-3" />
+                    {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
+                    {showFilters ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  </Button>
+                  {(analysisFilters.cityFilter || analysisFilters.mayorFilter || analysisFilters.urgencyFilter || analysisFilters.mentionsMayor || analysisFilters.crisisPotential) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={clearAnalysisFilters}
+                      className="gap-1 text-red-600 hover:text-red-700"
+                    >
+                      <X className="h-3 w-3" />
+                      Limpar
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {showFilters && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-purple-200">
+                  {/* Filtro por cidade */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-purple-700">Cidade</Label>
+                    <Input
+                      placeholder="Ex: São Paulo, Rio de Janeiro..."
+                      value={analysisFilters.cityFilter}
+                      onChange={(e) => setAnalysisFilters(prev => ({ ...prev, cityFilter: e.target.value }))}
+                      className="text-sm"
+                    />
+                  </div>
+
+                  {/* Filtro por prefeito */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-purple-700">Prefeito</Label>
+                    <Input
+                      placeholder="Ex: João Silva, Maria Santos..."
+                      value={analysisFilters.mayorFilter}
+                      onChange={(e) => setAnalysisFilters(prev => ({ ...prev, mayorFilter: e.target.value }))}
+                      className="text-sm"
+                    />
+                  </div>
+
+                  {/* Filtro por urgência */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-purple-700">Urgência</Label>
+                    <Select 
+                      value={analysisFilters.urgencyFilter} 
+                      onValueChange={(value) => setAnalysisFilters(prev => ({ ...prev, urgencyFilter: value }))}
+                    >
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="Selecionar urgência" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Todas</SelectItem>
+                        <SelectItem value="critical">🚨 Crítico</SelectItem>
+                        <SelectItem value="high">⚠️ Alto</SelectItem>
+                        <SelectItem value="medium">📊 Médio</SelectItem>
+                        <SelectItem value="low">📝 Baixo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Filtros booleanos */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-purple-700">Filtros Especiais</Label>
+                    <div className="flex flex-col gap-2">
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={analysisFilters.mentionsMayor}
+                          onChange={(e) => setAnalysisFilters(prev => ({ ...prev, mentionsMayor: e.target.checked }))}
+                          className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
+                        />
+                        <span>👤 Menciona Prefeito</span>
+                      </label>
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={analysisFilters.crisisPotential}
+                          onChange={(e) => setAnalysisFilters(prev => ({ ...prev, crisisPotential: e.target.checked }))}
+                          className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
+                        />
+                        <span>🔥 Potencial de Crise</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Card>
+
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <Brain className="h-6 w-6 text-purple-600" />
                 <div>
                   <h2 className="text-xl font-bold">Análises Inteligentes</h2>
                   <p className="text-sm text-gray-600">
-                    Análises detalhadas com IA sobre o impacto das notícias
+                    {filteredAnalyses.length > 0 ? 
+                      `${filteredAnalyses.length} análise${filteredAnalyses.length > 1 ? 's' : ''} encontrada${filteredAnalyses.length > 1 ? 's' : ''}` :
+                      'Nenhuma análise encontrada com os filtros aplicados'
+                    }
                   </p>
                 </div>
               </div>
@@ -983,44 +1159,51 @@ function NewsMonitoring() {
                     </Card>
                   ))}
                 </div>
-              ) : analyses.length === 0 ? (
+              ) : filteredAnalyses.length === 0 ? (
                 <Card className="p-12 text-center border-dashed border-2">
                   <div className="flex flex-col items-center gap-4">
                     <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
                       <Brain className="h-8 w-8 text-purple-600" />
                     </div>
                     <div className="max-w-md">
-                      <h3 className="text-xl font-semibold mb-2">Nenhuma análise disponível</h3>
+                      <h3 className="text-xl font-semibold mb-2">
+                        {analyses.length === 0 ? 'Nenhuma análise disponível' : 'Nenhuma análise encontrada'}
+                      </h3>
                       <p className="text-gray-600 mb-6 leading-relaxed">
-                        {selectedMayor 
-                          ? `Inicie a coleta de notícias para ${selectedMayor.nome} para gerar análises inteligentes com IA`
-                          : 'Selecione uma cidade e inicie a coleta de notícias para gerar análises inteligentes com IA'
-                        }
-                      </p>
-                      <Button 
-                        onClick={runPerplexityNews} 
-                        disabled={isCollecting}
-                        size="lg" 
-                        className="gap-2"
-                      >
-                        {isCollecting ? (
-                          <>
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                            Coletando e Analisando...
-                          </>
+                        {analyses.length === 0 ? (
+                          selectedMayor 
+                            ? `Inicie a coleta de notícias para ${selectedMayor.nome} para gerar análises inteligentes com IA`
+                            : 'Selecione uma cidade e inicie a coleta de notícias para gerar análises inteligentes com IA'
                         ) : (
-                          <>
-                            <Search className="h-5 w-5" />
-                            Iniciar Coleta e Análise
-                          </>
+                          'Nenhuma análise corresponde aos filtros aplicados. Tente ajustar os critérios de busca.'
                         )}
-                      </Button>
+                      </p>
+                      {analyses.length === 0 && (
+                        <Button 
+                          onClick={runPerplexityNews} 
+                          disabled={isCollecting}
+                          size="lg" 
+                          className="gap-2"
+                        >
+                          {isCollecting ? (
+                            <>
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                              Coletando e Analisando...
+                            </>
+                          ) : (
+                            <>
+                              <Search className="h-5 w-5" />
+                              Iniciar Coleta e Análise
+                            </>
+                          )}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Card>
               ) : (
                 <div className="space-y-4">
-                  {analyses.map((analysis) => (
+                  {filteredAnalyses.map((analysis) => (
                     <Card 
                       key={analysis.id} 
                       className="group p-6 hover:shadow-xl transition-all duration-300 cursor-pointer border-l-4 border-l-gray-200 hover:border-l-purple-500 bg-gradient-to-r from-white to-gray-50/30 hover:from-purple-50/20 hover:to-purple-100/30"
