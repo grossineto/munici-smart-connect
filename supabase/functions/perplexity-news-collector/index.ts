@@ -37,19 +37,56 @@ serve(async (req) => {
     const processedArticles = [];
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
-    // Queries dinâmicas baseadas no prefeito selecionado
+    // 🎯 Queries dinâmicas baseadas no prefeito selecionado com FONTES REGIONAIS
     let todayQueries;
+    let regionalSources;
     
     if (mayor) {
+      // Definir fontes regionais específicas por estado
+      const stateSources = {
+        'SP': 'G1 São Paulo, Folha, Estadão, UOL São Paulo, Terra São Paulo, R7 São Paulo, CNN Brasil',
+        'RJ': 'G1 Rio, O Globo, Extra, UOL Rio, O Dia, Jornal do Brasil, CNN Brasil',
+        'MG': 'G1 Minas, Estado de Minas, O Tempo, Hoje em Dia, Super Notícia, UOL Minas',
+        'RS': 'G1 RS, Zero Hora, Correio do Povo, Jornal do Comércio, GZH',
+        'PE': 'G1 Pernambuco, Diário de Pernambuco, Folha de Pernambuco, JC Online',
+        'BA': 'G1 Bahia, Correio, A Tarde, Metro 1, Bahia Notícias',
+        'PR': 'G1 Paraná, Gazeta do Povo, Bem Paraná, RPC, Banda B',
+        'CE': 'G1 Ceará, Diário do Nordeste, O Povo, Tribuna do Ceará',
+        'SC': 'G1 Santa Catarina, NSC Total, Diário Catarinense, ND+',
+        'GO': 'G1 Goiás, O Popular, Diário de Goiás, Mais Goiás',
+        'ES': 'G1 Espírito Santo, A Gazeta, Aqui Notícias, Folha Vitória',
+        'DF': 'G1 DF, Correio Braziliense, Metrópoles, Jornal de Brasília',
+        'AM': 'G1 Amazonas, A Crítica, Em Tempo, D24AM',
+        'PA': 'G1 Pará, Diário do Pará, O Liberal, DOL',
+        'MA': 'G1 Maranhão, O Imparcial, O Estado do Maranhão',
+        'MT': 'G1 Mato Grosso, Gazeta Digital, RDNEWS, SóNotícias',
+        'MS': 'G1 MS, Campo Grande News, Correio do Estado',
+        'AL': 'G1 Alagoas, Gazeta de Alagoas, TNH1',
+        'SE': 'G1 Sergipe, Cinform, Fan F1',
+        'PB': 'G1 Paraíba, Correio da Paraíba, Paraíba Online',
+        'RN': 'G1 RN, Tribuna do Norte, Novo Jornal',
+        'PI': 'G1 Piauí, Cidade Verde, O Dia PI',
+        'AC': 'G1 Acre, Ac24horas, ContilNet',
+        'RO': 'G1 Rondônia, Rondônia Ao Vivo, Folha do Estado',
+        'RR': 'G1 Roraima, Folha de Boa Vista',
+        'AP': 'G1 Amapá, SelesNafes.com',
+        'TO': 'G1 Tocantins, Jornal do Tocantins'
+      };
+
+      regionalSources = stateSources[mayor.state] || 'G1, Folha, Estadão, UOL, CNN Brasil';
+
       todayQueries = [
-        `${mayor.mayorName} prefeito ${mayor.cityName} notícias hoje ${today}`,
+        `${mayor.mayorName} prefeito ${mayor.cityName} ${mayor.state} notícias hoje ${today}`,
+        `${mayor.cityName} ${mayor.state} prefeitura gestão municipal hoje ${today}`,
         `${mayor.cityName} ${mayor.state} transporte público problemas hoje ${today}`,
         `${mayor.cityName} ${mayor.state} saúde hospitais notícias hoje ${today}`,
         `${mayor.cityName} ${mayor.state} segurança criminalidade hoje ${today}`,
-        `${mayor.cityName} ${mayor.state} educação escolas hoje ${today}`
+        `${mayor.cityName} ${mayor.state} educação escolas hoje ${today}`,
+        `${mayor.cityName} ${mayor.state} infraestrutura obras hoje ${today}`
       ];
     } else {
       // Queries padrão para São Paulo
+      regionalSources = 'G1 São Paulo, Folha, Estadão, UOL São Paulo, Terra São Paulo, R7 São Paulo, CNN Brasil';
       todayQueries = [
         `Ricardo Nunes prefeito São Paulo notícias hoje ${today}`,
         `São Paulo transporte público problemas hoje ${today}`,
@@ -79,11 +116,12 @@ serve(async (req) => {
               },
               {
                 role: 'user',
-                content: `Encontre 2 notícias ATUAIS de hoje (${today}) sobre "${query}" dos principais portais brasileiros.
+                content: `Encontre 2 notícias ATUAIS de hoje (${today}) sobre "${query}" dos portais brasileiros.
                 
                 IMPORTANTE: Quero notícias de HOJE, mesmo que similares já existam.
                 
-                FONTES: G1, Folha, Estadão, UOL, R7, CNN Brasil, Metrópoles, Band
+                FONTES PRIORITÁRIAS: ${regionalSources}
+                FONTES NACIONAIS: G1, Folha, Estadão, UOL, R7, CNN Brasil, Metrópoles, Band`
                 
                 Para cada notícia REAL encontrada hoje, retorne EXATAMENTE:
                 

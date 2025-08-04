@@ -40,8 +40,12 @@ export default function NewsMonitoring() {
   }, []);
 
   const loadData = async () => {
+    if (selectedMayor) {
+      return loadDataForMayor(selectedMayor);
+    }
+    
     try {
-      console.log('Loading news data...');
+      console.log('Loading general news data...');
       
       // Buscar alertas com dados dos artigos
       const { data: alertsRaw, error: alertsError } = await supabase
@@ -82,7 +86,6 @@ export default function NewsMonitoring() {
       if (alertsError) {
         console.error('Error loading alerts:', alertsError);
       } else {
-        // Transformar dados para o formato esperado
         const alertsData = alertsRaw?.map(alert => ({
           ...alert,
           news_articles: alert.news_articles
@@ -93,7 +96,6 @@ export default function NewsMonitoring() {
       if (analysesError) {
         console.error('Error loading analyses:', analysesError);
       } else {
-        // Transformar dados para o formato esperado
         const analysesData = analysesRaw?.map(analysis => ({
           ...analysis,
           news_articles: analysis.news_articles
@@ -105,6 +107,91 @@ export default function NewsMonitoring() {
       toast({
         title: "Erro",
         description: "Erro ao carregar dados de monitoramento",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🎯 NOVA FUNÇÃO: Carregar dados filtrados por prefeito
+  const loadDataForMayor = async (mayor: any) => {
+    try {
+      console.log(`🔍 Carregando dados para: ${mayor.nome} - ${mayor.cidade}/${mayor.uf}`);
+      
+      const mayorKeywords = [mayor.nome, mayor.cidade, mayor.uf];
+      
+      // Buscar alertas relacionados ao prefeito
+      let alertsQuery = supabase
+        .from('news_alerts')
+        .select(`
+          *,
+          news_articles!inner (
+            title,
+            url,
+            published_at,
+            news_sources (name)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      // Filtrar por palavras-chave do prefeito
+      for (const keyword of mayorKeywords) {
+        alertsQuery = alertsQuery.or(`news_articles.title.ilike.%${keyword}%,news_articles.content.ilike.%${keyword}%`);
+      }
+
+      const { data: alertsRaw, error: alertsError } = await alertsQuery.limit(50);
+
+      // Buscar análises relacionadas ao prefeito
+      let analysesQuery = supabase
+        .from('news_analysis')
+        .select(`
+          *,
+          news_articles!inner (
+            title,
+            url,
+            published_at,
+            author
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      // Filtrar por palavras-chave do prefeito
+      for (const keyword of mayorKeywords) {
+        analysesQuery = analysesQuery.or(`news_articles.title.ilike.%${keyword}%,keywords.cs.{${keyword}}`);
+      }
+
+      const { data: analysesRaw, error: analysesError } = await analysesQuery.limit(100);
+
+      console.log(`📊 Alertas encontrados para ${mayor.nome}:`, alertsRaw?.length || 0);
+      console.log(`📊 Análises encontradas para ${mayor.nome}:`, analysesRaw?.length || 0);
+
+      if (!alertsError && alertsRaw) {
+        const alertsData = alertsRaw.map(alert => ({
+          ...alert,
+          news_articles: alert.news_articles
+        }));
+        setAlerts(alertsData);
+      }
+
+      if (!analysesError && analysesRaw) {
+        const analysesData = analysesRaw.map(analysis => ({
+          ...analysis,
+          news_articles: analysis.news_articles
+        }));
+        setAnalyses(analysesData);
+      }
+
+      toast({
+        title: "Dados Atualizados",
+        description: `Mostrando ${(alertsRaw?.length || 0) + (analysesRaw?.length || 0)} itens para ${mayor.nome}`,
+      });
+
+    } catch (error) {
+      console.error('Error loading mayor data:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar dados do prefeito",
         variant: "destructive",
       });
     } finally {
@@ -216,7 +303,7 @@ export default function NewsMonitoring() {
     'Boa Vista': { nome: 'Arthur Henrique', partido: 'MDB', mandato: '2021-2024' }
   };
 
-  const selectCity = (city: any) => {
+  const selectCity = async (city: any) => {
     setSelectedCity(city);
     console.log('🏙️ Cidade selecionada:', city.nome);
     console.log('📋 Buscando prefeito para:', city.nome);
@@ -226,10 +313,19 @@ export default function NewsMonitoring() {
     if (mayor) {
       setSelectedMayor({ ...mayor, cidade: city.nome, uf: city.uf });
       console.log('✅ Prefeito encontrado:', mayor.nome);
+      
       toast({
-        title: "Prefeito Encontrado",
-        description: `${mayor.nome} (${mayor.partido}) - ${city.nome}/${city.uf}`,
+        title: "Prefeito Selecionado",
+        description: `${mayor.nome} (${mayor.partido}) - ${city.nome}/${city.uf}. Coletando notícias...`,
       });
+
+      // 🚀 AUTOMÁTICO: Coletar notícias imediatamente após seleção
+      console.log('🚀 Iniciando coleta automática para:', mayor.nome);
+      await runPerplexityNewsForMayor({ ...mayor, cidade: city.nome, uf: city.uf });
+      
+      // 🔄 Atualizar dashboard com filtro
+      await loadDataForMayor({ ...mayor, cidade: city.nome, uf: city.uf });
+      
     } else {
       setSelectedMayor(null);
       console.log('❌ Prefeito não encontrado para:', city.nome);
@@ -246,14 +342,23 @@ export default function NewsMonitoring() {
   const runPerplexityNews = async () => {
     setCrawling(true);
     try {
+      await runPerplexityNewsForMayor(selectedMayor);
+    } finally {
+      setCrawling(false);
+    }
+  };
+
+  // 🎯 NOVA FUNÇÃO: Coletar notícias para prefeito específico
+  const runPerplexityNewsForMayor = async (mayor: any | null) => {
+    try {
       console.log('Starting Perplexity news collection...');
       
       // Preparar dados do prefeito para a coleta personalizada
-      const mayorParams = selectedMayor ? {
-        mayorName: selectedMayor.nome,
-        cityName: selectedMayor.cidade,
-        state: selectedMayor.uf,
-        party: selectedMayor.partido
+      const mayorParams = mayor ? {
+        mayorName: mayor.nome,
+        cityName: mayor.cidade,
+        state: mayor.uf,
+        party: mayor.partido
       } : null;
       
       const { data, error } = await supabase.functions.invoke('perplexity-news-collector', {
@@ -267,23 +372,25 @@ export default function NewsMonitoring() {
         throw error;
       }
       
-      const targetMayor = selectedMayor ? `${selectedMayor.nome} (${selectedMayor.cidade}/${selectedMayor.uf})` : 'São Paulo';
+      const targetMayor = mayor ? `${mayor.nome} (${mayor.cidade}/${mayor.uf})` : 'São Paulo';
       
       toast({ 
         title: "Notícias Coletadas", 
         description: `Coletadas ${data?.articles?.length || 0} notícias sobre ${targetMayor}` 
       });
       
-      console.log('Reloading data in 3 seconds...');
+      console.log('🔄 Atualizando dashboard em 3 segundos...');
       setTimeout(() => {
-        console.log('Reloading data now...');
-        loadData();
+        console.log('🔄 Atualizando dashboard agora...');
+        if (mayor) {
+          loadDataForMayor(mayor);
+        } else {
+          loadData();
+        }
       }, 3000);
     } catch (error) {
       console.error('Perplexity news failed:', error);
       toast({ title: "Erro", description: "Erro ao coletar notícias em tempo real", variant: "destructive" });
-    } finally {
-      setCrawling(false);
     }
   };
 
@@ -401,18 +508,34 @@ export default function NewsMonitoring() {
           
           {/* Prefeito Selecionado */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Prefeito Atual</Label>
+            <Label className="text-sm font-medium">Prefeito Selecionado</Label>
             {selectedMayor ? (
               <div className="p-4 bg-white border border-green-200 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                     <User className="h-5 w-5 text-green-600" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="font-semibold text-green-800">{selectedMayor.nome}</p>
                     <p className="text-sm text-green-600">{selectedMayor.partido} • {selectedMayor.cidade}/{selectedMayor.uf}</p>
                     <p className="text-xs text-gray-500">Mandato: {selectedMayor.mandato}</p>
                   </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSelectedMayor(null);
+                      setSelectedCity(null);
+                      loadData(); // Recarregar dados gerais
+                      toast({
+                        title: "Filtro Removido",
+                        description: "Voltando para monitoramento geral",
+                      });
+                    }}
+                    className="text-green-700 border-green-300 hover:bg-green-100"
+                  >
+                    Limpar Filtro
+                  </Button>
                 </div>
               </div>
             ) : (
