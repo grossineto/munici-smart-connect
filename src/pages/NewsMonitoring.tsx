@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Search, Eye, BarChart3, MapPin, User, ChevronDown, ChevronUp, Brain, AlertTriangle, TrendingUp, Clock, Calendar, Filter, ExternalLink, Globe, Loader2 } from "lucide-react";
+import { Bell, Search, Eye, BarChart3, MapPin, User, ChevronDown, ChevronUp, Brain, AlertTriangle, TrendingUp, Clock, Calendar, Filter, ExternalLink, Globe, Loader2, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -87,46 +87,49 @@ function NewsMonitoring() {
   // Função para carregar dados filtrados por prefeito
   const loadDataForMayor = async (mayor: any) => {
     try {
-      setLoading(true);
-      console.log(`🔍 Carregando dados para: ${mayor.nome} - ${mayor.cidade}/${mayor.uf}`);
-
-      // Carregar alertas filtrados
+      console.log(`🔍 Carregando dados para: ${mayor.nome} - ${mayor.cidade}/${mayor.estado}`);
+      
+      // Carregar alertas filtrados com campos corretos
       const { data: alertsData, error: alertsError } = await supabase
-        .from('news_alerts' as any)
+        .from('news_alerts')
         .select('*')
-        .or(`title.ilike.%${mayor.nome}%,description.ilike.%${mayor.nome}%,title.ilike.%${mayor.cidade}%,description.ilike.%${mayor.cidade}%`)
-        .order('created_at', { ascending: false });
+        .or(`content.ilike.%${mayor.nome}%,content.ilike.%${mayor.cidade}%`)
+        .order('created_at', { ascending: false })
+        .limit(20);
 
       if (alertsError) {
         console.error('Erro ao carregar alertas filtrados:', alertsError);
       } else {
         setAlerts(alertsData || []);
-        console.log(`📊 Alertas encontrados para ${mayor.nome}: ${alertsData?.length || 0}`);
       }
 
-      // Carregar análises filtradas
+      // Carregar análises filtradas com campos corretos
       const { data: analysesData, error: analysesError } = await supabase
-        .from('news_analysis' as any)
-        .select('*')
-        .or(`title.ilike.%${mayor.nome}%,summary.ilike.%${mayor.nome}%,title.ilike.%${mayor.cidade}%,summary.ilike.%${mayor.cidade}%`)
-        .order('created_at', { ascending: false });
+        .from('news_analysis')
+        .select(`
+          *,
+          news_articles (
+            id,
+            title,
+            content,
+            author,
+            source,
+            url,
+            published_at
+          )
+        `)
+        .or(`executive_summary.ilike.%${mayor.nome}%,impact_analysis.ilike.%${mayor.cidade}%,keywords.ilike.%${mayor.nome}%`)
+        .order('created_at', { ascending: false })
+        .limit(20);
 
       if (analysesError) {
         console.error('Erro ao carregar análises filtradas:', analysesError);
       } else {
         setAnalyses(analysesData || []);
-        console.log(`📊 Análises encontradas para ${mayor.nome}: ${analysesData?.length || 0}`);
       }
 
     } catch (error) {
-      console.error('Erro ao carregar dados filtrados:', error);
-      toast({
-        title: "Erro ao filtrar dados",
-        description: "Não foi possível filtrar os dados. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      console.error('Erro geral ao carregar dados:', error);
     }
   };
 
@@ -878,25 +881,38 @@ function NewsMonitoring() {
                   {analyses.map((analysis) => (
                     <Card 
                       key={analysis.id} 
-                      className="p-6 hover:shadow-xl transition-all duration-300 cursor-pointer border-l-4 hover:border-l-purple-500"
+                      className="group p-6 hover:shadow-xl transition-all duration-300 cursor-pointer border-l-4 border-l-gray-200 hover:border-l-purple-500 bg-gradient-to-r from-white to-gray-50/30 hover:from-purple-50/20 hover:to-purple-100/30"
                       onClick={() => {
                         setSelectedAnalysis(analysis);
                         setShowAnalysisModal(true);
                       }}
                     >
+                      {/* Header com título e badges */}
                       <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1 pr-4">
-                          <h3 className="font-semibold text-lg mb-2 line-clamp-2 text-gray-900 hover:text-purple-700 transition-colors">
-                            {analysis.title}
-                          </h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-bold text-lg text-gray-900 group-hover:text-purple-700 transition-colors line-clamp-2">
+                              {analysis.title || analysis.news_articles?.title || 'Análise sem título'}
+                            </h3>
+                            <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" />
+                          </div>
+                          
+                          {/* Preview do conteúdo */}
+                          <div className="mb-3">
+                            <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                              {analysis.executive_summary || analysis.summary || analysis.impact_analysis || 'Preview da análise não disponível...'}
+                            </p>
+                          </div>
+
+                          {/* Metadados */}
+                          <div className="flex items-center gap-4 text-xs text-gray-500">
                             <span className="flex items-center gap-1">
                               <User className="h-3 w-3" />
-                              {analysis.author || 'Autor não informado'}
+                              {analysis.news_articles?.author || analysis.author || 'Autor não informado'}
                             </span>
                             <span className="flex items-center gap-1">
                               <Globe className="h-3 w-3" />
-                              {analysis.source || 'Fonte não informada'}
+                              {analysis.news_articles?.source || analysis.source || 'Fonte não informada'}
                             </span>
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
@@ -911,11 +927,12 @@ function NewsMonitoring() {
                           </div>
                         </div>
                         
-                        <div className="flex flex-col items-end gap-2">
+                        {/* Badges laterais */}
+                        <div className="flex flex-col items-end gap-2 ml-4">
                           <Badge variant={
                             analysis.urgency_level === 'critical' ? 'destructive' :
                             analysis.urgency_level === 'high' ? 'secondary' : 'outline'
-                          } className="text-xs">
+                          } className="text-xs font-medium">
                             {analysis.urgency_level === 'critical' ? '🚨 Crítico' :
                              analysis.urgency_level === 'high' ? '⚠️ Alto' :
                              analysis.urgency_level === 'medium' ? '📊 Médio' : '📝 Baixo'}
@@ -923,81 +940,94 @@ function NewsMonitoring() {
                           
                           {analysis.mentions_mayor && (
                             <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                              📍 Menciona Prefeito
+                              👤 Menciona Prefeito
                             </Badge>
                           )}
                           
                           {analysis.crisis_potential && (
-                            <Badge variant="destructive" className="text-xs">
+                            <Badge variant="destructive" className="text-xs animate-pulse">
                               🔥 Potencial de Crise
+                            </Badge>
+                          )}
+
+                          {(analysis.relevance_score || 0) >= 8 && (
+                            <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                              ⭐ Alta Relevância
                             </Badge>
                           )}
                         </div>
                       </div>
 
-                      {/* Métricas */}
-                      <div className="grid grid-cols-4 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+                      {/* Métricas compactas */}
+                      <div className="grid grid-cols-4 gap-3 mb-4 p-3 bg-white/70 rounded-lg border border-gray-100">
                         <div className="text-center">
-                          <div className="text-xl font-bold text-blue-600">
+                          <div className="text-lg font-bold text-blue-600">
                             {analysis.sentiment_score !== null && analysis.sentiment_score !== undefined 
                               ? (analysis.sentiment_score >= 0 ? '+' : '') + (analysis.sentiment_score * 100).toFixed(0) + '%'
                               : 'N/A'
                             }
                           </div>
-                          <div className="text-xs text-gray-600">Sentimento</div>
+                          <div className="text-xs text-gray-500">Sentimento</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-xl font-bold text-green-600">
+                          <div className="text-lg font-bold text-green-600">
                             {analysis.relevance_score || 'N/A'}/10
                           </div>
-                          <div className="text-xs text-gray-600">Relevância</div>
+                          <div className="text-xs text-gray-500">Relevância</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-xl font-bold text-purple-600">
+                          <div className="text-lg font-bold text-purple-600">
                             {analysis.crisis_potential ? '🔥' : '✅'}
                           </div>
-                          <div className="text-xs text-gray-600">Crise</div>
+                          <div className="text-xs text-gray-500">Crise</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-xl font-bold text-orange-600">
+                          <div className="text-lg font-bold text-orange-600">
                             {analysis.keywords && typeof analysis.keywords === 'string' ? analysis.keywords.split(',').length : 0}
                           </div>
-                          <div className="text-xs text-gray-600">Keywords</div>
+                          <div className="text-xs text-gray-500">Temas</div>
                         </div>
                       </div>
 
-                      {/* Resumo */}
-                      <div className="mb-4">
-                        <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed">
-                          {analysis.summary || 'Resumo não disponível para esta análise.'}
-                        </p>
-                      </div>
-
-                      {/* Keywords */}
+                      {/* Keywords principais */}
                       {analysis.keywords && typeof analysis.keywords === 'string' && (
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {analysis.keywords.split(',').slice(0, 5).map((keyword, index) => (
+                        <div className="flex flex-wrap gap-1 mb-4">
+                          {analysis.keywords.split(',').slice(0, 4).map((keyword, index) => (
                             <span 
                               key={index} 
-                              className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full"
+                              className="px-2 py-1 bg-purple-100/80 text-purple-700 text-xs rounded-full font-medium"
                             >
                               {keyword.trim()}
                             </span>
                           ))}
-                          {analysis.keywords.split(',').length > 5 && (
+                          {analysis.keywords.split(',').length > 4 && (
                             <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                              +{analysis.keywords.split(',').length - 5} mais
+                              +{analysis.keywords.split(',').length - 4}
                             </span>
                           )}
                         </div>
                       )}
 
-                      {/* Ação recomendada */}
+                      {/* Ação recomendada destacada */}
                       {analysis.recommended_action && (
-                        <div className="text-xs text-gray-600 bg-yellow-50 p-2 rounded border-l-3 border-yellow-400">
-                          <strong>💡 Ação Recomendada:</strong> {analysis.recommended_action}
+                        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-3">
+                          <div className="flex items-start gap-2">
+                            <div className="text-yellow-600 mt-0.5">💡</div>
+                            <div>
+                              <div className="text-xs font-semibold text-yellow-800 mb-1">Ação Recomendada</div>
+                              <div className="text-xs text-yellow-700 line-clamp-2">{analysis.recommended_action}</div>
+                            </div>
+                          </div>
                         </div>
                       )}
+
+                      {/* Footer com call-to-action */}
+                      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                        <span>Clique para ver análise completa</span>
+                        <div className="flex items-center gap-1 text-purple-600 font-medium">
+                          Ver detalhes <ArrowRight className="h-3 w-3" />
+                        </div>
+                      </div>
                     </Card>
                   ))}
                 </div>
