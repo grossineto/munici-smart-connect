@@ -1,112 +1,82 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
+import { Bell, Search, Eye, BarChart3, MapPin, User, ChevronDown, ChevronUp, Brain, AlertTriangle, TrendingUp, Clock, Calendar, Filter, ExternalLink, Globe, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, TrendingUp, Eye, Bell, RefreshCw, ExternalLink, Target, Users, Zap, Globe, Search, MapPin, User } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 import { AnalysisModal } from "@/components/AnalysisModal";
 import { SummaryModal } from "@/components/SummaryModal";
 
-export default function NewsMonitoring() {
+function NewsMonitoring() {
+  const { toast } = useToast();
+  
+  // Estados principais
   const [alerts, setAlerts] = useState<any[]>([]);
   const [analyses, setAnalyses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [crawling, setCrawling] = useState(false);
+  const [isCollecting, setIsCollecting] = useState(false);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState<any>(null);
-  const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
-  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
-  const [summaryType, setSummaryType] = useState<'critical' | 'pending' | 'analyses' | 'sources'>('critical');
+  const [summaryData, setSummaryData] = useState<any>(null);
+  const [summaryType, setSummaryType] = useState<'analyses' | 'pending' | 'critical' | 'sources'>('analyses');
   
-  // Estados para busca de prefeitos
-  const [searchCity, setSearchCity] = useState('');
-  const [cities, setCities] = useState<any[]>([]);
+  // Estados para pesquisa de cidades
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showOtherCities, setShowOtherCities] = useState(false);
   const [selectedCity, setSelectedCity] = useState<any>(null);
   const [selectedMayor, setSelectedMayor] = useState<any>(null);
-  const [searchingCities, setSearchingCities] = useState(false);
-  
-  const { toast } = useToast();
 
-  useEffect(() => {
-    loadData();
-    setupRealtimeSubscription();
-  }, []);
-
+  // Função para carregar dados gerais
   const loadData = async () => {
-    if (selectedMayor) {
-      return loadDataForMayor(selectedMayor);
-    }
-    
     try {
-      console.log('Loading general news data...');
-      
-      // Buscar alertas com dados dos artigos
-      const { data: alertsRaw, error: alertsError } = await supabase
-        .from('news_alerts')
-        .select(`
-          *,
-          news_articles!inner (
-            title,
-            url,
-            published_at,
-            news_sources (name)
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .limit(50);
+      setLoading(true);
+      console.log('🔄 Carregando dados gerais...');
 
-      console.log('Alerts raw:', alertsRaw);
-      console.log('Alerts error:', alertsError);
-
-      // Buscar análises com dados dos artigos  
-      const { data: analysesRaw, error: analysesError } = await supabase
-        .from('news_analysis')
-        .select(`
-          *,
-          news_articles!inner (
-            title,
-            url,
-            published_at,
-            author
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      console.log('Analyses raw:', analysesRaw);
-      console.log('Analyses error:', analysesError);
+      // Carregar alertas
+      const { data: alertsData, error: alertsError } = await supabase
+        .from('news_alerts' as any)
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (alertsError) {
-        console.error('Error loading alerts:', alertsError);
+        console.error('Erro ao carregar alertas:', alertsError);
       } else {
-        const alertsData = alertsRaw?.map(alert => ({
-          ...alert,
-          news_articles: alert.news_articles
-        })) || [];
-        setAlerts(alertsData);
+        setAlerts(alertsData || []);
+        console.log(`📊 Alertas carregados: ${alertsData?.length || 0}`);
       }
+
+      // Carregar análises
+      const { data: analysesData, error: analysesError } = await supabase
+        .from('news_analysis' as any)
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (analysesError) {
-        console.error('Error loading analyses:', analysesError);
+        console.error('Erro ao carregar análises:', analysesError);
       } else {
-        const analysesData = analysesRaw?.map(analysis => ({
-          ...analysis,
-          news_articles: analysis.news_articles
-        })) || [];
-        setAnalyses(analysesData);
+        setAnalyses(analysesData || []);
+        console.log(`📊 Análises carregadas: ${analysesData?.length || 0}`);
       }
+
+      console.log('Current state:', {
+        alerts: alertsData?.length || 0,
+        analyses: analysesData?.length || 0,
+        loading: false
+      });
+
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Erro geral ao carregar dados:', error);
       toast({
-        title: "Erro",
-        description: "Erro ao carregar dados de monitoramento",
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar os dados. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -114,92 +84,45 @@ export default function NewsMonitoring() {
     }
   };
 
-  // 🎯 NOVA FUNÇÃO: Carregar dados filtrados por prefeito
+  // Função para carregar dados filtrados por prefeito
   const loadDataForMayor = async (mayor: any) => {
     try {
+      setLoading(true);
       console.log(`🔍 Carregando dados para: ${mayor.nome} - ${mayor.cidade}/${mayor.uf}`);
-      
-      // Construir condições OR corretamente para o Supabase
-      const mayorConditions = [
-        `news_articles.title.ilike.%${mayor.nome}%`,
-        `news_articles.content.ilike.%${mayor.nome}%`,
-        `news_articles.title.ilike.%${mayor.cidade}%`,
-        `news_articles.content.ilike.%${mayor.cidade}%`,
-        `news_articles.title.ilike.%${mayor.uf}%`,
-        `news_articles.content.ilike.%${mayor.uf}%`
-      ].join(',');
-      
-      // Buscar alertas relacionados ao prefeito
-      const { data: alertsRaw, error: alertsError } = await supabase
-        .from('news_alerts')
-        .select(`
-          *,
-          news_articles!inner (
-            title,
-            url,
-            published_at,
-            news_sources (name)
-          )
-        `)
-        .or(mayorConditions)
-        .order('created_at', { ascending: false })
-        .limit(50);
 
-      // Construir condições para análises
-      const analysisConditions = [
-        `news_articles.title.ilike.%${mayor.nome}%`,
-        `keywords.cs.{${mayor.nome}}`,
-        `news_articles.title.ilike.%${mayor.cidade}%`,
-        `keywords.cs.{${mayor.cidade}}`,
-        `news_articles.title.ilike.%${mayor.uf}%`,
-        `keywords.cs.{${mayor.uf}}`
-      ].join(',');
+      // Carregar alertas filtrados
+      const { data: alertsData, error: alertsError } = await supabase
+        .from('news_alerts' as any)
+        .select('*')
+        .or(`title.ilike.%${mayor.nome}%,description.ilike.%${mayor.nome}%,title.ilike.%${mayor.cidade}%,description.ilike.%${mayor.cidade}%`)
+        .order('created_at', { ascending: false });
 
-      // Buscar análises relacionadas ao prefeito
-      const { data: analysesRaw, error: analysesError } = await supabase
-        .from('news_analysis')
-        .select(`
-          *,
-          news_articles!inner (
-            title,
-            url,
-            published_at,
-            author
-          )
-        `)
-        .or(analysisConditions)
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      console.log(`📊 Alertas encontrados para ${mayor.nome}:`, alertsRaw?.length || 0);
-      console.log(`📊 Análises encontradas para ${mayor.nome}:`, analysesRaw?.length || 0);
-
-      if (!alertsError && alertsRaw) {
-        const alertsData = alertsRaw.map(alert => ({
-          ...alert,
-          news_articles: alert.news_articles
-        }));
-        setAlerts(alertsData);
+      if (alertsError) {
+        console.error('Erro ao carregar alertas filtrados:', alertsError);
+      } else {
+        setAlerts(alertsData || []);
+        console.log(`📊 Alertas encontrados para ${mayor.nome}: ${alertsData?.length || 0}`);
       }
 
-      if (!analysesError && analysesRaw) {
-        const analysesData = analysesRaw.map(analysis => ({
-          ...analysis,
-          news_articles: analysis.news_articles
-        }));
-        setAnalyses(analysesData);
-      }
+      // Carregar análises filtradas
+      const { data: analysesData, error: analysesError } = await supabase
+        .from('news_analysis' as any)
+        .select('*')
+        .or(`title.ilike.%${mayor.nome}%,summary.ilike.%${mayor.nome}%,title.ilike.%${mayor.cidade}%,summary.ilike.%${mayor.cidade}%`)
+        .order('created_at', { ascending: false });
 
-      toast({
-        title: "Dados Atualizados",
-        description: `Mostrando ${(alertsRaw?.length || 0) + (analysesRaw?.length || 0)} itens para ${mayor.nome}`,
-      });
+      if (analysesError) {
+        console.error('Erro ao carregar análises filtradas:', analysesError);
+      } else {
+        setAnalyses(analysesData || []);
+        console.log(`📊 Análises encontradas para ${mayor.nome}: ${analysesData?.length || 0}`);
+      }
 
     } catch (error) {
-      console.error('Error loading mayor data:', error);
+      console.error('Erro ao carregar dados filtrados:', error);
       toast({
-        title: "Erro",
-        description: "Erro ao carregar dados do prefeito",
+        title: "Erro ao filtrar dados",
+        description: "Não foi possível filtrar os dados. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -207,360 +130,398 @@ export default function NewsMonitoring() {
     }
   };
 
+  // Configurar subscription em tempo real
   const setupRealtimeSubscription = () => {
     const channel = supabase
-      .channel('news-monitoring')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'news_alerts' }, () => {
-        loadData();
-      })
+      .channel('news-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'news_alerts'
+        },
+        (payload) => {
+          console.log('🚨 Novo alerta recebido:', payload);
+          if (selectedMayor) {
+            loadDataForMayor(selectedMayor);
+          } else {
+            loadData();
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'news_analysis'
+        },
+        (payload) => {
+          console.log('🧠 Nova análise recebida:', payload);
+          if (selectedMayor) {
+            loadDataForMayor(selectedMayor);
+          } else {
+            loadData();
+          }
+        }
+      )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   };
 
-  
-  // Função para buscar cidades brasileiras via API do IBGE
+  // Carregar dados iniciais e configurar subscription
+  useEffect(() => {
+    loadData();
+    const cleanup = setupRealtimeSubscription();
+    return cleanup;
+  }, []);
+
+  // Função para buscar cidades na API do IBGE
   const searchCities = async (query: string) => {
-    if (query.length < 2) {
-      setCities([]);
+    if (!query || query.length < 2) {
+      setSearchResults([]);
       return;
     }
-    
-    setSearchingCities(true);
+
+    setIsSearching(true);
     try {
-      console.log('🔍 Buscando cidades para:', query);
       const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodeURIComponent(query)}`);
-      
-      if (!response.ok) {
-        throw new Error(`Erro na API IBGE: ${response.status}`);
-      }
-      
       const data = await response.json();
-      console.log('📊 Cidades encontradas:', data.length);
       
-      // Formatar dados das cidades
-      const formattedCities = data.slice(0, 15).map((city: any) => ({
-        id: city.id,
-        nome: city.nome,
-        uf: city.microrregiao.mesorregiao.UF.sigla,
-        estado: city.microrregiao.mesorregiao.UF.nome,
-        displayName: `${city.nome} - ${city.microrregiao.mesorregiao.UF.sigla}`
-      }));
-      
-      console.log('✅ Cidades formatadas:', formattedCities.map(c => c.displayName));
-      setCities(formattedCities);
+      if (Array.isArray(data)) {
+        const formattedResults = data.slice(0, 10).map((city: any) => ({
+          id: city.id,
+          nome: city.nome,
+          uf: city.microrregiao?.mesorregiao?.UF?.sigla || city.UF?.sigla
+        }));
+        setSearchResults(formattedResults);
+      }
     } catch (error) {
-      console.error('❌ Erro ao buscar cidades:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao buscar cidades. Tente novamente.",
-        variant: "destructive",
-      });
-      setCities([]);
+      console.error('Erro ao buscar cidades:', error);
     } finally {
-      setSearchingCities(false);
+      setIsSearching(false);
     }
   };
 
-  // Mapeamento cidade -> estado para correção
-  const cityToState: { [key: string]: string } = {
-    'São Paulo': 'SP',
-    'Rio de Janeiro': 'RJ',
-    'Belo Horizonte': 'MG',
-    'Curitiba': 'PR',
-    'Recife': 'PE',
-    'Porto Alegre': 'RS',
-    'Salvador': 'BA',
-    'Fortaleza': 'CE',
-    'Brasília': 'DF',
-    'Manaus': 'AM',
-    'Goiânia': 'GO',
-    'Belém': 'PA',
-    'Guarulhos': 'SP',
-    'Campinas': 'SP',
-    'São Luís': 'MA',
-    'Maceió': 'AL',
-    'Duque de Caxias': 'RJ',
-    'Natal': 'RN',
-    'Campo Grande': 'MS',
-    'Teresina': 'PI',
-    'São Bernardo do Campo': 'SP',
-    'Nova Iguaçu': 'RJ',
-    'João Pessoa': 'PB',
-    'Santo André': 'SP',
-    'Ribeirão Preto': 'SP',
-    'Contagem': 'MG',
-    'Aracaju': 'SE',
-    'Feira de Santana': 'BA',
-    'Cuiabá': 'MT',
-    'Joinville': 'SC',
-    'Aparecida de Goiânia': 'GO',
-    'Londrina': 'PR',
-    'Ananindeua': 'PA',
-    'Porto Velho': 'RO',
-    'Serra': 'ES',
-    'Niterói': 'RJ',
-    'Caxias do Sul': 'RS',
-    'Macapá': 'AP',
-    'Mauá': 'SP',
-    'São João de Meriti': 'RJ',
-    'Florianópolis': 'SC',
-    'Vila Velha': 'ES',
-    'Cariacica': 'ES',
-    'Santos': 'SP',
-    'Boa Vista': 'RR'
+  // Dados dos prefeitos (base de dados local)
+  const mayorData: Record<string, any> = {
+    "São Paulo": { nome: "Ricardo Nunes", partido: "MDB", mandato: "2021-2024", cidade: "São Paulo", uf: "SP" },
+    "Rio de Janeiro": { nome: "Eduardo Paes", partido: "PSD", mandato: "2021-2024", cidade: "Rio de Janeiro", uf: "RJ" },
+    "Belo Horizonte": { nome: "Fuad Noman", partido: "PSD", mandato: "2021-2024", cidade: "Belo Horizonte", uf: "MG" },
+    "Curitiba": { nome: "Rafael Greca", partido: "PMN", mandato: "2017-2024", cidade: "Curitiba", uf: "PR" },
+    "Recife": { nome: "João Campos", partido: "PSB", mandato: "2021-2024", cidade: "Recife", uf: "PE" },
+    "Porto Alegre": { nome: "Sebastião Melo", partido: "MDB", mandato: "2021-2024", cidade: "Porto Alegre", uf: "RS" },
+    "Salvador": { nome: "Bruno Reis", partido: "União Brasil", mandato: "2021-2024", cidade: "Salvador", uf: "BA" },
+    "Fortaleza": { nome: "José Sarto", partido: "PDT", mandato: "2021-2024", cidade: "Fortaleza", uf: "CE" },
+    "Brasília": { nome: "Ibaneis Rocha", partido: "MDB", mandato: "2019-2026", cidade: "Brasília", uf: "DF" },
+    "Manaus": { nome: "David Almeida", partido: "Avante", mandato: "2021-2024", cidade: "Manaus", uf: "AM" }
   };
 
-  // Base expandida dos prefeitos atuais (principais cidades brasileiras)
-  const mayorData = {
-    'São Paulo': { nome: 'Ricardo Nunes', partido: 'MDB', mandato: '2021-2024' },
-    'Rio de Janeiro': { nome: 'Eduardo Paes', partido: 'PSD', mandato: '2021-2024' },
-    'Belo Horizonte': { nome: 'Alexandre Kalil', partido: 'PSD', mandato: '2017-2024' },
-    'Curitiba': { nome: 'Rafael Greca', partido: 'PDT', mandato: '2017-2024' },
-    'Recife': { nome: 'João Campos', partido: 'PSB', mandato: '2021-2024' },
-    'Porto Alegre': { nome: 'Sebastião Melo', partido: 'MDB', mandato: '2021-2024' },
-    'Salvador': { nome: 'Bruno Reis', partido: 'União', mandato: '2021-2024' },
-    'Fortaleza': { nome: 'José Sarto', partido: 'PDT', mandato: '2021-2024' },
-    'Brasília': { nome: 'Ibaneis Rocha', partido: 'MDB', mandato: '2019-2026' },
-    'Manaus': { nome: 'David Almeida', partido: 'Avante', mandato: '2021-2024' },
-    'Goiânia': { nome: 'Rogério Cruz', partido: 'Republicanos', mandato: '2021-2024' },
-    'Belém': { nome: 'Edmilson Rodrigues', partido: 'PSOL', mandato: '2021-2024' },
-    'Guarulhos': { nome: 'Guti', partido: 'PSD', mandato: '2021-2024' },
-    'Campinas': { nome: 'Dário Saadi', partido: 'Republicanos', mandato: '2021-2024' },
-    'São Luís': { nome: 'Eduardo Braide', partido: 'Podemos', mandato: '2021-2024' },
-    'Maceió': { nome: 'JHC', partido: 'PSB', mandato: '2021-2024' },
-    'Duque de Caxias': { nome: 'Wilson Reis', partido: 'DEM', mandato: '2021-2024' },
-    'Natal': { nome: 'Álvaro Dias', partido: 'PSDB', mandato: '2021-2024' },
-    'Campo Grande': { nome: 'Marquinhos Trad', partido: 'PSD', mandato: '2021-2024' },
-    'Teresina': { nome: 'Dr. Pessoa', partido: 'MDB', mandato: '2021-2024' },
-    'São Bernardo do Campo': { nome: 'Orlando Morando', partido: 'PSDB', mandato: '2017-2024' },
-    'Nova Iguaçu': { nome: 'Rogerio Lisboa', partido: 'PR', mandato: '2021-2024' },
-    'João Pessoa': { nome: 'Cícero Lucena', partido: 'PP', mandato: '2021-2024' },
-    'Santo André': { nome: 'Paulo Serra', partido: 'PSDB', mandato: '2021-2024' },
-    'Ribeirão Preto': { nome: 'Duarte Nogueira', partido: 'PSDB', mandato: '2021-2024' },
-    'Contagem': { nome: 'Marília Campos', partido: 'PT', mandato: '2021-2024' },
-    'Aracaju': { nome: 'Edvaldo Nogueira', partido: 'PDT', mandato: '2021-2024' },
-    'Feira de Santana': { nome: 'Colbert Martins', partido: 'MDB', mandato: '2021-2024' },
-    'Cuiabá': { nome: 'Emanuel Pinheiro', partido: 'MDB', mandato: '2021-2024' },
-    'Joinville': { nome: 'Adriano Silva', partido: 'Novo', mandato: '2021-2024' },
-    'Aparecida de Goiânia': { nome: 'Vilmar Mariano', partido: 'DEM', mandato: '2021-2024' },
-    'Londrina': { nome: 'Marcelo Belinati', partido: 'PP', mandato: '2021-2024' },
-    'Ananindeua': { nome: 'Daniel Santos', partido: 'MDB', mandato: '2021-2024' },
-    'Porto Velho': { nome: 'Hildon Chaves', partido: 'PSDB', mandato: '2021-2024' },
-    'Serra': { nome: 'Sergio Vidigal', partido: 'PDT', mandato: '2021-2024' },
-    'Niterói': { nome: 'Axel Grael', partido: 'PDT', mandato: '2021-2024' },
-    'Caxias do Sul': { nome: 'Adiló Didomenico', partido: 'PSDB', mandato: '2021-2024' },
-    'Macapá': { nome: 'Dr. Furlan', partido: 'MDB', mandato: '2021-2024' },
-    'Mauá': { nome: 'Marcelo Oliveira', partido: 'PT', mandato: '2021-2024' },
-    'São João de Meriti': { nome: 'Dr. João', partido: 'DEM', mandato: '2021-2024' },
-    'Florianópolis': { nome: 'Topázio Neto', partido: 'PSD', mandato: '2021-2024' },
-    'Vila Velha': { nome: 'Arnaldinho Borgo', partido: 'Podemos', mandato: '2021-2024' },
-    'Cariacica': { nome: 'Euclério Sampaio', partido: 'DEM', mandato: '2021-2024' },
-    'Santos': { nome: 'Rogério Santos', partido: 'PSDB', mandato: '2021-2024' },
-    'Boa Vista': { nome: 'Arthur Henrique', partido: 'MDB', mandato: '2021-2024' }
+  // Correção de estados para algumas cidades
+  const cityToState: Record<string, string> = {
+    "Recife": "PE",
+    "São Paulo": "SP",
+    "Rio de Janeiro": "RJ"
   };
 
+  // Função para selecionar cidade
   const selectCity = async (city: any) => {
-    setSelectedCity(city);
     console.log('🏙️ Cidade selecionada:', city.nome);
+    setSelectedCity(city);
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowOtherCities(false);
+
+    // Buscar prefeito correspondente
     console.log('📋 Buscando prefeito para:', city.nome);
     console.log('🗂️ Cidades disponíveis na base:', Object.keys(mayorData));
     
-    const mayor = mayorData[city.nome as keyof typeof mayorData];
+    const mayor = mayorData[city.nome];
     if (mayor) {
-      // 🎯 CORREÇÃO: Usar estado correto do mapeamento
-      const correctState = cityToState[city.nome] || city.uf;
-      const mayorData = { ...mayor, cidade: city.nome, uf: correctState };
-      
-      setSelectedMayor(mayorData);
       console.log('✅ Prefeito encontrado:', mayor.nome);
-      console.log('🗺️ Estado corrigido:', city.nome, '->', correctState);
+      
+      // Corrigir estado se necessário
+      const correctedState = cityToState[city.nome] || city.uf;
+      if (correctedState !== city.uf) {
+        console.log(`🗺️ Estado corrigido: ${city.nome} -> ${correctedState}`);
+      }
+      
+      const mayorWithCorrectState = {
+        ...mayor,
+        uf: correctedState
+      };
+      
+      setSelectedMayor(mayorWithCorrectState);
+      
+      // Automaticamente iniciar coleta para o prefeito selecionado
+      console.log('🚀 Iniciando coleta automática para:', mayor.nome);
+      await runPerplexityNewsForMayor(mayorWithCorrectState);
+      
+      // Carregar dados filtrados
+      await loadDataForMayor(mayorWithCorrectState);
       
       toast({
-        title: "Prefeito Selecionado",
-        description: `${mayor.nome} (${mayor.partido}) - ${city.nome}/${correctState}. Coletando notícias...`,
+        title: "Cidade Selecionada ✅",
+        description: `Monitoramento ativo para ${mayor.nome} em ${city.nome}/${correctedState}`,
       });
-
-      // 🚀 AUTOMÁTICO: Coletar notícias imediatamente após seleção
-      console.log('🚀 Iniciando coleta automática para:', mayor.nome);
-      await runPerplexityNewsForMayor(mayorData);
-      
-      // 🔄 Atualizar dashboard com filtro
-      await loadDataForMayor(mayorData);
-      
     } else {
-      setSelectedMayor(null);
       console.log('❌ Prefeito não encontrado para:', city.nome);
       toast({
-        title: "Cidade Não Disponível",
-        description: `${city.nome}/${city.uf} ainda não está na nossa base. Tente: São Paulo, Rio de Janeiro, Belo Horizonte, Curitiba, etc.`,
+        title: "Prefeito não encontrado",
+        description: `Não temos dados do prefeito de ${city.nome} em nossa base.`,
         variant: "destructive",
       });
     }
-    setCities([]);
-    setSearchCity('');
   };
 
+  // Função para executar coleta de notícias
   const runPerplexityNews = async () => {
-    setCrawling(true);
+    console.log('Starting Perplexity news collection...');
+    
     try {
-      await runPerplexityNewsForMayor(selectedMayor);
-    } finally {
-      setCrawling(false);
-    }
-  };
-
-  // 🎯 NOVA FUNÇÃO: Coletar notícias para prefeito específico
-  const runPerplexityNewsForMayor = async (mayor: any | null) => {
-    try {
-      console.log('Starting Perplexity news collection...');
-      
-      // Preparar dados do prefeito para a coleta personalizada
-      const mayorParams = mayor ? {
-        mayorName: mayor.nome,
-        cityName: mayor.cidade,
-        state: mayor.uf,
-        party: mayor.partido
-      } : null;
+      setIsCollecting(true);
       
       const { data, error } = await supabase.functions.invoke('perplexity-news-collector', {
-        body: { mayor: mayorParams }
+        body: { 
+          mayor: selectedMayor ? {
+            mayorName: selectedMayor.nome,
+            cityName: selectedMayor.cidade,
+            state: selectedMayor.uf
+          } : null
+        },
       });
       
       console.log('Perplexity news response:', { data, error });
       
       if (error) {
         console.error('Perplexity news error:', error);
-        throw error;
+        toast({
+          title: "Erro na coleta de notícias",
+          description: "Não foi possível coletar novas notícias. Verifique as configurações da API.",
+          variant: "destructive",
+        });
+        return;
       }
       
-      const targetMayor = mayor ? `${mayor.nome} (${mayor.cidade}/${mayor.uf})` : 'São Paulo';
-      
-      toast({ 
-        title: "Notícias Coletadas", 
-        description: `Coletadas ${data?.articles?.length || 0} notícias sobre ${targetMayor}` 
-      });
-      
-      console.log('🔄 Atualizando dashboard em 3 segundos...');
-      setTimeout(() => {
-        console.log('🔄 Atualizando dashboard agora...');
-        if (mayor) {
-          loadDataForMayor(mayor);
-        } else {
-          loadData();
-        }
-      }, 3000);
+      if (data && data.success) {
+        toast({
+          title: "Coleta Concluída ✅",
+          description: `${data.processed_articles || 0} artigos processados e analisados com sucesso`,
+        });
+        
+        // Recarregar dados após coleta
+        setTimeout(() => {
+          if (selectedMayor) {
+            loadDataForMayor(selectedMayor);
+          } else {
+            loadData();
+          }
+        }, 3000);
+      } else {
+        toast({
+          title: "Coleta Parcial ⚠️",
+          description: "Algumas análises podem não ter sido processadas completamente",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Perplexity news failed:', error);
-      toast({ title: "Erro", description: "Erro ao coletar notícias em tempo real", variant: "destructive" });
+      toast({
+        title: "Erro na coleta",
+        description: "Falha na comunicação com o serviço de notícias. Verifique sua conexão.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCollecting(false);
     }
   };
 
-  console.log('Current state:', { alerts: alerts.length, analyses: analyses.length, loading });
+  // Função para executar coleta para prefeito específico
+  const runPerplexityNewsForMayor = async (mayor: any) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('perplexity-news-collector', {
+        body: { 
+          mayor: {
+            mayorName: mayor.nome,
+            cityName: mayor.cidade,
+            state: mayor.uf
+          }
+        },
+      });
+      
+      console.log('Perplexity news response:', { data, error });
+      
+      if (error) {
+        console.error('Perplexity news error:', error);
+        return;
+      }
+    } catch (error) {
+      console.error('Perplexity news failed:', error);
+    }
+  };
+
+  // Cidades principais para seleção rápida
+  const mainCities = [
+    { nome: "São Paulo", uf: "SP" },
+    { nome: "Rio de Janeiro", uf: "RJ" },
+    { nome: "Belo Horizonte", uf: "MG" },
+    { nome: "Curitiba", uf: "PR" },
+    { nome: "Recife", uf: "PE" },
+    { nome: "Porto Alegre", uf: "RS" },
+    { nome: "Salvador", uf: "BA" },
+    { nome: "Fortaleza", uf: "CE" },
+    { nome: "Brasília", uf: "DF" },
+    { nome: "Manaus", uf: "AM" }
+  ];
+
+  // Funções para abrir modais de resumo
+  const openSummaryModal = (type: 'analyses' | 'pending' | 'critical' | 'sources', data: any) => {
+    setSummaryType(type);
+    setSummaryData(data);
+    setShowSummaryModal(true);
+  };
 
   if (loading) {
-    return <div className="p-6">Carregando...</div>;
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">Carregando monitoramento...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  const criticalAlerts = alerts.filter(a => a.severity === 'critical' && !a.acknowledged);
-  const unacknowledgedAlerts = alerts.filter(a => !a.acknowledged);
-
   return (
-    <div className="p-6 space-y-6">
+    <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Monitoramento de Notícias</h1>
-          <p className="text-muted-foreground">Acompanhe notícias relevantes e alertas em tempo real</p>
+          <p className="text-gray-600">
+            {selectedMayor 
+              ? `Monitorando ${selectedMayor.nome} - ${selectedMayor.cidade}/${selectedMayor.uf}`
+              : 'Monitoramento geral de notícias e análises'
+            }
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={runPerplexityNews} disabled={crawling} className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-            <RefreshCw className={`h-4 w-4 ${crawling ? 'animate-spin' : ''}`} />
-            {crawling ? 'Coletando...' : 'Coletar Notícias'}
-          </Button>
-        </div>
+        <Button onClick={runPerplexityNews} disabled={isCollecting} className="gap-2">
+          {isCollecting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Coletando...
+            </>
+          ) : (
+            <>
+              <Search className="h-4 w-4" />
+              Coletar Notícias
+            </>
+          )}
+        </Button>
       </div>
 
-      {/* Sistema de Busca de Prefeitos */}
-      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-800">
-            <Search className="h-5 w-5" />
-            Buscar Prefeito por Município
-          </CardTitle>
-          <p className="text-sm text-blue-600">Monitore notícias específicas de qualquer prefeito do Brasil</p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Seleção Rápida de Principais Cidades */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Selecionar Cidade Principal</Label>
-              <Select
-                value={selectedCity?.nome || ''}
-                onValueChange={(cityName) => {
-                  const city = { nome: cityName, uf: 'SP', id: Math.random() }; // uf será ajustado pelo mayorData
-                  selectCity(city);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Escolha uma cidade..." />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  {Object.keys(mayorData).map((cityName) => {
-                    const mayor = mayorData[cityName as keyof typeof mayorData];
+      {/* Seleção de Cidade/Prefeito */}
+      <Card className="p-6">
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Seleção de Cidade e Prefeito
+            </h2>
+            
+            <div className="space-y-4">
+              {/* Cidades Principais */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Cidades Principais</Label>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  {mainCities.map((city) => {
+                    const hasData = mayorData[city.nome];
                     return (
-                      <SelectItem key={cityName} value={cityName}>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-blue-500" />
-                          <span className="font-medium">{cityName}</span>
-                          <span className="text-sm text-gray-500">• {mayor.nome} ({mayor.partido})</span>
+                      <Button
+                        key={`${city.nome}-${city.uf}`}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => selectCity(city)}
+                        disabled={!hasData}
+                        className={`text-left justify-start h-auto p-3 ${
+                          hasData 
+                            ? 'hover:bg-green-50 border-green-200 text-green-800' 
+                            : 'opacity-50 cursor-not-allowed'
+                        }`}
+                      >
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium">{city.nome}</span>
+                          <span className="text-xs text-gray-500">{city.uf}</span>
+                          {hasData && <span className="text-xs text-green-600">✓ Disponível</span>}
                         </div>
-                      </SelectItem>
+                      </Button>
                     );
                   })}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-blue-600">✅ {Object.keys(mayorData).length} cidades disponíveis na base</p>
-            </div>
-            
-            {/* Busca Manual (alternativa) */}
-            <div className="space-y-2">
-              <Label htmlFor="search-city" className="text-sm font-medium">Ou Buscar Outras Cidades</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="search-city"
-                  placeholder="Digite o nome da cidade..."
-                  value={searchCity}
-                  onChange={(e) => {
-                    setSearchCity(e.target.value);
-                    searchCities(e.target.value);
-                  }}
-                  className="pl-10"
-                />
-                
-                {/* Dropdown de resultados da busca manual */}
-                {cities.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                    {cities.map((city) => {
-                      const hasData = mayorData[city.nome as keyof typeof mayorData];
-                      return (
-                        <div
-                          key={city.id}
-                          onClick={() => selectCity(city)}
-                          className={`px-4 py-2 cursor-pointer flex items-center gap-2 ${
-                            hasData 
-                              ? 'hover:bg-green-50 border-l-4 border-green-400' 
-                              : 'hover:bg-gray-50 opacity-60'
-                          }`}
-                        >
-                          <MapPin className={`h-4 w-4 ${hasData ? 'text-green-500' : 'text-gray-400'}`} />
-                          <span className="font-medium">{city.nome}</span>
-                          <span className="text-sm text-gray-500">- {city.uf}</span>
-                          {hasData && <Badge variant="outline" className="ml-auto text-xs bg-green-50 text-green-700">✓ Disponível</Badge>}
-                          {!hasData && <span className="ml-auto text-xs text-red-500">Não disponível</span>}
+                </div>
+              </div>
+
+              {/* Busca Manual */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowOtherCities(!showOtherCities)}
+                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                  >
+                    {showOtherCities ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    {showOtherCities ? 'Fechar' : 'Selecionar Cidade'}
+                  </Button>
+                </div>
+
+                {showOtherCities && (
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <Input
+                        placeholder="Digite o nome da cidade..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          searchCities(e.target.value);
+                        }}
+                        className="w-full"
+                      />
+                      {isSearching && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
                         </div>
-                      );
-                    })}
+                      )}
+                    </div>
+
+                    {searchResults.length > 0 && (
+                      <div className="border rounded-lg max-h-48 overflow-y-auto">
+                        {searchResults.map((city) => {
+                          const hasData = mayorData[city.nome];
+                          return (
+                            <div
+                              key={`${city.id}-${city.nome}`}
+                              onClick={() => hasData && selectCity(city)}
+                              className={`px-4 py-2 cursor-pointer flex items-center gap-2 ${
+                                hasData 
+                                  ? 'hover:bg-green-50 border-l-4 border-green-400' 
+                                  : 'hover:bg-gray-50 opacity-60'
+                              }`}
+                            >
+                              <MapPin className={`h-4 w-4 ${hasData ? 'text-green-500' : 'text-gray-400'}`} />
+                              <span className="font-medium">{city.nome}</span>
+                              <span className="text-sm text-gray-500">- {city.uf}</span>
+                              {hasData && <Badge variant="outline" className="ml-auto text-xs bg-green-50 text-green-700">✓ Disponível</Badge>}
+                              {!hasData && <span className="ml-auto text-xs text-red-500">Não disponível</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -602,456 +563,465 @@ export default function NewsMonitoring() {
               </div>
             ) : (
               <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                <User className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Nenhum prefeito selecionado</p>
-                <p className="text-xs text-gray-400">Use o seletor acima para escolher uma cidade</p>
+                <p className="text-sm text-gray-600">Nenhum prefeito selecionado</p>
+                <p className="text-xs text-gray-500">Selecione uma cidade para filtrar as notícias</p>
               </div>
             )}
           </div>
-          
-          {/* Informações do Sistema */}
-          <div className="flex items-center justify-between p-3 bg-blue-100 rounded-lg">
-            <div className="flex items-center gap-2 text-blue-700">
-              <Globe className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                {selectedMayor 
-                  ? `Coletando notícias sobre ${selectedMayor.nome} - ${selectedMayor.cidade}/${selectedMayor.uf}`
-                  : 'Coletando notícias sobre Ricardo Nunes - São Paulo/SP (padrão)'
-                }
-              </span>
-            </div>
-            <Badge variant="secondary" className="bg-blue-200 text-blue-800">
-              {Object.keys(mayorData).length} prefeitos na base
-            </Badge>
-          </div>
-        </CardContent>
+        </div>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card 
-          className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
-          onClick={() => {
-            setSummaryType('critical');
-            setSummaryModalOpen(true);
-          }}
-        >
+      {/* Cards de Resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" 
+              onClick={() => openSummaryModal('critical', alerts.filter(a => a.urgency_level === 'critical'))}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Alertas Críticos</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertTriangle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{criticalAlerts.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {criticalAlerts.length > 0 ? 'Requerem ação imediata' : 'Nenhuma situação crítica'}
-            </p>
+            <div className="text-2xl font-bold text-red-600">
+              {alerts.filter(alert => alert.urgency_level === 'critical').length}
+            </div>
+            <p className="text-xs text-gray-600">Requerem atenção imediata</p>
           </CardContent>
         </Card>
 
-        <Card 
-          className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
-          onClick={() => {
-            setSummaryType('pending');
-            setSummaryModalOpen(true);
-          }}
-        >
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => openSummaryModal('pending', alerts.filter(a => a.status === 'pending'))}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Alertas Pendentes</CardTitle>
-            <Bell className="h-4 w-4 text-orange-600" />
+            <Clock className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{unacknowledgedAlerts.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {unacknowledgedAlerts.length > 0 ? 'Aguardando verificação' : 'Todos verificados'}
-            </p>
+            <div className="text-2xl font-bold text-yellow-600">
+              {alerts.filter(alert => alert.status === 'pending').length}
+            </div>
+            <p className="text-xs text-gray-600">Aguardando análise</p>
           </CardContent>
         </Card>
 
-        <Card 
-          className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
-          onClick={() => {
-            setSummaryType('analyses');
-            setSummaryModalOpen(true);
-          }}
-        >
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => openSummaryModal('analyses', analyses.filter(a => new Date(a.created_at).toDateString() === new Date().toDateString()))}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Análises Hoje</CardTitle>
-            <TrendingUp className="h-4 w-4 text-yellow-600" />
+            <Brain className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analyses.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {analyses.filter(a => a.mentions_mayor).length} mencionam Ricardo Nunes
-            </p>
+            <div className="text-2xl font-bold text-purple-600">
+              {analyses.filter(analysis => new Date(analysis.created_at).toDateString() === new Date().toDateString()).length}
+            </div>
+            <p className="text-xs text-gray-600">Processadas com IA</p>
           </CardContent>
         </Card>
 
-        <Card 
-          className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
-          onClick={() => {
-            setSummaryType('sources');
-            setSummaryModalOpen(true);
-          }}
-        >
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => openSummaryModal('sources', [])}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Fontes Ativas</CardTitle>
-            <Eye className="h-4 w-4 text-blue-600" />
+            <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {[...new Set(analyses.map(a => a.news_articles?.author).filter(Boolean))].length}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Portais monitorados em tempo real
-            </p>
+            <div className="text-2xl font-bold text-green-600">12</div>
+            <p className="text-xs text-gray-600">Monitoramento ativo</p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="dashboard">
-        <TabsList>
-          <TabsTrigger value="dashboard">Dashboard Visual</TabsTrigger>
-          <TabsTrigger value="alerts">Alertas</TabsTrigger>
-          <TabsTrigger value="analysis">Análises</TabsTrigger>
-        </TabsList>
+      {/* Tabs do Dashboard */}
+      <div className="space-y-6">
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger 
+              value="dashboard" 
+              className="flex items-center gap-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger 
+              value="alerts" 
+              className="flex items-center gap-2"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              Alertas ({alerts.length})
+            </TabsTrigger>
+            <TabsTrigger 
+              value="analyses" 
+              className="flex items-center gap-2"
+            >
+              <Brain className="h-4 w-4" />
+              Análises ({analyses.length})
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="dashboard">
-          {/* Dashboard Visual Redesenhado */}
-          <div className="space-y-6">
-            {/* Resumo Visual para o Prefeito */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-green-200">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-green-800">
-                    <TrendingUp className="h-6 w-6" />
-                    Notícias Positivas
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-green-700">
-                    {analyses.filter(a => a.sentiment_score > 0.3).length}
+          <TabsContent value="dashboard" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Sentimento das Notícias */}
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Sentimento das Notícias</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Positivo</span>
+                    <span className="text-sm font-medium">
+                      {analyses.filter(a => a.sentiment_score > 0.2).length}
+                    </span>
                   </div>
-                  <p className="text-sm text-green-600 mt-1">Impacto favorável na opinião pública</p>
-                </CardContent>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Neutro</span>
+                    <span className="text-sm font-medium">
+                      {analyses.filter(a => a.sentiment_score >= -0.2 && a.sentiment_score <= 0.2).length}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Negativo</span>
+                    <span className="text-sm font-medium">
+                      {analyses.filter(a => a.sentiment_score < -0.2).length}
+                    </span>
+                  </div>
+                </div>
               </Card>
 
-              <Card className="bg-gradient-to-br from-red-50 to-rose-100 border-red-200">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-red-800">
-                    <AlertTriangle className="h-6 w-6" />
-                    Notícias Negativas
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-red-700">
-                    {analyses.filter(a => a.sentiment_score < -0.3).length}
+              {/* Menções do Prefeito */}
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Menções do Prefeito</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Menções Diretas</span>
+                    <span className="text-sm font-medium">
+                      {analyses.filter(a => a.mentions_mayor).length}
+                    </span>
                   </div>
-                  <p className="text-sm text-red-600 mt-1">Requerem atenção da gestão</p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-purple-50 to-violet-100 border-purple-200">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-purple-800">
-                    <Target className="h-6 w-6" />
-                    Menções ao Prefeito
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-purple-700">
-                    {analyses.filter(a => a.mentions_mayor).length}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Alta Relevância</span>
+                    <span className="text-sm font-medium">
+                      {analyses.filter(a => a.relevance_score >= 8).length}
+                    </span>
                   </div>
-                  <p className="text-sm text-purple-600 mt-1">Impacto direto na gestão</p>
-                </CardContent>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Potencial de Crise</span>
+                    <span className="text-sm font-medium">
+                      {analyses.filter(a => a.crisis_potential).length}
+                    </span>
+                  </div>
+                </div>
               </Card>
             </div>
 
-            {/* Feed Visual de Notícias */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <Globe className="h-6 w-6 text-blue-600" />
-                  Painel de Opinião Pública em Tempo Real
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700">São Paulo</Badge>
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">Clique em qualquer notícia para ver análise completa</p>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[600px]">
-                  {analyses.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Globe className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-600 mb-2">Nenhuma notícia encontrada</h3>
-                      <p className="text-sm text-muted-foreground mb-6">Clique em "Coletar Notícias" para buscar notícias atualizadas dos principais portais brasileiros</p>
-                      <Button onClick={runPerplexityNews} disabled={crawling} className="bg-gradient-to-r from-blue-600 to-purple-600">
-                        <Zap className="h-4 w-4 mr-2" />
-                        {crawling ? 'Coletando...' : 'Coletar Notícias'}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="grid gap-6">
-                      {analyses.slice(0, 12).map((analysis) => (
-                        <div 
-                          key={analysis.id} 
-                          className="group border-2 rounded-xl p-6 bg-gradient-to-r from-slate-50 to-slate-100 hover:from-blue-50 hover:to-purple-50 transition-all duration-300 cursor-pointer hover:shadow-xl hover:scale-[1.02]"
+            {/* Feed de Análises Recentes */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Análises Recentes</h3>
+              <div className="space-y-4">
+                {analyses.slice(0, 5).map((analysis) => (
+                  <div key={analysis.id} className="border-l-4 border-blue-500 pl-4 py-2">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm line-clamp-2">{analysis.title}</h4>
+                        <p className="text-xs text-gray-600 mt-1">{analysis.source} • {new Date(analysis.created_at).toLocaleDateString('pt-BR')}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Badge variant={
+                          analysis.urgency_level === 'critical' ? 'destructive' :
+                          analysis.urgency_level === 'high' ? 'secondary' : 'outline'
+                        } className="text-xs">
+                          {analysis.urgency_level === 'critical' ? 'Crítico' :
+                           analysis.urgency_level === 'high' ? 'Alto' : 'Médio'}
+                        </Badge>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
                           onClick={() => {
                             setSelectedAnalysis(analysis);
-                            setAnalysisModalOpen(true);
+                            setShowAnalysisModal(true);
                           }}
                         >
-                          {/* Header com Badges */}
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex flex-wrap gap-2">
-                              <Badge variant="outline" className="bg-white border-blue-200 text-blue-800 font-semibold px-3 py-1">
-                                📰 {analysis.news_articles?.author || 'Portal de Notícias'}
-                              </Badge>
-                              {/* Data de Publicação */}
-                              <Badge variant="outline" className="bg-gray-50 border-gray-200 text-gray-700 px-3 py-1">
-                                🕐 {analysis.news_articles?.published_at 
-                                  ? new Date(analysis.news_articles.published_at).toLocaleDateString('pt-BR', {
-                                      day: '2-digit',
-                                      month: '2-digit', 
-                                      year: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })
-                                  : 'Data não disponível'
-                                }
-                              </Badge>
-                              <Badge 
-                                variant={analysis.sentiment_score > 0.3 ? 'default' : analysis.sentiment_score < -0.3 ? 'destructive' : 'secondary'}
-                                className="px-3 py-1 text-sm font-bold"
-                              >
-                                {analysis.sentiment_score > 0.3 ? '😊 POSITIVA' : 
-                                 analysis.sentiment_score < -0.3 ? '😞 NEGATIVA' : '😐 NEUTRA'}
-                              </Badge>
-                              {(analysis.urgency_level === 'high' || analysis.urgency_level === 'critical') && (
-                                <Badge variant="destructive" className="animate-pulse px-3 py-1 font-bold">
-                                  🚨 {analysis.urgency_level === 'critical' ? 'CRÍTICA' : 'URGENTE'}
-                                </Badge>
-                              )}
-                              {analysis.mentions_mayor && (
-                                <Badge className="bg-purple-500 hover:bg-purple-600 px-3 py-1 font-bold">
-                                  👨‍💼 PREFEITO
-                                </Badge>
-                              )}
-                              {analysis.crisis_potential && (
-                                <Badge variant="destructive" className="animate-bounce px-3 py-1 font-bold">
-                                  ⚠️ POTENCIAL DE CRISE
-                                </Badge>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <Button 
-                                size="sm" 
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (analysis.news_articles?.url) {
-                                    window.open(analysis.news_articles.url, '_blank');
-                                  }
-                                }}
-                                className="opacity-70 group-hover:opacity-100 transition-opacity"
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedAnalysis(analysis);
-                                  setAnalysisModalOpen(true);
-                                }}
-                                className="opacity-70 group-hover:opacity-100 transition-opacity"
-                              >
-                                <Eye className="h-4 w-4 mr-1" />
-                                Analisar
-                              </Button>
-                            </div>
-                          </div>
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </TabsContent>
 
-                          {/* Título da Notícia */}
-                          <h2 className="text-xl font-bold text-gray-800 mb-3 line-clamp-2 group-hover:text-blue-800 transition-colors">
-                            {analysis.news_articles?.title}
-                          </h2>
+          <TabsContent value="alerts" className="space-y-6">
+            <div className="grid gap-4">
+              {alerts.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <AlertTriangle className="h-12 w-12 text-gray-400" />
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Nenhum alerta encontrado</h3>
+                      <p className="text-gray-600 mb-4">Inicie a coleta de notícias para gerar alertas automáticos</p>
+                      <Button onClick={runPerplexityNews} className="gap-2">
+                        <Search className="h-4 w-4" />
+                        Iniciar Coleta
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ) : (
+                alerts.map((alert) => (
+                  <Card key={alert.id} className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-2">{alert.title}</h3>
+                        <p className="text-gray-700 mb-3">{alert.description}</p>
+                      </div>
+                      <Badge variant={
+                        alert.urgency_level === 'critical' ? 'destructive' :
+                        alert.urgency_level === 'high' ? 'secondary' : 'outline'
+                      }>
+                        {alert.urgency_level === 'critical' ? '🚨 Crítico' :
+                         alert.urgency_level === 'high' ? '⚠️ Alto' : '📊 Médio'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <span>📅 {new Date(alert.created_at).toLocaleDateString('pt-BR')}</span>
+                      <span>🔗 {alert.source || 'Fonte automática'}</span>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
 
-                          {/* Resumo */}
-                          <p className="text-gray-600 mb-4 line-clamp-3 leading-relaxed">
-                            {analysis.summary}
-                          </p>
-
-                          {/* Ação Recomendada (destaque visual) */}
-                          {analysis.recommended_action && (
-                            <div className="mb-4 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-400 rounded-lg">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Target className="h-4 w-4 text-yellow-600" />
-                                <span className="font-semibold text-yellow-800">Ação Recomendada para a Gestão:</span>
-                              </div>
-                              <p className="text-yellow-700 font-medium">{analysis.recommended_action}</p>
-                            </div>
-                          )}
-
-                          {/* Footer com Métricas */}
-                          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                            <div className="flex items-center gap-4 text-sm">
-                              <div className="flex items-center gap-1">
-                                <TrendingUp className="h-4 w-4 text-blue-500" />
-                                <span className="font-medium">Relevância: {Math.round((analysis.relevance_score || 0) * 10)}%</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Users className="h-4 w-4 text-purple-500" />
-                                <span className="font-medium">Impacto: {analysis.sentiment_score > 0 ? 'Positivo' : analysis.sentiment_score < 0 ? 'Negativo' : 'Neutro'}</span>
-                              </div>
-                            </div>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true, locale: ptBR })}
+          <TabsContent value="analyses" className="space-y-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Brain className="h-6 w-6 text-purple-600" />
+                <div>
+                  <h2 className="text-xl font-bold">Análises Inteligentes</h2>
+                  <p className="text-sm text-gray-600">
+                    Análises detalhadas com IA sobre o impacto das notícias
+                  </p>
+                </div>
+              </div>
+              {analyses.length > 0 && (
+                <Button 
+                  onClick={runPerplexityNews} 
+                  disabled={isCollecting}
+                  className="gap-2"
+                >
+                  {isCollecting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Coletando...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="h-4 w-4" />
+                      Nova Coleta
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+            
+            <div className="grid gap-4">
+              {loading ? (
+                <div className="grid gap-4">
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i} className="p-6">
+                      <div className="animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2 mb-3"></div>
+                        <div className="h-16 bg-gray-200 rounded mb-4"></div>
+                        <div className="flex gap-4">
+                          <div className="h-8 bg-gray-200 rounded w-20"></div>
+                          <div className="h-8 bg-gray-200 rounded w-20"></div>
+                          <div className="h-8 bg-gray-200 rounded w-20"></div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : analyses.length === 0 ? (
+                <Card className="p-12 text-center border-dashed border-2">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Brain className="h-8 w-8 text-purple-600" />
+                    </div>
+                    <div className="max-w-md">
+                      <h3 className="text-xl font-semibold mb-2">Nenhuma análise disponível</h3>
+                      <p className="text-gray-600 mb-6 leading-relaxed">
+                        {selectedMayor 
+                          ? `Inicie a coleta de notícias para ${selectedMayor.nome} para gerar análises inteligentes com IA`
+                          : 'Selecione uma cidade e inicie a coleta de notícias para gerar análises inteligentes com IA'
+                        }
+                      </p>
+                      <Button 
+                        onClick={runPerplexityNews} 
+                        disabled={isCollecting}
+                        size="lg" 
+                        className="gap-2"
+                      >
+                        {isCollecting ? (
+                          <>
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            Coletando e Analisando...
+                          </>
+                        ) : (
+                          <>
+                            <Search className="h-5 w-5" />
+                            Iniciar Coleta e Análise
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {analyses.map((analysis) => (
+                    <Card 
+                      key={analysis.id} 
+                      className="p-6 hover:shadow-xl transition-all duration-300 cursor-pointer border-l-4 hover:border-l-purple-500"
+                      onClick={() => {
+                        setSelectedAnalysis(analysis);
+                        setShowAnalysisModal(true);
+                      }}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1 pr-4">
+                          <h3 className="font-semibold text-lg mb-2 line-clamp-2 text-gray-900 hover:text-purple-700 transition-colors">
+                            {analysis.title}
+                          </h3>
+                          <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                            <span className="flex items-center gap-1">
+                              <User className="h-3 w-3" />
+                              {analysis.author || 'Autor não informado'}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Globe className="h-3 w-3" />
+                              {analysis.source || 'Fonte não informada'}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(analysis.created_at).toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
                             </span>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="alerts">
-          <Card>
-            <CardHeader><CardTitle>Alertas Recentes</CardTitle></CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[400px]">
-                {alerts.length === 0 ? (
-                  <p className="text-center text-muted-foreground">Nenhum alerta encontrado</p>
-                ) : (
-                  <div className="space-y-4">
-                    {alerts.map((alert) => (
-                      <div key={alert.id} className="p-4 border rounded-lg">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex items-center gap-2">
-                            <Badge variant={alert.severity === 'critical' ? 'destructive' : alert.severity === 'high' ? 'default' : 'secondary'}>
-                              {alert.severity === 'critical' ? 'CRÍTICO' : alert.severity === 'high' ? 'ALTO' : 'MÉDIO'}
+                        
+                        <div className="flex flex-col items-end gap-2">
+                          <Badge variant={
+                            analysis.urgency_level === 'critical' ? 'destructive' :
+                            analysis.urgency_level === 'high' ? 'secondary' : 'outline'
+                          } className="text-xs">
+                            {analysis.urgency_level === 'critical' ? '🚨 Crítico' :
+                             analysis.urgency_level === 'high' ? '⚠️ Alto' :
+                             analysis.urgency_level === 'medium' ? '📊 Médio' : '📝 Baixo'}
+                          </Badge>
+                          
+                          {analysis.mentions_mayor && (
+                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                              📍 Menciona Prefeito
                             </Badge>
-                            {alert.news_articles?.news_sources?.name && (
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                                {alert.news_articles.news_sources.name}
-                              </Badge>
-                            )}
-                          </div>
-                          {alert.news_articles?.url && (
-                            <Button size="sm" variant="ghost" onClick={() => window.open(alert.news_articles.url, '_blank')}>
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
+                          )}
+                          
+                          {analysis.crisis_potential && (
+                            <Badge variant="destructive" className="text-xs">
+                              🔥 Potencial de Crise
+                            </Badge>
                           )}
                         </div>
-                        <h3 className="font-semibold text-lg mb-2">{alert.title}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">{alert.message}</p>
-                        {alert.news_articles?.title && (
-                          <p className="text-sm font-medium text-blue-600 mb-2">{alert.news_articles.title}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true, locale: ptBR })}
+                      </div>
+
+                      {/* Métricas */}
+                      <div className="grid grid-cols-4 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-blue-600">
+                            {analysis.sentiment_score !== null && analysis.sentiment_score !== undefined 
+                              ? (analysis.sentiment_score >= 0 ? '+' : '') + (analysis.sentiment_score * 100).toFixed(0) + '%'
+                              : 'N/A'
+                            }
+                          </div>
+                          <div className="text-xs text-gray-600">Sentimento</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-green-600">
+                            {analysis.relevance_score || 'N/A'}/10
+                          </div>
+                          <div className="text-xs text-gray-600">Relevância</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-purple-600">
+                            {analysis.crisis_potential ? '🔥' : '✅'}
+                          </div>
+                          <div className="text-xs text-gray-600">Crise</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-orange-600">
+                            {analysis.keywords ? analysis.keywords.split(',').length : 0}
+                          </div>
+                          <div className="text-xs text-gray-600">Keywords</div>
+                        </div>
+                      </div>
+
+                      {/* Resumo */}
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed">
+                          {analysis.summary || 'Resumo não disponível para esta análise.'}
                         </p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        <TabsContent value="analysis">
-          <Card>
-            <CardHeader><CardTitle>Análises Recentes</CardTitle></CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[400px]">
-                {analyses.length === 0 ? (
-                  <p className="text-center text-muted-foreground">Nenhuma análise encontrada</p>
-                ) : (
-                  <div className="space-y-4">
-                    {analyses.map((analysis) => (
-                      <div key={analysis.id} className="p-4 border rounded-lg">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant={
-                              analysis.sentiment_score > 0.3 ? 'default' : 
-                              analysis.sentiment_score < -0.3 ? 'destructive' : 'secondary'
-                            }>
-                              {analysis.sentiment_score > 0.3 ? '✅ POSITIVA' : 
-                               analysis.sentiment_score < -0.3 ? '❌ NEGATIVA' : '⚪ NEUTRA'}
-                            </Badge>
-                            <Badge variant="outline">
-                              {analysis.urgency_level === 'critical' ? 'CRÍTICA' :
-                               analysis.urgency_level === 'high' ? 'ALTA' :
-                               analysis.urgency_level === 'medium' ? 'MÉDIA' : 'BAIXA'}
-                            </Badge>
-                            {analysis.news_articles?.news_sources?.name && (
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                                {analysis.news_articles.news_sources.name}
-                              </Badge>
-                            )}
-                            {analysis.mentions_mayor && <Badge className="bg-purple-100 text-purple-700">Menciona Prefeito</Badge>}
-                            {analysis.crisis_potential && <Badge variant="destructive">🚨 Potencial de Crise</Badge>}
-                          </div>
-                          {analysis.news_articles?.url && (
-                            <Button size="sm" variant="ghost" onClick={() => window.open(analysis.news_articles.url, '_blank')}>
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
+                      {/* Keywords */}
+                      {analysis.keywords && (
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {analysis.keywords.split(',').slice(0, 5).map((keyword, index) => (
+                            <span 
+                              key={index} 
+                              className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full"
+                            >
+                              {keyword.trim()}
+                            </span>
+                          ))}
+                          {analysis.keywords.split(',').length > 5 && (
+                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                              +{analysis.keywords.split(',').length - 5} mais
+                            </span>
                           )}
                         </div>
-                        
-                        <h3 className="font-semibold text-lg mb-2">{analysis.news_articles?.title}</h3>
-                        <p className="text-sm text-muted-foreground mb-3">{analysis.summary}</p>
-                        
-                        {analysis.impact_analysis && (
-                          <div className="mb-2">
-                            <strong className="text-sm">Impacto:</strong>
-                            <p className="text-sm text-gray-600">{analysis.impact_analysis}</p>
-                          </div>
-                        )}
-                        
-                        {analysis.recommended_action && (
-                          <div className="mb-2 p-2 bg-yellow-50 rounded">
-                            <strong className="text-sm text-yellow-800">Ação Recomendada:</strong>
-                            <p className="text-sm text-yellow-700">{analysis.recommended_action}</p>
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center justify-between text-xs text-muted-foreground mt-3">
-                          <span>Relevância: {Math.round((analysis.relevance_score || 0) * 100)}%</span>
-                          <span>{formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true, locale: ptBR })}</span>
+                      )}
+
+                      {/* Ação recomendada */}
+                      {analysis.recommended_action && (
+                        <div className="text-xs text-gray-600 bg-yellow-50 p-2 rounded border-l-3 border-yellow-400">
+                          <strong>💡 Ação Recomendada:</strong> {analysis.recommended_action}
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
 
       {/* Modais */}
       <AnalysisModal 
-        analysis={selectedAnalysis}
-        isOpen={analysisModalOpen}
-        onClose={() => {
-          setAnalysisModalOpen(false);
-          setSelectedAnalysis(null);
-        }}
+        analysis={selectedAnalysis} 
+        isOpen={showAnalysisModal} 
+        onClose={() => setShowAnalysisModal(false)} 
       />
-      
+
       <SummaryModal 
         type={summaryType}
-        data={summaryType === 'critical' ? criticalAlerts : 
-              summaryType === 'pending' ? unacknowledgedAlerts : 
-              summaryType === 'analyses' ? analyses : analyses}
-        isOpen={summaryModalOpen}
-        onClose={() => setSummaryModalOpen(false)}
+        data={summaryData}
+        isOpen={showSummaryModal} 
+        onClose={() => setShowSummaryModal(false)} 
       />
     </div>
   );
 }
+
+export default NewsMonitoring;
