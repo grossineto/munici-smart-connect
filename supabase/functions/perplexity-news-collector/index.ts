@@ -121,7 +121,7 @@ serve(async (req) => {
                 IMPORTANTE: Quero notícias de HOJE, mesmo que similares já existam.
                 
                 FONTES PRIORITÁRIAS: ${regionalSources}
-                FONTES NACIONAIS: G1, Folha, Estadão, UOL, R7, CNN Brasil, Metrópoles, Band`
+                FONTES NACIONAIS: G1, Folha, Estadão, UOL, R7, CNN Brasil, Metrópoles, Band
                 
                 Para cada notícia REAL encontrada hoje, retorne EXATAMENTE:
                 
