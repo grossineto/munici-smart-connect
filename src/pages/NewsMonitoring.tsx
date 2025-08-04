@@ -282,7 +282,7 @@ function NewsMonitoring() {
     "Manaus": { nome: "David Almeida", partido: "Avante", mandato: "2021-2024", cidade: "Manaus", uf: "AM" },
     "Bauru": { nome: "Suéllen Rosim", partido: "PSB", mandato: "2021-2024", cidade: "Bauru", uf: "SP" },
     "Pederneiras": { nome: "Ivana Camarinha", partido: "PSB", mandato: "2021-2024", cidade: "Pederneiras", uf: "SP" },
-    "Botucatu": { nome: "Mário Pardini", partido: "PSDB", mandato: "2021-2024", cidade: "Botucatu", uf: "SP" },
+    "Botucatu": { nome: "Fábio Vieira de Souza Leite", partido: "PSDB", mandato: "2021-2024", cidade: "Botucatu", uf: "SP" },
     "São Roque": { nome: "Guto Issa", partido: "PSD", mandato: "2021-2024", cidade: "São Roque", uf: "SP" }
   };
 
