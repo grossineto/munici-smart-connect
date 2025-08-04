@@ -887,24 +887,53 @@ function NewsMonitoring() {
                         setShowAnalysisModal(true);
                       }}
                     >
-                      {/* Header com título e badges */}
+                      {/* Header com localização e badges */}
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
+                          {/* Localização - Prefeitura/Cidade */}
+                          <div className="flex items-center gap-2 mb-3 text-sm">
+                            <MapPin className="h-4 w-4 text-purple-600" />
+                            <span className="font-semibold text-purple-700">
+                              {selectedMayor ? `${selectedMayor.nome} - ${selectedMayor.cidade}/${selectedMayor.estado}` : 'Localização não identificada'}
+                            </span>
+                            {analysis.mentions_mayor && (
+                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 ml-2">
+                                👤 Menciona Prefeito
+                              </Badge>
+                            )}
+                          </div>
+
+                          {/* Título da análise */}
+                          <div className="flex items-center gap-2 mb-3">
                             <h3 className="font-bold text-lg text-gray-900 group-hover:text-purple-700 transition-colors line-clamp-2">
-                              {analysis.title || analysis.news_articles?.title || 'Análise sem título'}
+                              {analysis.news_articles?.title || analysis.title || 'Análise sem título'}
                             </h3>
-                            <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" />
+                            <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
                           </div>
                           
-                          {/* Preview do conteúdo */}
-                          <div className="mb-3">
-                            <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-                              {analysis.executive_summary || analysis.summary || analysis.impact_analysis || 'Preview da análise não disponível...'}
+                          {/* Preview do conteúdo da análise */}
+                          <div className="mb-4 p-4 bg-gray-50/70 rounded-lg border-l-2 border-purple-200">
+                            <div className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                              <Brain className="h-3 w-3" />
+                              Resumo Executivo
+                            </div>
+                            <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed">
+                              {analysis.executive_summary || analysis.summary || analysis.impact_analysis || 'Preview da análise não disponível. Clique para ver mais detalhes...'}
                             </p>
                           </div>
 
-                          {/* Metadados */}
+                          {/* Impacto e ações recomendadas */}
+                          {analysis.impact_analysis && (
+                            <div className="mb-3 p-3 bg-blue-50/70 rounded-lg border-l-2 border-blue-200">
+                              <div className="text-xs font-semibold text-blue-700 mb-1 flex items-center gap-1">
+                                <TrendingUp className="h-3 w-3" />
+                                Análise de Impacto
+                              </div>
+                              <p className="text-xs text-blue-700 line-clamp-2">{analysis.impact_analysis}</p>
+                            </div>
+                          )}
+
+                          {/* Metadados da fonte */}
                           <div className="flex items-center gap-4 text-xs text-gray-500">
                             <span className="flex items-center gap-1">
                               <User className="h-3 w-3" />
@@ -937,12 +966,6 @@ function NewsMonitoring() {
                              analysis.urgency_level === 'high' ? '⚠️ Alto' :
                              analysis.urgency_level === 'medium' ? '📊 Médio' : '📝 Baixo'}
                           </Badge>
-                          
-                          {analysis.mentions_mayor && (
-                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                              👤 Menciona Prefeito
-                            </Badge>
-                          )}
                           
                           {analysis.crisis_potential && (
                             <Badge variant="destructive" className="text-xs animate-pulse">
@@ -1010,7 +1033,7 @@ function NewsMonitoring() {
 
                       {/* Ação recomendada destacada */}
                       {analysis.recommended_action && (
-                        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-3">
+                        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-3 mb-4">
                           <div className="flex items-start gap-2">
                             <div className="text-yellow-600 mt-0.5">💡</div>
                             <div>
@@ -1022,8 +1045,8 @@ function NewsMonitoring() {
                       )}
 
                       {/* Footer com call-to-action */}
-                      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-                        <span>Clique para ver análise completa</span>
+                      <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                        <span>Clique para ver análise completa com todos os detalhes</span>
                         <div className="flex items-center gap-1 text-purple-600 font-medium">
                           Ver detalhes <ArrowRight className="h-3 w-3" />
                         </div>
