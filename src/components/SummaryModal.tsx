@@ -188,27 +188,55 @@ export function SummaryModal({ type, data, isOpen, onClose }: SummaryModalProps)
   };
 
   const renderSourcesSummary = () => {
-    const sources = [...new Set(data.map(a => a.news_articles?.author).filter(Boolean))];
-    const sourceStats = sources.map(source => ({
+    // Fontes reais detectadas nas análises
+    const realSources = [...new Set(data.map(a => a.news_articles?.author).filter(Boolean))];
+    const sourceStats = realSources.map(source => ({
       name: source,
       count: data.filter(a => a.news_articles?.author === source).length,
       positive: data.filter(a => a.news_articles?.author === source && a.sentiment_score > 0.3).length,
       negative: data.filter(a => a.news_articles?.author === source && a.sentiment_score < -0.3).length
     }));
 
+    // Fontes configuradas para monitoramento
+    const monitoredSources = [
+      "Folha de S.Paulo", "G1 São Paulo", "CNN Brasil", "UOL",
+      "Estado de S.Paulo", "Portal R7", "Band.com.br", "Globo.com",
+      "Metrópoles", "Brasil 247", "Poder360", "Agência Brasil",
+      "Gazeta do Povo", "Terra", "iG São Paulo"
+    ];
+
     return (
       <div className="space-y-4">
         <div className="text-center mb-6">
-          <div className="text-4xl font-bold text-blue-600">{sources.length}</div>
-          <p className="text-muted-foreground">Portais monitorados em tempo real</p>
+          <div className="text-4xl font-bold text-blue-600">{monitoredSources.length}</div>
+          <p className="text-muted-foreground">Fontes monitoradas em tempo real</p>
+          <p className="text-xs text-muted-foreground mt-1">{realSources.length} com notícias hoje</p>
         </div>
+
+        {/* Fontes Configuradas para Monitoramento */}
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <h3 className="font-bold text-lg text-blue-800 mb-3">📺 Principais Veículos Monitorados</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+              {monitoredSources.map((source, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${realSources.includes(source) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  <span className={realSources.includes(source) ? 'text-green-700 font-medium' : 'text-gray-600'}>
+                    {source}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
         
-        {sourceStats.map((source, index) => (
-          <Card key={index} className="border-blue-200 bg-blue-50">
+        {/* Estatísticas das Fontes Ativas */}
+        {sourceStats.length > 0 && sourceStats.map((source, index) => (
+          <Card key={index} className="border-green-200 bg-green-50">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-lg text-blue-800">📰 {source.name}</h3>
-                <Badge variant="outline" className="bg-white text-blue-700">{source.count} notícias</Badge>
+                <h3 className="font-bold text-lg text-green-800">📰 {source.name}</h3>
+                <Badge variant="outline" className="bg-white text-green-700">{source.count} notícias</Badge>
               </div>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
