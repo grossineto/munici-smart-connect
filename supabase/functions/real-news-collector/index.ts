@@ -81,28 +81,29 @@ serve(async (req) => {
         let savedArticle;
         if (existingArticle) {
           console.log(`Article already exists: ${newsItem.title}`);
-          continue;
+          savedArticle = existingArticle;
+        } else {
+          // Save article to database
+          const { data: newArticle, error: insertError } = await supabase
+            .from('news_articles')
+            .insert({
+              source_id: defaultSource.id,
+              title: newsItem.title,
+              content: newsItem.content,
+              url: newsItem.url,
+              published_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error('Error saving article:', insertError);
+            continue;
+          }
+
+          savedArticle = newArticle;
+          console.log(`Saved article: ${newsItem.title} from ${newsItem.source}`);
         }
-
-        // Save article to database
-        const { data: newArticle, error: insertError } = await supabase
-          .from('news_articles')
-          .insert({
-            source_id: defaultSource.id,
-            title: newsItem.title,
-            content: newsItem.content,
-            url: newsItem.url,
-            published_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-
-        if (insertError) {
-          console.error('Error saving article:', insertError);
-          continue;
-        }
-
-        savedArticle = newArticle;
         console.log(`Saved article: ${newsItem.title} from ${newsItem.source}`);
 
         // Analyze with AI

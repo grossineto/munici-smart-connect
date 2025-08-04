@@ -255,16 +255,16 @@ export default function NewsMonitoring() {
                   <div className="space-y-4">
                     {alerts.map((alert) => (
                       <div key={alert.id} className="p-4 border rounded-lg">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <Badge variant={alert.severity === 'critical' ? 'destructive' : 'secondary'}>
-                              {alert.severity}
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center gap-2">
+                            <Badge variant={alert.severity === 'critical' ? 'destructive' : alert.severity === 'high' ? 'default' : 'secondary'}>
+                              {alert.severity === 'critical' ? 'CRÍTICO' : alert.severity === 'high' ? 'ALTO' : 'MÉDIO'}
                             </Badge>
-                            <h3 className="font-semibold mt-2">{alert.title}</h3>
-                            <p className="text-sm text-muted-foreground">{alert.message}</p>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true, locale: ptBR })}
-                            </p>
+                            {alert.news_articles?.news_sources?.name && (
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                                {alert.news_articles.news_sources.name}
+                              </Badge>
+                            )}
                           </div>
                           {alert.news_articles?.url && (
                             <Button size="sm" variant="ghost" onClick={() => window.open(alert.news_articles.url, '_blank')}>
@@ -272,6 +272,14 @@ export default function NewsMonitoring() {
                             </Button>
                           )}
                         </div>
+                        <h3 className="font-semibold text-lg mb-2">{alert.title}</h3>
+                        <p className="text-sm text-muted-foreground mb-2">{alert.message}</p>
+                        {alert.news_articles?.title && (
+                          <p className="text-sm font-medium text-blue-600 mb-2">{alert.news_articles.title}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true, locale: ptBR })}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -292,21 +300,55 @@ export default function NewsMonitoring() {
                   <div className="space-y-4">
                     {analyses.map((analysis) => (
                       <div key={analysis.id} className="p-4 border rounded-lg">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <Badge variant="outline">{analysis.urgency_level}</Badge>
-                            {analysis.mentions_mayor && <Badge className="ml-2">Menciona Prefeito</Badge>}
-                            <h3 className="font-semibold mt-2">{analysis.news_articles?.title}</h3>
-                            <p className="text-sm text-muted-foreground">{analysis.summary}</p>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              Relevância: {Math.round((analysis.relevance_score || 0) * 100)}%
-                            </p>
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant={
+                              analysis.sentiment_score > 0.3 ? 'default' : 
+                              analysis.sentiment_score < -0.3 ? 'destructive' : 'secondary'
+                            }>
+                              {analysis.sentiment_score > 0.3 ? '✅ POSITIVA' : 
+                               analysis.sentiment_score < -0.3 ? '❌ NEGATIVA' : '⚪ NEUTRA'}
+                            </Badge>
+                            <Badge variant="outline">
+                              {analysis.urgency_level === 'critical' ? 'CRÍTICA' :
+                               analysis.urgency_level === 'high' ? 'ALTA' :
+                               analysis.urgency_level === 'medium' ? 'MÉDIA' : 'BAIXA'}
+                            </Badge>
+                            {analysis.news_articles?.news_sources?.name && (
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                                {analysis.news_articles.news_sources.name}
+                              </Badge>
+                            )}
+                            {analysis.mentions_mayor && <Badge className="bg-purple-100 text-purple-700">Menciona Prefeito</Badge>}
+                            {analysis.crisis_potential && <Badge variant="destructive">🚨 Potencial de Crise</Badge>}
                           </div>
                           {analysis.news_articles?.url && (
                             <Button size="sm" variant="ghost" onClick={() => window.open(analysis.news_articles.url, '_blank')}>
                               <ExternalLink className="h-4 w-4" />
                             </Button>
                           )}
+                        </div>
+                        
+                        <h3 className="font-semibold text-lg mb-2">{analysis.news_articles?.title}</h3>
+                        <p className="text-sm text-muted-foreground mb-3">{analysis.summary}</p>
+                        
+                        {analysis.impact_analysis && (
+                          <div className="mb-2">
+                            <strong className="text-sm">Impacto:</strong>
+                            <p className="text-sm text-gray-600">{analysis.impact_analysis}</p>
+                          </div>
+                        )}
+                        
+                        {analysis.recommended_action && (
+                          <div className="mb-2 p-2 bg-yellow-50 rounded">
+                            <strong className="text-sm text-yellow-800">Ação Recomendada:</strong>
+                            <p className="text-sm text-yellow-700">{analysis.recommended_action}</p>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mt-3">
+                          <span>Relevância: {Math.round((analysis.relevance_score || 0) * 100)}%</span>
+                          <span>{formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true, locale: ptBR })}</span>
                         </div>
                       </div>
                     ))}
