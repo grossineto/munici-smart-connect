@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Search, Eye, BarChart3, MapPin, User, ChevronDown, ChevronUp, Brain, AlertTriangle, TrendingUp, Clock, Calendar, Filter, ExternalLink, Globe, Loader2, ArrowRight, X, CheckCircle, AlertCircle } from "lucide-react";
+import { Bell, Search, Eye, BarChart3, MapPin, User, ChevronDown, ChevronUp, Brain, AlertTriangle, TrendingUp, Clock, Calendar, Filter, ExternalLink, Globe, Loader2, ArrowRight, X, CheckCircle, AlertCircle, Newspaper, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AnalysisModal } from "@/components/AnalysisModal";
 import { SummaryModal } from "@/components/SummaryModal";
+import { SearchPoliticianInput } from "@/components/SearchPoliticianInput";
+import { PoliticianCard } from "@/components/PoliticianCard";
+import { StartAnalysisButton } from "@/components/StartAnalysisButton";
+import { RecentSuggestions } from "@/components/RecentSuggestions";
 
 function NewsMonitoring() {
   const { toast } = useToast();
@@ -582,31 +586,88 @@ function NewsMonitoring() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Monitoramento de Notícias</h1>
-          <p className="text-gray-600">
-            {selectedMayor 
-              ? `Monitorando ${selectedMayor.nome} - ${selectedMayor.cidade}/${selectedMayor.uf}`
-              : 'Monitoramento geral de notícias e análises'
-            }
-          </p>
+    <div className="min-h-screen bg-background">
+      {/* Header Profissional */}
+      <div className="border-b-2 border-muted bg-card shadow-sm">
+        <div className="container mx-auto px-6 py-8">
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Newspaper className="h-6 w-6 text-primary" />
+              </div>
+              <h1 className="text-3xl font-bold text-foreground">Monitoramento de Notícias</h1>
+            </div>
+            <p className="text-muted-foreground text-lg leading-relaxed">
+              Inteligência em tempo real sobre políticos em atividade e impactos na administração pública
+            </p>
+          </div>
+
+          {/* Nova Seção de Seleção de Político */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+            {/* Busca de Político */}
+            <div className="xl:col-span-2 space-y-6">
+              <SearchPoliticianInput
+                onSelectPolitician={(politician) => {
+                  setSelectedMayor(politician);
+                  setSelectedCity({ nome: politician.cidade, uf: politician.uf });
+                }}
+                disabled={isCollecting}
+              />
+
+              {/* Sugestões Recentes */}
+              <RecentSuggestions
+                onSelectPolitician={(politician) => {
+                  setSelectedMayor(politician);
+                  setSelectedCity({ nome: politician.cidade, uf: politician.uf });
+                }}
+              />
+            </div>
+
+            {/* Card do Político Selecionado */}
+            <div className="space-y-6">
+              {selectedMayor ? (
+                <div className="space-y-4">
+                  <PoliticianCard politician={selectedMayor} />
+                  
+                  <StartAnalysisButton
+                    isLoading={isCollecting}
+                    onClick={runPerplexityNews}
+                    politician={selectedMayor}
+                  />
+
+                  <Button
+                    onClick={() => {
+                      setSelectedMayor(null);
+                      setSelectedCity(null);
+                      loadData();
+                    }}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Limpar Seleção
+                  </Button>
+                </div>
+              ) : (
+                <Card className="border-2 border-dashed">
+                  <CardContent className="p-8 text-center">
+                    <div className="text-center text-muted-foreground">
+                      <Activity className="h-16 w-16 mx-auto mb-4 opacity-40" />
+                      <h3 className="font-medium text-lg mb-2">Nenhum político selecionado</h3>
+                      <p className="text-sm leading-relaxed">
+                        Busque um político na barra de pesquisa acima ou selecione uma das sugestões para iniciar o monitoramento de notícias
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
         </div>
-        <Button onClick={runPerplexityNews} disabled={isCollecting} className="gap-2">
-          {isCollecting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Coletando...
-            </>
-          ) : (
-            <>
-              <Search className="h-4 w-4" />
-              Coletar Notícias
-            </>
-          )}
-        </Button>
       </div>
+
+      {/* Conteúdo Principal */}
+      <div className="container mx-auto px-6 py-8 space-y-6">
 
       {/* Banner de Filtro Ativo */}
       {selectedMayor && (
@@ -1583,6 +1644,7 @@ function NewsMonitoring() {
         isOpen={showSummaryModal} 
         onClose={() => setShowSummaryModal(false)} 
       />
+      </div>
     </div>
   );
 }
