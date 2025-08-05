@@ -157,6 +157,16 @@ export function SearchPoliticianInput({
     }
   };
 
+  // Função para obter logo do partido
+  const getPartyLogo = (partido?: string) => {
+    switch (partido?.toUpperCase()) {
+      case 'MDB':
+        return '/lovable-uploads/84ee407e-7a09-419b-8cc6-122b525ecb78.png';
+      default:
+        return null;
+    }
+  };
+
   const handleCitySelect = (city: any) => {
     const mayor = mayorData[city.nome];
     if (mayor) {
@@ -214,9 +224,18 @@ export function SearchPoliticianInput({
                             <User className="h-3 w-3" />
                             {mayor.nome} - {mayor.cargo}
                             {mayor.partido && (
-                              <Badge variant="outline" className="text-xs">
-                                {mayor.partido}
-                              </Badge>
+                              <div className="flex items-center gap-1">
+                                {getPartyLogo(mayor.partido) && (
+                                  <img 
+                                    src={getPartyLogo(mayor.partido)!} 
+                                    alt={`Logo ${mayor.partido}`}
+                                    className="h-3 w-auto"
+                                  />
+                                )}
+                                <Badge variant="outline" className="text-xs">
+                                  {mayor.partido}
+                                </Badge>
+                              </div>
                             )}
                           </div>
                         ) : (

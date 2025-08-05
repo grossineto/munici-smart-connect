@@ -46,6 +46,26 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
     }
   };
 
+  // Função para obter avatar do político
+  const getPoliticianAvatar = (nome: string) => {
+    switch (nome) {
+      case 'Ricardo Nunes':
+        return '/lovable-uploads/e8407b5a-3324-4fad-ae94-1c4214ff64da.png';
+      default:
+        return politician.avatar;
+    }
+  };
+
+  // Função para obter logo do partido
+  const getPartyLogo = (partido?: string) => {
+    switch (partido?.toUpperCase()) {
+      case 'MDB':
+        return '/lovable-uploads/84ee407e-7a09-419b-8cc6-122b525ecb78.png';
+      default:
+        return null;
+    }
+  };
+
   return (
     <Card className={`border-2 shadow-sm hover:shadow-md transition-shadow ${className}`}>
       <CardContent className="p-6">
@@ -53,7 +73,7 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
           {/* Avatar */}
           <Avatar className="h-16 w-16 border-2 border-muted">
             <AvatarImage 
-              src={politician.avatar} 
+              src={getPoliticianAvatar(politician.nome)} 
               alt={`Foto de ${politician.nome}`}
             />
             <AvatarFallback className="text-lg font-semibold bg-primary/10 text-primary">
@@ -94,9 +114,18 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
               )}
               
               {politician.partido && (
-                <Badge variant="secondary" className="text-xs">
-                  {politician.partido}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {getPartyLogo(politician.partido) && (
+                    <img 
+                      src={getPartyLogo(politician.partido)!} 
+                      alt={`Logo ${politician.partido}`}
+                      className="h-6 w-auto"
+                    />
+                  )}
+                  <Badge variant="secondary" className="text-xs">
+                    {politician.partido}
+                  </Badge>
+                </div>
               )}
             </div>
 

@@ -18,6 +18,16 @@ interface RecentSuggestionsProps {
 }
 
 export function RecentSuggestions({ onSelectPolitician, className = "" }: RecentSuggestionsProps) {
+  // Função para obter logo do partido
+  const getPartyLogo = (partido?: string) => {
+    switch (partido?.toUpperCase()) {
+      case 'MDB':
+        return '/lovable-uploads/84ee407e-7a09-419b-8cc6-122b525ecb78.png';
+      default:
+        return null;
+    }
+  };
+
   // Principais cidades/prefeitos em destaque
   const featuredPoliticians: Politician[] = [
     {
@@ -90,7 +100,16 @@ export function RecentSuggestions({ onSelectPolitician, className = "" }: Recent
                   {politician.partido && (
                     <>
                       <span>•</span>
-                      <span>{politician.partido}</span>
+                      <div className="flex items-center gap-1">
+                        {getPartyLogo(politician.partido) && (
+                          <img 
+                            src={getPartyLogo(politician.partido)!} 
+                            alt={`Logo ${politician.partido}`}
+                            className="h-3 w-auto"
+                          />
+                        )}
+                        <span>{politician.partido}</span>
+                      </div>
                     </>
                   )}
                 </div>
