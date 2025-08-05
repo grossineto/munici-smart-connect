@@ -65,6 +65,8 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
         return '/lovable-uploads/f6d35a9d-205a-4556-ac06-3f9fbd151298.png';
       case 'Ivana Camarinha':
         return '/lovable-uploads/67267154-40d4-465f-aa9d-fcca131002f0.png';
+      case 'Tarcísio Gomes de Freitas':
+        return '/lovable-uploads/425f80f3-21ac-4eef-984d-ba432848be17.png';
       default:
         return politician.avatar;
     }
@@ -85,6 +87,8 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
       case 'PV':
       case 'PARTIDO VERDE':
         return '/lovable-uploads/c3695bb8-feda-48d4-beff-f390ac899551.png';
+      case 'REPUBLICANOS':
+        return '/lovable-uploads/5459eeca-7b7d-463c-b793-35eba82ba4f3.png';
       default:
         return null;
     }

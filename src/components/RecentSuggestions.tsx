@@ -33,6 +33,8 @@ export function RecentSuggestions({ onSelectPolitician, className = "" }: Recent
       case 'PV':
       case 'PARTIDO VERDE':
         return '/lovable-uploads/c3695bb8-feda-48d4-beff-f390ac899551.png';
+      case 'REPUBLICANOS':
+        return '/lovable-uploads/5459eeca-7b7d-463c-b793-35eba82ba4f3.png';
       default:
         return null;
     }
@@ -66,6 +68,13 @@ export function RecentSuggestions({ onSelectPolitician, className = "" }: Recent
       cargo: "Prefeita",
       partido: "PSD",
       cidade: "Bauru",
+      uf: "SP"
+    },
+    {
+      nome: "Tarcísio Gomes de Freitas",
+      cargo: "Governador",
+      partido: "Republicanos", 
+      cidade: "São Paulo",
       uf: "SP"
     }
   ];

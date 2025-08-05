@@ -82,12 +82,12 @@ export function SearchPoliticianInput({
   // Dados dos prefeitos (base expandida)
   const mayorData: Record<string, Politician> = {
     "São Paulo": { 
-      nome: "Ricardo Nunes", 
-      partido: "MDB", 
-      mandato: "2021-2024", 
+      nome: "Tarcísio Gomes de Freitas", 
+      partido: "Republicanos", 
+      mandato: "2023-2026", 
       cidade: "São Paulo", 
       uf: "SP",
-      cargo: "Prefeito"
+      cargo: "Governador"
     },
     "Rio de Janeiro": { 
       nome: "Eduardo Paes", 
@@ -161,6 +161,14 @@ export function SearchPoliticianInput({
       uf: "AM",
       cargo: "Prefeito"
     },
+    "São Paulo Estado": { 
+      nome: "Tarcísio Gomes de Freitas", 
+      partido: "Republicanos", 
+      mandato: "2023-2026", 
+      cidade: "São Paulo", 
+      uf: "SP",
+      cargo: "Governador"
+    },
     "Bauru": { 
       nome: "Suéllen Rosim", 
       partido: "PSD", 
@@ -210,6 +218,8 @@ export function SearchPoliticianInput({
       case 'PV':
       case 'PARTIDO VERDE':
         return '/lovable-uploads/c3695bb8-feda-48d4-beff-f390ac899551.png';
+      case 'REPUBLICANOS':
+        return '/lovable-uploads/5459eeca-7b7d-463c-b793-35eba82ba4f3.png';
       default:
         return null;
     }
