@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { AdvancedSearchFilters } from '@/components/AdvancedSearchFilters';
 
 interface Politician {
   id?: any;

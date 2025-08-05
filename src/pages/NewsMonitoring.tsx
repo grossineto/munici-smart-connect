@@ -15,6 +15,7 @@ import { SearchPoliticianInput } from "@/components/SearchPoliticianInput";
 import { PoliticianCard } from "@/components/PoliticianCard";
 import { StartAnalysisButton } from "@/components/StartAnalysisButton";
 import { RecentSuggestions } from "@/components/RecentSuggestions";
+import { AdvancedSearchFilters } from "@/components/AdvancedSearchFilters";
 
 function NewsMonitoring() {
   const { toast } = useToast();
@@ -519,6 +520,14 @@ function NewsMonitoring() {
                 onSelectPolitician={handleSelectPolitician}
                 disabled={isCollecting}
               />
+              
+              {/* Filtros Avançados */}
+              <AdvancedSearchFilters
+                onFiltersChange={(filters) => {
+                  console.log('Filtros aplicados:', filters);
+                  // TODO: Implementar lógica de filtros
+                }}
+              />
 
               {/* Sugestões Recentes */}
               <RecentSuggestions
@@ -533,7 +542,6 @@ function NewsMonitoring() {
                   <PoliticianCard politician={selectedPolitician} />
                   
                   <StartAnalysisButton
-                    isLoading={isCollecting}
                     onClick={handleStartAnalysis}
                     politician={selectedPolitician}
                   />
