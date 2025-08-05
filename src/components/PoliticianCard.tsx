@@ -63,6 +63,8 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
         return '/lovable-uploads/9c090c37-0d6e-4699-9cc5-028de5640b9a.png';
       case 'Guto Issa':
         return '/lovable-uploads/f6d35a9d-205a-4556-ac06-3f9fbd151298.png';
+      case 'Ivana Camarinha':
+        return '/lovable-uploads/67267154-40d4-465f-aa9d-fcca131002f0.png';
       default:
         return politician.avatar;
     }

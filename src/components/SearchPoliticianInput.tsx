@@ -184,6 +184,14 @@ export function SearchPoliticianInput({
       cidade: "São Roque", 
       uf: "SP",
       cargo: "Prefeito"
+    },
+    "Pederneiras": { 
+      nome: "Ivana Camarinha", 
+      partido: "PV", 
+      mandato: "2021-2024", 
+      cidade: "Pederneiras", 
+      uf: "SP",
+      cargo: "Prefeita"
     }
   };
 
