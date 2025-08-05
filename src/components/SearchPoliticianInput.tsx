@@ -31,8 +31,8 @@ export function SearchPoliticianInput({
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
-  // Função para buscar cidades na API do IBGE
-  const searchCities = async (query: string) => {
+  // Função para buscar prefeitos na base local
+  const searchPoliticians = (query: string) => {
     if (!query || query.length < 2) {
       setSearchResults([]);
       setShowResults(false);
@@ -43,21 +43,27 @@ export function SearchPoliticianInput({
     setShowResults(true);
     
     try {
-      const response = await fetch(
-        `https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodeURIComponent(query)}`
-      );
-      const data = await response.json();
-      
-      if (Array.isArray(data)) {
-        const formattedResults = data.slice(0, 8).map((city: any) => ({
-          id: city.id,
-          nome: city.nome,
-          uf: city.microrregiao?.mesorregiao?.UF?.sigla || city.UF?.sigla
+      const queryLower = query.toLowerCase();
+      const filteredMayors = Object.entries(mayorData)
+        .filter(([cityName, mayor]) => {
+          return (
+            cityName.toLowerCase().includes(queryLower) ||
+            mayor.nome.toLowerCase().includes(queryLower) ||
+            mayor.partido?.toLowerCase().includes(queryLower) ||
+            mayor.uf.toLowerCase().includes(queryLower)
+          );
+        })
+        .slice(0, 8)
+        .map(([cityName, mayor]) => ({
+          id: cityName,
+          nome: cityName,
+          uf: mayor.uf,
+          mayor: mayor
         }));
-        setSearchResults(formattedResults);
-      }
+      
+      setSearchResults(filteredMayors);
     } catch (error) {
-      console.error('Erro ao buscar cidades:', error);
+      console.error('Erro ao buscar políticos:', error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -67,7 +73,7 @@ export function SearchPoliticianInput({
   // Debounce da busca
   useEffect(() => {
     const timer = setTimeout(() => {
-      searchCities(searchQuery);
+      searchPoliticians(searchQuery);
     }, 300);
 
     return () => clearTimeout(timer);
@@ -174,13 +180,13 @@ export function SearchPoliticianInput({
     }
   };
 
-  const handleCitySelect = (city: any) => {
-    const mayor = mayorData[city.nome];
+  const handlePoliticianSelect = (result: any) => {
+    const mayor = result.mayor || mayorData[result.nome];
     if (mayor) {
       onSelectPolitician({
         ...mayor,
-        cidade: city.nome,
-        uf: city.uf
+        cidade: result.nome,
+        uf: result.uf
       });
     }
     setSearchQuery('');
@@ -209,47 +215,41 @@ export function SearchPoliticianInput({
         <Card className="absolute top-full left-0 right-0 mt-2 z-50 shadow-lg border-2">
           <CardContent className="p-2">
             <div className="space-y-1">
-              {searchResults.map((city) => {
-                const mayor = mayorData[city.nome];
+              {searchResults.map((result) => {
+                const mayor = result.mayor || mayorData[result.nome];
                 return (
                   <Button
-                    key={city.id}
+                    key={result.id}
                     variant="ghost"
                     className="w-full justify-start p-3 h-auto text-left hover:bg-muted/80"
-                    onClick={() => handleCitySelect(city)}
+                    onClick={() => handlePoliticianSelect(result)}
                   >
                     <div className="flex items-center gap-3 w-full">
                       <div className="flex-shrink-0">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <User className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm">
-                          {city.nome}, {city.uf}
+                          {mayor.nome} - {mayor.cargo}
                         </div>
-                        {mayor ? (
-                          <div className="text-xs text-muted-foreground flex items-center gap-2">
-                            <User className="h-3 w-3" />
-                            {mayor.nome} - {mayor.cargo}
-                            {mayor.partido && (
-                              <div className="flex items-center gap-1">
-                                {getPartyLogo(mayor.partido) && (
-                                  <img 
-                                    src={getPartyLogo(mayor.partido)!} 
-                                    alt={`Logo ${mayor.partido}`}
-                                    className="h-3 w-auto"
-                                  />
-                                )}
-                                <Badge variant="outline" className="text-xs">
-                                  {mayor.partido}
-                                </Badge>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="text-xs text-muted-foreground">
-                            Dados do político não disponíveis
-                          </div>
-                        )}
+                        <div className="text-xs text-muted-foreground flex items-center gap-2">
+                          <MapPin className="h-3 w-3" />
+                          {result.nome}, {result.uf}
+                          {mayor.partido && (
+                            <div className="flex items-center gap-1">
+                              {getPartyLogo(mayor.partido) && (
+                                <img 
+                                  src={getPartyLogo(mayor.partido)!} 
+                                  alt={`Logo ${mayor.partido}`}
+                                  className="h-3 w-auto"
+                                />
+                              )}
+                              <Badge variant="outline" className="text-xs">
+                                {mayor.partido}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </Button>
