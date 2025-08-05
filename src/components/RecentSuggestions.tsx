@@ -25,6 +25,8 @@ export function RecentSuggestions({ onSelectPolitician, className = "" }: Recent
         return '/lovable-uploads/84ee407e-7a09-419b-8cc6-122b525ecb78.png';
       case 'PSD':
         return '/lovable-uploads/0db47da6-761a-4a1d-abff-33cd9d18d944.png';
+      case 'PSB':
+        return '/lovable-uploads/c1fc5a33-93d2-4978-b974-59917be945e0.png';
       default:
         return null;
     }

@@ -53,6 +53,8 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
         return '/lovable-uploads/e8407b5a-3324-4fad-ae94-1c4214ff64da.png';
       case 'Eduardo Paes':
         return '/lovable-uploads/eceb707c-015a-4cb2-b488-493c9c6b5cac.png';
+      case 'João Campos':
+        return '/lovable-uploads/990eb197-9e97-4050-9ad7-41f0539e7ba8.png';
       default:
         return politician.avatar;
     }
@@ -65,6 +67,8 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
         return '/lovable-uploads/84ee407e-7a09-419b-8cc6-122b525ecb78.png';
       case 'PSD':
         return '/lovable-uploads/0db47da6-761a-4a1d-abff-33cd9d18d944.png';
+      case 'PSB':
+        return '/lovable-uploads/c1fc5a33-93d2-4978-b974-59917be945e0.png';
       default:
         return null;
     }
