@@ -217,6 +217,8 @@ export function SearchPoliticianInput({
             <div className="space-y-1">
               {searchResults.map((result) => {
                 const mayor = result.mayor || mayorData[result.nome];
+                if (!mayor) return null;
+                
                 return (
                   <Button
                     key={result.id}
@@ -254,7 +256,7 @@ export function SearchPoliticianInput({
                     </div>
                   </Button>
                 );
-              })}
+              }).filter(Boolean)}
             </div>
           </CardContent>
         </Card>
