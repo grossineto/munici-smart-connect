@@ -31,13 +31,8 @@ function NewsMonitoring() {
   const [summaryData, setSummaryData] = useState<any>(null);
   const [summaryType, setSummaryType] = useState<'analyses' | 'pending' | 'critical' | 'sources'>('analyses');
   
-  // Estados para pesquisa de cidades
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showOtherCities, setShowOtherCities] = useState(false);
-  const [selectedCity, setSelectedCity] = useState<any>(null);
-  const [selectedMayor, setSelectedMayor] = useState<any>(null);
+  // Estados para o novo sistema de seleção de políticos
+  const [selectedPolitician, setSelectedPolitician] = useState<any>(null);
 
   // Estados dos filtros de análise
   const [analysisFilters, setAnalysisFilters] = useState({
@@ -99,17 +94,17 @@ function NewsMonitoring() {
     }
   };
 
-  // Função para carregar dados filtrados por prefeito
-  const loadDataForMayor = async (mayor: any) => {
+  // Função para carregar dados filtrados por político
+  const loadDataForPolitician = async (politician: any) => {
     try {
       setLoading(true);
       
-      // LIMPAR DADOS ANTIGOS PRIMEIRO para evitar mostrar dados de outro prefeito
+      // LIMPAR DADOS ANTIGOS PRIMEIRO para evitar mostrar dados de outro político
       setAlerts([]);
       setAnalyses([]);
       setFilteredAnalyses([]);
       
-      console.log(`🔍 Carregando dados FILTRADOS para: ${mayor.nome} - ${mayor.cidade}/${mayor.uf}`);
+      console.log(`🔍 Carregando dados FILTRADOS para: ${politician.nome} - ${politician.cidade}/${politician.uf}`);
       
       // Filtros corrigidos para alertas - usando sintaxe correta do Supabase
       const { data: alertsData, error: alertsError } = await supabase
@@ -125,7 +120,7 @@ function NewsMonitoring() {
             published_at
           )
         `)
-        .or(`title.ilike.%${mayor.nome}%,title.ilike.%${mayor.cidade}%,message.ilike.%${mayor.nome}%,message.ilike.%${mayor.cidade}%`)
+        .or(`title.ilike.%${politician.nome}%,title.ilike.%${politician.cidade}%,message.ilike.%${politician.nome}%,message.ilike.%${politician.cidade}%`)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -135,7 +130,7 @@ function NewsMonitoring() {
         const { data: fallbackAlerts } = await supabase
           .from('news_alerts')
           .select('*')
-          .or(`title.ilike.%${mayor.nome}%,title.ilike.%${mayor.cidade}%,message.ilike.%${mayor.nome}%,message.ilike.%${mayor.cidade}%`)
+          .or(`title.ilike.%${politician.nome}%,title.ilike.%${politician.cidade}%,message.ilike.%${politician.nome}%,message.ilike.%${politician.cidade}%`)
           .order('created_at', { ascending: false })
           .limit(20);
         setAlerts(fallbackAlerts || []);
@@ -158,7 +153,7 @@ function NewsMonitoring() {
             published_at
           )
         `)
-        .or(`summary.ilike.%${mayor.nome}%,summary.ilike.%${mayor.cidade}%,impact_analysis.ilike.%${mayor.nome}%,impact_analysis.ilike.%${mayor.cidade}%`)
+        .or(`summary.ilike.%${politician.nome}%,summary.ilike.%${politician.cidade}%,impact_analysis.ilike.%${politician.nome}%,impact_analysis.ilike.%${politician.cidade}%`)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -168,7 +163,7 @@ function NewsMonitoring() {
         const { data: fallbackAnalyses } = await supabase
           .from('news_analysis')
           .select('*')
-          .or(`summary.ilike.%${mayor.nome}%,summary.ilike.%${mayor.cidade}%,impact_analysis.ilike.%${mayor.nome}%,impact_analysis.ilike.%${mayor.cidade}%`)
+          .or(`summary.ilike.%${politician.nome}%,summary.ilike.%${politician.cidade}%,impact_analysis.ilike.%${politician.nome}%,impact_analysis.ilike.%${politician.cidade}%`)
           .order('created_at', { ascending: false })
           .limit(20);
         setAnalyses(fallbackAnalyses || []);
@@ -202,8 +197,8 @@ function NewsMonitoring() {
         },
         (payload) => {
           console.log('🚨 Novo alerta recebido:', payload);
-          if (selectedMayor) {
-            loadDataForMayor(selectedMayor);
+          if (selectedPolitician) {
+            loadDataForPolitician(selectedPolitician);
           } else {
             loadData();
           }
@@ -218,8 +213,8 @@ function NewsMonitoring() {
         },
         (payload) => {
           console.log('🧠 Nova análise recebida:', payload);
-          if (selectedMayor) {
-            loadDataForMayor(selectedMayor);
+          if (selectedPolitician) {
+            loadDataForPolitician(selectedPolitician);
           } else {
             loadData();
           }
@@ -234,131 +229,45 @@ function NewsMonitoring() {
 
   // Carregar dados iniciais e configurar subscription
   useEffect(() => {
-    if (selectedMayor) {
-      console.log('🔄 Recarregando dados filtrados para:', selectedMayor.nome);
-      loadDataForMayor(selectedMayor);
+    if (selectedPolitician) {
+      console.log('🔄 Recarregando dados filtrados para:', selectedPolitician.nome);
+      loadDataForPolitician(selectedPolitician);
     } else {
       console.log('🔄 Carregando dados gerais...');
       loadData();
     }
     const cleanup = setupRealtimeSubscription();
     return cleanup;
-  }, [selectedMayor]); // Adicionar selectedMayor como dependência
+  }, [selectedPolitician]); // Adicionar selectedPolitician como dependência
 
-  // Função para buscar cidades na API do IBGE
-  const searchCities = async (query: string) => {
-    if (!query || query.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodeURIComponent(query)}`);
-      const data = await response.json();
-      
-      if (Array.isArray(data)) {
-        const formattedResults = data.slice(0, 10).map((city: any) => ({
-          id: city.id,
-          nome: city.nome,
-          uf: city.microrregiao?.mesorregiao?.UF?.sigla || city.UF?.sigla
-        }));
-        setSearchResults(formattedResults);
-      }
-    } catch (error) {
-      console.error('Erro ao buscar cidades:', error);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // Dados dos prefeitos (base de dados local)
-  const mayorData: Record<string, any> = {
-    "São Paulo": { nome: "Ricardo Nunes", partido: "MDB", mandato: "2021-2024", cidade: "São Paulo", uf: "SP" },
-    "Rio de Janeiro": { nome: "Eduardo Paes", partido: "PSD", mandato: "2021-2024", cidade: "Rio de Janeiro", uf: "RJ" },
-    "Belo Horizonte": { nome: "Prefeito Interino", partido: "PSD", mandato: "2024", cidade: "Belo Horizonte", uf: "MG" },
-    "Curitiba": { nome: "Rafael Greca", partido: "PMN", mandato: "2017-2024", cidade: "Curitiba", uf: "PR" },
-    "Recife": { nome: "João Campos", partido: "PSB", mandato: "2021-2024", cidade: "Recife", uf: "PE" },
-    "Porto Alegre": { nome: "Sebastião Melo", partido: "MDB", mandato: "2021-2024", cidade: "Porto Alegre", uf: "RS" },
-    "Salvador": { nome: "Bruno Reis", partido: "União Brasil", mandato: "2021-2024", cidade: "Salvador", uf: "BA" },
-    "Fortaleza": { nome: "José Sarto", partido: "PDT", mandato: "2021-2024", cidade: "Fortaleza", uf: "CE" },
-    "Brasília": { nome: "Ibaneis Rocha", partido: "MDB", mandato: "2019-2026", cidade: "Brasília", uf: "DF" },
-    "Manaus": { nome: "David Almeida", partido: "Avante", mandato: "2021-2024", cidade: "Manaus", uf: "AM" },
-    "Bauru": { nome: "Suéllen Rosim", partido: "PSB", mandato: "2021-2024", cidade: "Bauru", uf: "SP" },
-    "Pederneiras": { nome: "Ivana Camarinha", partido: "PSB", mandato: "2021-2024", cidade: "Pederneiras", uf: "SP" },
-    "Botucatu": { nome: "Fábio Vieira de Souza Leite", partido: "PSDB", mandato: "2021-2024", cidade: "Botucatu", uf: "SP" },
-    "São Roque": { nome: "Guto Issa", partido: "PSD", mandato: "2021-2024", cidade: "São Roque", uf: "SP" }
-  };
-
-  // Correção de estados para algumas cidades
-  const cityToState: Record<string, string> = {
-    "Recife": "PE",
-    "São Paulo": "SP",
-    "Rio de Janeiro": "RJ"
-  };
-
-  // Função para selecionar cidade
-  const selectCity = async (city: any) => {
-    console.log('🏙️ Cidade selecionada:', city.nome);
+  // Função para selecionar político do novo sistema
+  const handleSelectPolitician = (politician: any) => {
+    console.log('🏛️ Político selecionado:', politician);
     
     // LIMPAR DADOS ANTIGOS IMEDIATAMENTE
     setAlerts([]);
     setAnalyses([]);
     setFilteredAnalyses([]);
-    setSelectedMayor(null);
     
-    setSelectedCity(city);
-    setSearchQuery('');
-    setSearchResults([]);
-    setShowOtherCities(false);
+    setSelectedPolitician(politician);
+    
+    // Carregar dados filtrados
+    loadDataForPolitician(politician);
+    
+    toast({
+      title: "Político Selecionado ✅",
+      description: `Monitoramento ativo para ${politician.nome} em ${politician.cidade}/${politician.uf}`,
+    });
+  };
 
-    // Buscar prefeito correspondente
-    console.log('📋 Buscando prefeito para:', city.nome);
-    console.log('🗂️ Cidades disponíveis na base:', Object.keys(mayorData));
+  // Função para iniciar análise
+  const handleStartAnalysis = async () => {
+    if (!selectedPolitician) return;
     
-    const mayor = mayorData[city.nome];
-    if (mayor) {
-      console.log('✅ Prefeito encontrado:', mayor.nome);
-      
-      // Corrigir estado se necessário
-      const correctedState = cityToState[city.nome] || city.uf;
-      if (correctedState !== city.uf) {
-        console.log(`🗺️ Estado corrigido: ${city.nome} -> ${correctedState}`);
-      }
-      
-      const mayorWithCorrectState = {
-        ...mayor,
-        uf: correctedState,
-        estado: correctedState,
-        cidade: city.nome
-      };
-      
-      setSelectedMayor(mayorWithCorrectState);
-      
-      console.log('🚀 Iniciando coleta automática para:', mayor.nome);
-      console.log('📍 Dados completos do prefeito:', mayorWithCorrectState);
-      
-      // Carregar dados filtrados primeiro (mais rápido)
-      await loadDataForMayor(mayorWithCorrectState);
-      
-      // Depois tentar coleta automática (pode falhar, mas não bloqueia)
-      try {
-        await runPerplexityNewsForMayor(mayorWithCorrectState);
-      } catch (collectError) {
-        console.warn('⚠️ Coleta automática falhou, mas dados filtrados foram carregados:', collectError);
-      }
-      
-      toast({
-        title: "Cidade Selecionada ✅",
-        description: `Monitoramento ativo para ${mayor.nome} em ${city.nome}/${correctedState}`,
-      });
-    } else {
-      console.log('❌ Prefeito não encontrado para:', city.nome);
-      toast({
-        title: "Prefeito não encontrado",
-        description: `Não temos dados do prefeito de ${city.nome} em nossa base.`,
-        variant: "destructive",
-      });
+    try {
+      await runPerplexityNewsForPolitician(selectedPolitician);
+    } catch (error) {
+      console.error('Erro ao iniciar análise:', error);
     }
   };
 
@@ -371,10 +280,10 @@ function NewsMonitoring() {
       
       const { data, error } = await supabase.functions.invoke('perplexity-news-collector', {
         body: { 
-          mayor: selectedMayor ? {
-            mayorName: selectedMayor.nome,
-            cityName: selectedMayor.cidade,
-            state: selectedMayor.uf
+          mayor: selectedPolitician ? {
+            mayorName: selectedPolitician.nome,
+            cityName: selectedPolitician.cidade,
+            state: selectedPolitician.uf
           } : null
         },
       });
@@ -399,8 +308,8 @@ function NewsMonitoring() {
         
         // Recarregar dados após coleta
         setTimeout(() => {
-          if (selectedMayor) {
-            loadDataForMayor(selectedMayor);
+          if (selectedPolitician) {
+            loadDataForPolitician(selectedPolitician);
           } else {
             loadData();
           }
@@ -424,10 +333,10 @@ function NewsMonitoring() {
     }
   };
 
-  // Função para executar coleta para prefeito específico
-  const runPerplexityNewsForMayor = async (mayor: any) => {
+  // Função para executar coleta para político específico
+  const runPerplexityNewsForPolitician = async (politician: any) => {
     try {
-      console.log('🚀 Iniciando coleta para prefeito:', mayor);
+      console.log('🚀 Iniciando coleta para político:', politician);
       
       setIsCollecting(true);
       
@@ -439,12 +348,12 @@ function NewsMonitoring() {
       const collectionPromise = supabase.functions.invoke('perplexity-news-collector', {
         body: { 
           mayor: {
-            nome: mayor.nome,
-            cidade: mayor.cidade,
-            uf: mayor.uf,
-            mayorName: mayor.nome,  // Compatibilidade
-            cityName: mayor.cidade, // Compatibilidade
-            state: mayor.uf        // Compatibilidade
+            nome: politician.nome,
+            cidade: politician.cidade,
+            uf: politician.uf,
+            mayorName: politician.nome,  // Compatibilidade
+            cityName: politician.cidade, // Compatibilidade
+            state: politician.uf        // Compatibilidade
           }
         },
       });
@@ -472,8 +381,8 @@ function NewsMonitoring() {
         });
         
         // Recarregar dados após sucesso
-        if (selectedMayor) {
-          loadDataForMayor(selectedMayor);
+        if (selectedPolitician) {
+          loadDataForPolitician(selectedPolitician);
         } else {
           loadData();
         }
@@ -607,38 +516,31 @@ function NewsMonitoring() {
             {/* Busca de Político */}
             <div className="xl:col-span-2 space-y-6">
               <SearchPoliticianInput
-                onSelectPolitician={(politician) => {
-                  setSelectedMayor(politician);
-                  setSelectedCity({ nome: politician.cidade, uf: politician.uf });
-                }}
+                onSelectPolitician={handleSelectPolitician}
                 disabled={isCollecting}
               />
 
               {/* Sugestões Recentes */}
               <RecentSuggestions
-                onSelectPolitician={(politician) => {
-                  setSelectedMayor(politician);
-                  setSelectedCity({ nome: politician.cidade, uf: politician.uf });
-                }}
+                onSelectPolitician={handleSelectPolitician}
               />
             </div>
 
             {/* Card do Político Selecionado */}
             <div className="space-y-6">
-              {selectedMayor ? (
+              {selectedPolitician ? (
                 <div className="space-y-4">
-                  <PoliticianCard politician={selectedMayor} />
+                  <PoliticianCard politician={selectedPolitician} />
                   
                   <StartAnalysisButton
                     isLoading={isCollecting}
-                    onClick={runPerplexityNews}
-                    politician={selectedMayor}
+                    onClick={handleStartAnalysis}
+                    politician={selectedPolitician}
                   />
 
                   <Button
                     onClick={() => {
-                      setSelectedMayor(null);
-                      setSelectedCity(null);
+                      setSelectedPolitician(null);
                       loadData();
                     }}
                     variant="outline"
@@ -670,7 +572,7 @@ function NewsMonitoring() {
       <div className="container mx-auto px-6 py-8 space-y-6">
 
       {/* Banner de Filtro Ativo */}
-      {selectedMayor && (
+      {selectedPolitician && (
         <Card className="p-4 bg-gradient-to-r from-blue-100 to-purple-100 border-blue-300">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -679,10 +581,10 @@ function NewsMonitoring() {
               </div>
               <div>
                 <p className="font-semibold text-blue-800">
-                  📊 Dashboard Filtrado - {selectedMayor.nome}
+                  📊 Dashboard Filtrado - {selectedPolitician.nome}
                 </p>
                 <p className="text-sm text-blue-600">
-                  Exibindo apenas dados de {selectedMayor.cidade}/{selectedMayor.uf} • {analyses.length} análises • {alerts.length} alertas
+                  Exibindo apenas dados de {selectedPolitician.cidade}/{selectedPolitician.uf} • {analyses.length} análises • {alerts.length} alertas
                 </p>
               </div>
             </div>
@@ -693,192 +595,6 @@ function NewsMonitoring() {
         </Card>
       )}
 
-      {/* Seleção de Cidade/Prefeito */}
-      <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2 text-blue-800">
-              <MapPin className="h-5 w-5 text-blue-600" />
-              Seleção de Cidade e Prefeito
-            </h2>
-            
-            {/* Seletor Unificado Elegante */}
-            <div className="space-y-4">
-              <div className="relative">
-                <Label className="text-sm font-medium text-blue-700 mb-3 block">
-                  Buscar Cidade ou Prefeito
-                </Label>
-                
-                {/* Campo de Busca Principal */}
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                    <Search className="h-4 w-4 text-blue-500" />
-                  </div>
-                  <Input
-                    placeholder="Digite o nome da cidade ou prefeito..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      searchCities(e.target.value);
-                      setShowOtherCities(e.target.value.length > 0);
-                    }}
-                    className="pl-10 pr-4 h-12 text-base border-blue-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm"
-                  />
-                  {isSearching && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Sugestões Rápidas - Cidades Principais */}
-              {!searchQuery && (
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium text-gray-600">Cidades Principais</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {mainCities.map((city) => {
-                      const hasData = mayorData[city.nome];
-                      return (
-                        <Button
-                          key={`${city.nome}-${city.uf}`}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            selectCity(city);
-                            setSearchQuery('');
-                          }}
-                          disabled={!hasData}
-                          className={`transition-all duration-200 ${
-                            hasData 
-                              ? 'hover:bg-blue-100 border-blue-300 text-blue-700 hover:scale-105 shadow-sm' 
-                              : 'opacity-40 cursor-not-allowed'
-                          }`}
-                        >
-                          <span className="font-medium">{city.nome}</span>
-                          <span className="text-xs ml-1 opacity-75">{city.uf}</span>
-                          {hasData && <span className="text-xs ml-1">✨</span>}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Resultados da Busca */}
-              {searchQuery && searchResults.length > 0 && (
-                <div className="bg-white/90 backdrop-blur-sm border border-blue-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
-                  <div className="p-2">
-                    <div className="text-xs text-blue-600 font-medium mb-2 px-2">
-                      {searchResults.length} cidade(s) encontrada(s)
-                    </div>
-                    {searchResults.map((city) => {
-                      const hasData = mayorData[city.nome];
-                      return (
-                        <div
-                          key={`${city.id}-${city.nome}`}
-                          onClick={() => {
-                            if (hasData) {
-                              selectCity(city);
-                              setSearchQuery('');
-                              setShowOtherCities(false);
-                            }
-                          }}
-                          className={`px-3 py-3 m-1 rounded-lg cursor-pointer transition-all duration-200 ${
-                            hasData 
-                              ? 'hover:bg-blue-50 hover:shadow-md border border-transparent hover:border-blue-200' 
-                              : 'hover:bg-gray-50 opacity-60 cursor-not-allowed'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                              hasData ? 'bg-blue-100' : 'bg-gray-100'
-                            }`}>
-                              <MapPin className={`h-4 w-4 ${hasData ? 'text-blue-600' : 'text-gray-400'}`} />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-800">{city.nome}</span>
-                                <span className="text-sm text-gray-500">• {city.uf}</span>
-                              </div>
-                              {hasData && mayorData[city.nome] && (
-                                <div className="text-xs text-blue-600 mt-1">
-                                  Prefeito: {mayorData[city.nome].nome} ({mayorData[city.nome].partido})
-                                </div>
-                              )}
-                            </div>
-                            {hasData ? (
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
-                                <span className="text-xs">✓ Disponível</span>
-                              </Badge>
-                            ) : (
-                              <span className="text-xs text-red-500">Não disponível</span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Estado Vazio para Busca */}
-              {searchQuery && searchResults.length === 0 && !isSearching && (
-                <div className="text-center py-8 text-gray-500">
-                  <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Nenhuma cidade encontrada</p>
-                  <p className="text-xs">Tente buscar por outro termo</p>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Prefeito Selecionado - Mantido como está pois o usuário gostou */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium text-blue-700">Prefeito Selecionado</Label>
-            {selectedMayor ? (
-              <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-300 rounded-xl shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-md">
-                    <User className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-green-800 text-lg">{selectedMayor.nome}</p>
-                    <p className="text-sm text-green-600 font-medium">{selectedMayor.partido} • {selectedMayor.cidade}/{selectedMayor.uf}</p>
-                    <p className="text-xs text-gray-600 mt-1">Mandato: {selectedMayor.mandato}</p>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setSelectedMayor(null);
-                      setSelectedCity(null);
-                      setSearchQuery('');
-                      loadData();
-                      toast({
-                        title: "Filtro Removido",
-                        description: "Voltando para monitoramento geral",
-                      });
-                    }}
-                    className="text-green-700 border-green-400 hover:bg-green-100 transition-all duration-200 hover:scale-105"
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Remover
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="p-6 bg-gradient-to-r from-gray-50 to-blue-50 border border-gray-200 rounded-xl text-center">
-                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <MapPin className="h-6 w-6 text-gray-400" />
-                </div>
-                <p className="text-sm text-gray-600 font-medium">Nenhum prefeito selecionado</p>
-                <p className="text-xs text-gray-500 mt-1">Use o campo de busca acima para filtrar notícias por cidade</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </Card>
 
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -969,7 +685,7 @@ function NewsMonitoring() {
               {/* Sentimento das Notícias */}
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4">
-                  {selectedMayor ? `Sentimento das Notícias - ${selectedMayor.cidade}` : 'Sentimento das Notícias'}
+                  {selectedPolitician ? `Sentimento das Notícias - ${selectedPolitician.cidade}` : 'Sentimento das Notícias'}
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -996,7 +712,7 @@ function NewsMonitoring() {
               {/* Menções do Prefeito */}
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4">
-                  {selectedMayor ? `Menções - ${selectedMayor.nome}` : 'Menções do Prefeito'}
+                  {selectedPolitician ? `Menções - ${selectedPolitician.nome}` : 'Menções do Político'}
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -1026,10 +742,10 @@ function NewsMonitoring() {
               <div className="flex items-center gap-2 mb-4">
                 <Brain className="h-5 w-5 text-purple-600" />
                 <h3 className="text-lg font-semibold">
-                  {selectedMayor ? `Análises Recentes - ${selectedMayor.cidade}` : 'Análises Recentes'}
+                  {selectedPolitician ? `Análises Recentes - ${selectedPolitician.cidade}` : 'Análises Recentes'}
                 </h3>
                 <Badge variant="outline" className="text-xs">
-                  {analyses.length} {selectedMayor ? 'filtradas' : 'total'}
+                  {analyses.length} {selectedPolitician ? 'filtradas' : 'total'}
                 </Badge>
               </div>
               
@@ -1054,7 +770,7 @@ function NewsMonitoring() {
                       <div className="flex items-center gap-2 mb-2">
                         <MapPin className="h-3 w-3 text-purple-600" />
                         <span className="text-xs font-semibold text-purple-700">
-                          {selectedMayor ? `${selectedMayor.nome} - ${selectedMayor.cidade}/${selectedMayor.estado}` : 'Localização não identificada'}
+                          {selectedPolitician ? `${selectedPolitician.nome} - ${selectedPolitician.cidade}/${selectedPolitician.uf}` : 'Localização não identificada'}
                         </span>
                         {analysis.mentions_mayor && (
                           <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
@@ -1417,9 +1133,9 @@ function NewsMonitoring() {
                       </h3>
                       <p className="text-gray-600 mb-6 leading-relaxed">
                         {analyses.length === 0 ? (
-                          selectedMayor 
-                            ? `Inicie a coleta de notícias para ${selectedMayor.nome} para gerar análises inteligentes com IA`
-                            : 'Selecione uma cidade e inicie a coleta de notícias para gerar análises inteligentes com IA'
+                          selectedPolitician 
+                            ? `Inicie a coleta de notícias para ${selectedPolitician.nome} para gerar análises inteligentes com IA`
+                            : 'Selecione um político e inicie a coleta de notícias para gerar análises inteligentes com IA'
                         ) : (
                           'Nenhuma análise corresponde aos filtros aplicados. Tente ajustar os critérios de busca.'
                         )}
@@ -1465,7 +1181,7 @@ function NewsMonitoring() {
                           <div className="flex items-center gap-2 mb-3 text-sm">
                             <MapPin className="h-4 w-4 text-purple-600" />
                             <span className="font-semibold text-purple-700">
-                              {selectedMayor ? `${selectedMayor.nome} - ${selectedMayor.cidade}/${selectedMayor.estado}` : 'Localização não identificada'}
+                              {selectedPolitician ? `${selectedPolitician.nome} - ${selectedPolitician.cidade}/${selectedPolitician.uf}` : 'Localização não identificada'}
                             </span>
                             {analysis.mentions_mayor && (
                               <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 ml-2">
