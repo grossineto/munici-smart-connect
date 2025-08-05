@@ -23,31 +23,35 @@ export function StartAnalysisButton({
       onClick={onClick}
       disabled={disabled || isLoading}
       size="lg"
-      className="w-full h-14 text-base font-semibold bg-primary hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50"
+      className="w-full h-12 text-sm font-medium bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group"
     >
-      {isLoading ? (
-        <>
-          <Loader2 className="h-5 w-5 mr-3 animate-spin" />
-          Coletando e Analisando...
-        </>
-      ) : (
-        <>
-          <div className="flex items-center gap-2 mr-3">
-            <Search className="h-4 w-4" />
-            <Brain className="h-4 w-4" />
-          </div>
-          {politician ? (
-            <span>
-              Iniciar Análise para {politician.nome}
+      <div className="flex items-center justify-center gap-3 w-full">
+        {isLoading ? (
+          <>
+            <div className="relative">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+            <span className="font-medium">
+              Coletando e Analisando...
             </span>
-          ) : (
-            <span>
-              Iniciar Coleta e Análise
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <Search className="h-4 w-4 transition-transform group-hover:scale-110" />
+              <Brain className="h-4 w-4 transition-transform group-hover:scale-110" />
+            </div>
+            <span className="flex-1 text-center font-medium">
+              {politician ? (
+                `Iniciar Análise para ${politician.nome}`
+              ) : (
+                "Iniciar Coleta e Análise"
+              )}
             </span>
-          )}
-          <Rocket className="h-5 w-5 ml-3" />
-        </>
-      )}
+            <Rocket className="h-4 w-4 transition-transform group-hover:scale-110 group-hover:translate-x-1" />
+          </>
+        )}
+      </div>
     </Button>
   );
 }
