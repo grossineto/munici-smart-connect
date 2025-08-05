@@ -3,6 +3,7 @@ import { Clock, TrendingUp, MapPin, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface Politician {
   nome: string;
@@ -37,6 +38,24 @@ export function RecentSuggestions({ onSelectPolitician, className = "" }: Recent
         return '/lovable-uploads/5459eeca-7b7d-463c-b793-35eba82ba4f3.png';
       default:
         return null;
+    }
+  };
+
+  // Função para obter avatar do político
+  const getPoliticianAvatar = (nome: string) => {
+    switch (nome) {
+      case 'Ricardo Nunes':
+        return '/lovable-uploads/e8407b5a-3324-4fad-ae94-1c4214ff64da.png';
+      case 'João Campos':
+        return '/lovable-uploads/990eb197-9e97-4050-9ad7-41f0539e7ba8.png';
+      case 'Bruno Reis':
+        return '/lovable-uploads/0d511335-415f-4a36-a437-3354866c9612.png';
+      case 'Suéllen Rosim':
+        return '/lovable-uploads/6f653b9a-a318-4b80-955c-4f7b4de6634c.png';
+      case 'Tarcísio Gomes de Freitas':
+        return '/lovable-uploads/dc683cc5-b8bf-4311-9698-3337b29889e5.png';
+      default:
+        return undefined;
     }
   };
 
@@ -98,12 +117,16 @@ export function RecentSuggestions({ onSelectPolitician, className = "" }: Recent
             className="w-full justify-start p-4 h-auto text-left hover:bg-muted/80 border border-transparent hover:border-muted-foreground/20 transition-all duration-200"
             onClick={() => onSelectPolitician(politician)}
           >
-            <div className="flex items-center gap-3 w-full">
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-5 w-5 text-primary" />
-                </div>
-              </div>
+              <div className="flex items-center gap-3 w-full">
+                <Avatar className="w-10 h-10 border border-muted">
+                  <AvatarImage 
+                    src={getPoliticianAvatar(politician.nome)} 
+                    alt={`Foto de ${politician.nome}`}
+                  />
+                  <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                    {politician.nome.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium text-sm">
