@@ -68,14 +68,18 @@ const Insights = () => {
     loadInsightsData();
   }, []);
 
-  // Limpar mapa quando token muda
+  // Debounce para evitar recriação constante do mapa
   useEffect(() => {
-    console.log('Token changed:', mapboxToken);
-    if (map.current) {
-      console.log('Removing existing map');
-      map.current.remove();
-      map.current = null;
-    }
+    if (!mapboxToken) return;
+    
+    const timeoutId = setTimeout(() => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    }, 1000); // Aguarda 1 segundo após parar de digitar
+
+    return () => clearTimeout(timeoutId);
   }, [mapboxToken]);
 
   const loadInsightsData = async () => {
@@ -404,10 +408,7 @@ const Insights = () => {
                   <Input
                     placeholder="Cole seu token público do Mapbox aqui"
                     value={mapboxToken}
-                    onChange={(e) => {
-                      console.log('Input onChange triggered:', e.target.value);
-                      setMapboxToken(e.target.value);
-                    }}
+                    onChange={(e) => setMapboxToken(e.target.value)}
                   />
                   <div className="flex gap-2">
                     <Button onClick={initializeMap} className="flex-1">
