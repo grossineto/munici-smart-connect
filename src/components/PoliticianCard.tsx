@@ -82,6 +82,9 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
       case 'UNIÃO BRASIL':
       case 'UNIAO BRASIL':
         return '/lovable-uploads/80af8899-6d4a-4e09-9727-942aefbfc911.png';
+      case 'PV':
+      case 'PARTIDO VERDE':
+        return '/lovable-uploads/c3695bb8-feda-48d4-beff-f390ac899551.png';
       default:
         return null;
     }
