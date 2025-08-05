@@ -68,6 +68,14 @@ const Insights = () => {
     loadInsightsData();
   }, []);
 
+  // Limpar mapa quando token muda
+  useEffect(() => {
+    if (map.current) {
+      map.current.remove();
+      map.current = null;
+    }
+  }, [mapboxToken]);
+
   const loadInsightsData = async () => {
     try {
       // Carregar dados das solicitações para análise
