@@ -55,6 +55,8 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
         return '/lovable-uploads/eceb707c-015a-4cb2-b488-493c9c6b5cac.png';
       case 'João Campos':
         return '/lovable-uploads/990eb197-9e97-4050-9ad7-41f0539e7ba8.png';
+      case 'Bruno Reis':
+        return '/lovable-uploads/0d511335-415f-4a36-a437-3354866c9612.png';
       default:
         return politician.avatar;
     }
@@ -69,6 +71,9 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
         return '/lovable-uploads/0db47da6-761a-4a1d-abff-33cd9d18d944.png';
       case 'PSB':
         return '/lovable-uploads/c1fc5a33-93d2-4978-b974-59917be945e0.png';
+      case 'UNIÃO BRASIL':
+      case 'UNIAO BRASIL':
+        return '/lovable-uploads/80af8899-6d4a-4e09-9727-942aefbfc911.png';
       default:
         return null;
     }

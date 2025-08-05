@@ -27,6 +27,9 @@ export function RecentSuggestions({ onSelectPolitician, className = "" }: Recent
         return '/lovable-uploads/0db47da6-761a-4a1d-abff-33cd9d18d944.png';
       case 'PSB':
         return '/lovable-uploads/c1fc5a33-93d2-4978-b974-59917be945e0.png';
+      case 'UNIÃO BRASIL':
+      case 'UNIAO BRASIL':
+        return '/lovable-uploads/80af8899-6d4a-4e09-9727-942aefbfc911.png';
       default:
         return null;
     }
