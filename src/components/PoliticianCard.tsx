@@ -51,6 +51,8 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
     switch (nome) {
       case 'Ricardo Nunes':
         return '/lovable-uploads/e8407b5a-3324-4fad-ae94-1c4214ff64da.png';
+      case 'Eduardo Paes':
+        return '/lovable-uploads/eceb707c-015a-4cb2-b488-493c9c6b5cac.png';
       default:
         return politician.avatar;
     }
@@ -61,6 +63,8 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
     switch (partido?.toUpperCase()) {
       case 'MDB':
         return '/lovable-uploads/84ee407e-7a09-419b-8cc6-122b525ecb78.png';
+      case 'PSD':
+        return '/lovable-uploads/0db47da6-761a-4a1d-abff-33cd9d18d944.png';
       default:
         return null;
     }

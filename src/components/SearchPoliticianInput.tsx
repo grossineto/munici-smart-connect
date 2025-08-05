@@ -162,6 +162,8 @@ export function SearchPoliticianInput({
     switch (partido?.toUpperCase()) {
       case 'MDB':
         return '/lovable-uploads/84ee407e-7a09-419b-8cc6-122b525ecb78.png';
+      case 'PSD':
+        return '/lovable-uploads/0db47da6-761a-4a1d-abff-33cd9d18d944.png';
       default:
         return null;
     }
