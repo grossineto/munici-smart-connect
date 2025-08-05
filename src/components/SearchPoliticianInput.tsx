@@ -168,6 +168,14 @@ export function SearchPoliticianInput({
       cidade: "Bauru", 
       uf: "SP",
       cargo: "Prefeita"
+    },
+    "Botucatu": { 
+      nome: "Fábio Leite", 
+      partido: "PSD", 
+      mandato: "2021-2024", 
+      cidade: "Botucatu", 
+      uf: "SP",
+      cargo: "Prefeito"
     }
   };
 

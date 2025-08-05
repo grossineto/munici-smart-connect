@@ -59,6 +59,8 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
         return '/lovable-uploads/0d511335-415f-4a36-a437-3354866c9612.png';
       case 'Suéllen Rosim':
         return '/lovable-uploads/6f653b9a-a318-4b80-955c-4f7b4de6634c.png';
+      case 'Fábio Leite':
+        return '/lovable-uploads/9c090c37-0d6e-4699-9cc5-028de5640b9a.png';
       default:
         return politician.avatar;
     }
