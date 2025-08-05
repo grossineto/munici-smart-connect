@@ -70,7 +70,9 @@ const Insights = () => {
 
   // Limpar mapa quando token muda
   useEffect(() => {
+    console.log('Token changed:', mapboxToken);
     if (map.current) {
+      console.log('Removing existing map');
       map.current.remove();
       map.current = null;
     }
@@ -402,7 +404,10 @@ const Insights = () => {
                   <Input
                     placeholder="Cole seu token público do Mapbox aqui"
                     value={mapboxToken}
-                    onChange={(e) => setMapboxToken(e.target.value)}
+                    onChange={(e) => {
+                      console.log('Input onChange triggered:', e.target.value);
+                      setMapboxToken(e.target.value);
+                    }}
                   />
                   <div className="flex gap-2">
                     <Button onClick={initializeMap} className="flex-1">
