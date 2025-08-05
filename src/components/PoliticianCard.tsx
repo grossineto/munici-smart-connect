@@ -61,6 +61,8 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
         return '/lovable-uploads/6f653b9a-a318-4b80-955c-4f7b4de6634c.png';
       case 'Fábio Leite':
         return '/lovable-uploads/9c090c37-0d6e-4699-9cc5-028de5640b9a.png';
+      case 'Guto Issa':
+        return '/lovable-uploads/f6d35a9d-205a-4556-ac06-3f9fbd151298.png';
       default:
         return politician.avatar;
     }

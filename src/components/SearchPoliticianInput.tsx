@@ -176,6 +176,14 @@ export function SearchPoliticianInput({
       cidade: "Botucatu", 
       uf: "SP",
       cargo: "Prefeito"
+    },
+    "São Roque": { 
+      nome: "Guto Issa", 
+      partido: "PSD", 
+      mandato: "2021-2024", 
+      cidade: "São Roque", 
+      uf: "SP",
+      cargo: "Prefeito"
     }
   };
 
