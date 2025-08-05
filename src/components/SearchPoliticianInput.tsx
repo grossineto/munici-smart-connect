@@ -160,6 +160,14 @@ export function SearchPoliticianInput({
       cidade: "Manaus", 
       uf: "AM",
       cargo: "Prefeito"
+    },
+    "Bauru": { 
+      nome: "Suéllen Rosim", 
+      partido: "PSD", 
+      mandato: "2025-2028", 
+      cidade: "Bauru", 
+      uf: "SP",
+      cargo: "Prefeita"
     }
   };
 

@@ -57,6 +57,8 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
         return '/lovable-uploads/990eb197-9e97-4050-9ad7-41f0539e7ba8.png';
       case 'Bruno Reis':
         return '/lovable-uploads/0d511335-415f-4a36-a437-3354866c9612.png';
+      case 'Suéllen Rosim':
+        return '/lovable-uploads/6f653b9a-a318-4b80-955c-4f7b4de6634c.png';
       default:
         return politician.avatar;
     }

@@ -45,16 +45,9 @@ export function RecentSuggestions({ onSelectPolitician, className = "" }: Recent
       uf: "SP"
     },
     {
-      nome: "Eduardo Paes",
-      cargo: "Prefeito", 
-      partido: "PSD",
-      cidade: "Rio de Janeiro",
-      uf: "RJ"
-    },
-    {
       nome: "João Campos",
       cargo: "Prefeito",
-      partido: "PSB", 
+      partido: "PSB",
       cidade: "Recife",
       uf: "PE"
     },
@@ -62,8 +55,15 @@ export function RecentSuggestions({ onSelectPolitician, className = "" }: Recent
       nome: "Bruno Reis",
       cargo: "Prefeito",
       partido: "União Brasil",
-      cidade: "Salvador", 
+      cidade: "Salvador",
       uf: "BA"
+    },
+    {
+      nome: "Suéllen Rosim",
+      cargo: "Prefeita",
+      partido: "PSD",
+      cidade: "Bauru",
+      uf: "SP"
     }
   ];
 
