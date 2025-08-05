@@ -66,7 +66,7 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
       case 'Ivana Camarinha':
         return '/lovable-uploads/67267154-40d4-465f-aa9d-fcca131002f0.png';
       case 'Tarcísio Gomes de Freitas':
-        return '/lovable-uploads/425f80f3-21ac-4eef-984d-ba432848be17.png';
+        return '/lovable-uploads/dc683cc5-b8bf-4311-9698-3337b29889e5.png';
       default:
         return politician.avatar;
     }
