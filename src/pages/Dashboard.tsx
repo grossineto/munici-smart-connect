@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Clock, CheckCircle, AlertTriangle, Users, Calendar, TrendingUp, Brain, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MessageSquare, Clock, CheckCircle, AlertTriangle, Users, Calendar, TrendingUp, Brain, MapPin, Share2, Newspaper } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { SocialDashboard } from "@/components/SocialDashboard";
 
 interface DashboardStats {
   totalRequests: number;
@@ -168,6 +171,15 @@ const Dashboard = () => {
           Visão geral do sistema municipal de atendimento.
         </p>
       </div>
+
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="news">Monitoramento</TabsTrigger>
+          <TabsTrigger value="social">Redes Sociais</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6 mt-6">
 
       {/* Estatísticas Principais */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -410,6 +422,39 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+
+        <TabsContent value="news" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Newspaper className="h-5 w-5" />
+                Monitoramento de Notícias
+              </CardTitle>
+              <CardDescription>
+                Acompanhe notícias e análises em tempo real sobre políticos e questões municipais
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-muted-foreground">
+                  O sistema de monitoramento coleta automaticamente notícias relevantes e realiza análises de sentimento para identificar tendências e possíveis crises.
+                </p>
+                <Button asChild>
+                  <a href="/news-monitoring">
+                    <Newspaper className="h-4 w-4 mr-2" />
+                    Abrir Monitoramento de Notícias
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="social" className="mt-6">
+          <SocialDashboard />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

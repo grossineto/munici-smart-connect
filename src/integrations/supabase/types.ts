@@ -565,6 +565,54 @@ export type Database = {
           },
         ]
       }
+      social_mentions: {
+        Row: {
+          content: string
+          created_at: string
+          engagement_score: number | null
+          id: string
+          mention_type: string
+          platform: string
+          politician_name: string
+          raw_data: Json | null
+          reach_estimate: number | null
+          sentiment: string | null
+          timestamp: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          engagement_score?: number | null
+          id?: string
+          mention_type?: string
+          platform: string
+          politician_name: string
+          raw_data?: Json | null
+          reach_estimate?: number | null
+          sentiment?: string | null
+          timestamp?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          engagement_score?: number | null
+          id?: string
+          mention_type?: string
+          platform?: string
+          politician_name?: string
+          raw_data?: Json | null
+          reach_estimate?: number | null
+          sentiment?: string | null
+          timestamp?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           assigned_at: string | null
