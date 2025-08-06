@@ -45,14 +45,25 @@ serve(async (req) => {
       throw new Error('TWITTER_BEARER_TOKEN não configurado');
     }
 
-    // Lista de políticos para monitorar
-    const politicians = [
+    // Obter lista de políticos do request (ou usar lista padrão)
+    let politicians = [
       'João Dória',
       'Rodrigo Garcia', 
       'Fernando Haddad',
       'Bruno Covas',
       'Ricardo Nunes'
     ];
+
+    // Se houver políticos específicos no body da requisição, usar eles
+    try {
+      const body = await req.json();
+      if (body.politicians && Array.isArray(body.politicians) && body.politicians.length > 0) {
+        politicians = body.politicians;
+        console.log('Usando políticos personalizados:', politicians);
+      }
+    } catch (error) {
+      console.log('Usando lista padrão de políticos');
+    }
 
     console.log('Iniciando coleta de menções do Twitter...');
 
