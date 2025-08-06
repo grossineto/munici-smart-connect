@@ -275,191 +275,331 @@ const SocialMonitoring = () => {
     }
   };
 
+  // Se nenhum político selecionado, mostrar view principal
+  if (!selectedPolitician) {
+    return (
+      <div className="container mx-auto py-6 space-y-8">
+        {/* Header Principal */}
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 p-8 border shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="space-y-3">
+              <h1 className="text-4xl font-bold tracking-tight text-foreground">
+                Monitoramento de Redes Sociais
+              </h1>
+              <p className="text-muted-foreground text-xl">
+                Acompanhe menções, sentimentos e engajamento em tempo real
+              </p>
+              
+              {/* Status das Plataformas */}
+              <div className="flex items-center gap-6 mt-6">
+                <div className="flex items-center gap-3 px-3 py-2 bg-background/50 rounded-lg">
+                  <Twitter className="h-5 w-5 text-blue-500" />
+                  <span className="text-sm font-medium">Twitter</span>
+                  <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
+                </div>
+                <div className="flex items-center gap-3 px-3 py-2 bg-background/50 rounded-lg">
+                  <Instagram className="h-5 w-5 text-pink-500" />
+                  <span className="text-sm font-medium">Instagram</span>
+                  <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
+                </div>
+                <div className="flex items-center gap-3 px-3 py-2 bg-background/50 rounded-lg">
+                  <Facebook className="h-5 w-5 text-blue-600" />
+                  <span className="text-sm font-medium">Facebook</span>
+                  <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
+                </div>
+                <div className="flex items-center gap-3 px-3 py-2 bg-background/50 rounded-lg">
+                  <Music className="h-5 w-5 text-gray-900" />
+                  <span className="text-sm font-medium">TikTok</span>
+                  <div className="w-3 h-3 bg-warning rounded-full"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Button 
+                onClick={handleImportFromNews}
+                disabled={isLoadingPoliticians}
+                variant="outline"
+                size="lg"
+                className="flex items-center gap-2 px-6"
+              >
+                <Download className={`h-5 w-5 ${isLoadingPoliticians ? 'animate-pulse' : ''}`} />
+                {isLoadingPoliticians ? 'Importando...' : 'Importar Políticos'}
+              </Button>
+              
+              <Button 
+                onClick={handleCollectMentions}
+                disabled={isCollecting || monitoredPoliticians.length === 0}
+                size="lg"
+                className="flex items-center gap-2 px-6 bg-primary hover:bg-primary/90"
+              >
+                <RefreshCw className={`h-5 w-5 ${isCollecting ? 'animate-spin' : ''}`} />
+                {isCollecting ? 'Coletando...' : 'Coletar Menções'}
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="flex items-center gap-2 px-6"
+              >
+                <Download className="h-5 w-5" />
+                Exportar Relatório
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Métricas Gerais */}
+        <SocialMetricsGrid 
+          selectedPolitician="all"
+          timeframe="7d"
+        />
+
+        {/* Seção Principal - Políticos Monitorados */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">Políticos Monitorados</h2>
+              <p className="text-muted-foreground">Selecione um político para ver dados detalhados</p>
+            </div>
+          </div>
+
+          {monitoredPoliticians.length === 0 ? (
+            <div className="border-2 border-dashed border-muted rounded-xl p-12 text-center">
+              <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Nenhum político sendo monitorado</h3>
+              <p className="text-muted-foreground mb-6">
+                Comece importando políticos do sistema ou fazendo uma busca manual
+              </p>
+              
+              <div className="space-y-4 max-w-md mx-auto">
+                <SearchPoliticianInput
+                  onSelectPolitician={handleSelectPolitician}
+                  placeholder="Busque por nome, partido ou cidade..."
+                />
+                
+                <div className="text-sm text-muted-foreground">
+                  ou clique em "Importar Políticos" para carregar a base do sistema
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {monitoredPoliticians.map((politician, index) => (
+                <div 
+                  key={`${politician.nome}-${politician.cidade}-${index}`}
+                  onClick={() => setSelectedPolitician(politician)}
+                  className="cursor-pointer group"
+                >
+                  <div className="bg-card rounded-xl border p-6 transition-all duration-200 hover:shadow-lg hover:border-primary/50 group-hover:scale-[1.02]">
+                    {/* Header do Card */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center">
+                          <span className="text-lg font-bold text-foreground">
+                            {politician.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                          </span>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
+                            {politician.nome}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {politician.cargo} • {politician.cidade}, {politician.uf}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemovePolitician(politician);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ✕
+                      </Button>
+                    </div>
+
+                    {/* Informações */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded">
+                          {politician.partido}
+                        </div>
+                        <div className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded">
+                          {politician.mandato}
+                        </div>
+                      </div>
+
+                      {/* Pequeno Gráfico de Sentimento */}
+                      <div className="h-8 bg-muted/50 rounded flex items-center justify-center">
+                        <TrendingUp className="h-4 w-4 text-success" />
+                        <span className="text-xs text-muted-foreground ml-1">Sentimento geral</span>
+                      </div>
+
+                      {/* Indicadores de Redes */}
+                      <div className="flex items-center gap-2">
+                        <Twitter className="h-4 w-4 text-blue-500" />
+                        <Instagram className="h-4 w-4 text-pink-500" />
+                        <Facebook className="h-4 w-4 text-blue-600" />
+                        <Music className="h-4 w-4 text-gray-900" />
+                        <span className="text-xs text-muted-foreground ml-auto">4 redes ativas</span>
+                      </div>
+
+                      {/* CTA */}
+                      <div className="pt-2 border-t">
+                        <span className="text-sm font-medium text-primary group-hover:underline">
+                          Ver Detalhes →
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Busca Adicional */}
+          {monitoredPoliticians.length > 0 && (
+            <div className="bg-muted/30 rounded-xl p-6 border border-dashed">
+              <div className="flex items-center gap-4">
+                <Search className="h-5 w-5 text-muted-foreground" />
+                <div className="flex-1">
+                  <SearchPoliticianInput
+                    onSelectPolitician={handleSelectPolitician}
+                    placeholder="Adicionar mais políticos ao monitoramento..."
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // View detalhada do político selecionado
   return (
     <div className="container mx-auto py-6 space-y-8">
-      {/* Header Modernizado */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 p-6 border shadow-sm">
+      {/* Header Detalhado */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 p-6 border shadow-lg">
         <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight heading-institutional">
-              Monitoramento de Redes Sociais
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Acompanhe menções, sentimentos e engajamento em tempo real
-            </p>
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => setSelectedPolitician(null)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              ← Voltar
+            </Button>
             
-            {/* Status das Plataformas */}
-            <div className="flex items-center gap-4 mt-4">
-              <div className="flex items-center gap-2">
-                <Twitter className="h-4 w-4 text-blue-500" />
-                <span className="text-sm text-muted-foreground">Twitter</span>
-                <div className="w-2 h-2 bg-success rounded-full"></div>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center">
+                <span className="text-2xl font-bold text-foreground">
+                  {selectedPolitician.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                </span>
               </div>
-              <div className="flex items-center gap-2">
-                <Instagram className="h-4 w-4 text-pink-500" />
-                <span className="text-sm text-muted-foreground">Instagram</span>
-                <div className="w-2 h-2 bg-success rounded-full"></div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Facebook className="h-4 w-4 text-blue-600" />
-                <span className="text-sm text-muted-foreground">Facebook</span>
-                <div className="w-2 h-2 bg-success rounded-full"></div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Music className="h-4 w-4 text-gray-900" />
-                <span className="text-sm text-muted-foreground">TikTok</span>
-                <div className="w-2 h-2 bg-muted rounded-full"></div>
+              
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                  {selectedPolitician.nome}
+                </h1>
+                <p className="text-lg text-muted-foreground">
+                  {selectedPolitician.cargo} • {selectedPolitician.cidade}, {selectedPolitician.uf} • {selectedPolitician.partido}
+                </p>
+                
+                {/* Redes Ativas */}
+                <div className="flex items-center gap-3 mt-2">
+                  <div className="flex items-center gap-2 px-2 py-1 bg-blue-500/10 rounded">
+                    <Twitter className="h-4 w-4 text-blue-500" />
+                    <span className="text-xs text-blue-600 font-medium">Ativo</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-2 py-1 bg-pink-500/10 rounded">
+                    <Instagram className="h-4 w-4 text-pink-500" />
+                    <span className="text-xs text-pink-600 font-medium">Ativo</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-2 py-1 bg-blue-600/10 rounded">
+                    <Facebook className="h-4 w-4 text-blue-600" />
+                    <span className="text-xs text-blue-700 font-medium">Ativo</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-2 py-1 bg-muted rounded">
+                    <Music className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">TikTok</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button 
-              onClick={handleImportFromNews}
-              disabled={isLoadingPoliticians}
-              variant="outline"
-              className="flex items-center gap-2 hover:bg-background/80"
-            >
-              <Download className={`h-4 w-4 ${isLoadingPoliticians ? 'animate-pulse' : ''}`} />
-              {isLoadingPoliticians ? 'Importando...' : 'Importar Políticos'}
-            </Button>
-            
+          <div className="flex items-center gap-3">
             <Button 
               onClick={handleCollectMentions}
-              disabled={isCollecting || monitoredPoliticians.length === 0}
-              className="flex items-center gap-2 shadow-sm"
+              disabled={isCollecting}
+              variant="outline"
+              className="flex items-center gap-2"
             >
               <RefreshCw className={`h-4 w-4 ${isCollecting ? 'animate-spin' : ''}`} />
-              {isCollecting ? 'Coletando...' : 'Coletar Menções'}
+              {isCollecting ? 'Coletando...' : 'Atualizar'}
+            </Button>
+            
+            <Button className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Exportar Relatório
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Métricas Principais */}
+      {/* Alertas de Destaque */}
+      <AlertsPanel selectedPolitician={selectedPolitician.nome} />
+
+      {/* Métricas do Político */}
       <SocialMetricsGrid 
-        selectedPolitician={selectedPolitician?.nome || "all"}
+        selectedPolitician={selectedPolitician.nome}
         timeframe="7d"
       />
 
-      {/* Seção de Busca e Seleção de Políticos */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-4">
-          <div className="bg-card rounded-lg border p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Search className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold">Adicionar Político</h2>
-            </div>
-            
-            <SearchPoliticianInput
-              onSelectPolitician={handleSelectPolitician}
-              placeholder="Busque por nome, partido ou cidade..."
-            />
-            
-            <div className="mt-4 text-sm text-muted-foreground">
-              💡 Busque e adicione políticos para monitorar suas menções nas redes sociais
-            </div>
-          </div>
+      {/* Tabs por Rede Social */}
+      <PlatformTabs 
+        selectedPolitician={selectedPolitician.nome}
+        timeframe="7d"
+        onRefresh={() => window.location.reload()}
+      />
 
-          {/* Lista de Políticos Monitorados */}
-          {monitoredPoliticians.length > 0 && (
-            <div className="bg-card rounded-lg border p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  <h2 className="text-lg font-semibold">Políticos Monitorados ({monitoredPoliticians.length})</h2>
-                </div>
-                
-                {/* Info sobre palavras-chave */}
-                {keywords.length > 0 && (
-                  <div className="text-xs text-muted-foreground">
-                    {keywords.length} palavras-chave ativas
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-3">
-                {monitoredPoliticians.map((politician, index) => (
-                  <SocialPoliticianCard
-                    key={`${politician.nome}-${politician.cidade}-${index}`}
-                    politician={politician}
-                    onRemove={() => handleRemovePolitician(politician)}
-                    isSelected={selectedPolitician?.nome === politician.nome && selectedPolitician?.cidade === politician.cidade}
-                    onSelect={() => setSelectedPolitician(politician)}
-                    showKeywords={true}
-                  />
-                ))}
-              </div>
-              
-              {/* Resumo das palavras-chave por categoria */}
-              {keywords.length > 0 && (
-                <div className="mt-4 p-3 bg-muted/50 rounded border">
-                  <h4 className="text-sm font-medium mb-2">Palavras-chave ativas por categoria:</h4>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    {Object.entries(
-                      keywords.reduce((acc, kw) => {
-                        acc[kw.category] = (acc[kw.category] || 0) + 1;
-                        return acc;
-                      }, {} as Record<string, number>)
-                    ).map(([category, count]) => (
-                      <div key={category} className="flex justify-between">
-                        <span className="capitalize">{category}:</span>
-                        <span className="font-medium">{count as number}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Dashboard com Gráficos */}
-        <div className="lg:col-span-2 space-y-6">
-          <PlatformTabs 
-            selectedPolitician={selectedPolitician?.nome || "all"}
-            timeframe="7d"
-            onRefresh={() => window.location.reload()}
-          />
-        </div>
-      </div>
-
-      {/* Seção de Análises Avançadas */}
+      {/* Análises Avançadas */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <SentimentLineChart 
-          selectedPolitician={selectedPolitician?.nome || "all"}
+          selectedPolitician={selectedPolitician.nome}
           timeframe="7d"
         />
         
         <div className="space-y-6">
           <TrendingTopics 
-            selectedPolitician={selectedPolitician?.nome || "all"}
+            selectedPolitician={selectedPolitician.nome}
             timeframe="7d"
           />
         </div>
       </div>
 
-      {/* Heatmap de Atividade */}
-      <MentionHeatmap 
-        selectedPolitician={selectedPolitician?.nome || "all"}
-        timeframe="7d"
-      />
-
-      {/* Seção de Alertas e Timeline */}
+      {/* Timeline e Heatmap */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <AlertsPanel 
-          selectedPolitician={selectedPolitician?.nome || "all"}
+        <SocialTimeline 
+          selectedPolitician={selectedPolitician.nome}
+          timeframe="7d"
         />
         
-        <SocialTimeline 
-          selectedPolitician={selectedPolitician?.nome || "all"}
+        <MentionHeatmap 
+          selectedPolitician={selectedPolitician.nome}
           timeframe="7d"
         />
       </div>
 
       {/* Ferramentas de Exportação */}
       <ExportTools 
-        selectedPolitician={selectedPolitician?.nome || "all"}
+        selectedPolitician={selectedPolitician.nome}
         timeframe="7d"
       />
     </div>
