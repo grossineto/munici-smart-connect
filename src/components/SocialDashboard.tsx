@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,14 +11,14 @@ import { useSocialMentions, useSocialStats } from "@/hooks/useSocialMonitor";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function SocialDashboard() {
-  const [selectedPolitician, setSelectedPolitician] = useState<string>("");
+  const [selectedPolitician, setSelectedPolitician] = useState<string>("all");
   const [timeframe, setTimeframe] = useState("7d");
   
   const { data: mentions = [], isLoading: mentionsLoading } = useSocialMentions(
-    selectedPolitician || undefined
+    selectedPolitician === "all" ? undefined : selectedPolitician
   );
   const { data: stats, isLoading: statsLoading } = useSocialStats(
-    selectedPolitician || undefined, 
+    selectedPolitician === "all" ? undefined : selectedPolitician, 
     timeframe
   );
 
@@ -74,7 +75,7 @@ export function SocialDashboard() {
               <SelectValue placeholder="Todos os políticos" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os políticos</SelectItem>
+              <SelectItem value="all">Todos os políticos</SelectItem>
               {politicians.map(politician => (
                 <SelectItem key={politician} value={politician}>
                   {politician}
