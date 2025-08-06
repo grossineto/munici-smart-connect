@@ -1,12 +1,13 @@
 
-import { SocialDashboard } from "@/components/SocialDashboard";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Search, Plus, Users, Download } from "lucide-react";
+import { RefreshCw, Search, Users, Download, Twitter, Instagram, Facebook, Music, TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SearchPoliticianInput } from "@/components/SearchPoliticianInput";
 import { SocialPoliticianCard } from "@/components/SocialPoliticianCard";
+import { SocialMetricsGrid } from "@/components/SocialMetricsGrid";
+import { PlatformTabs } from "@/components/PlatformTabs";
 
 const SocialMonitoring = () => {
   const [isCollecting, setIsCollecting] = useState(false);
@@ -193,37 +194,71 @@ const SocialMonitoring = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Monitoramento de Redes Sociais</h1>
-          <p className="text-muted-foreground">
-            📢 Posts dos políticos • 💬 Menções públicas • 📈 Engajamento • 🧠 Análise de sentimento
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button 
-            onClick={handleImportFromNews}
-            disabled={isLoadingPoliticians}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <Download className={`h-4 w-4 ${isLoadingPoliticians ? 'animate-pulse' : ''}`} />
-            {isLoadingPoliticians ? 'Importando...' : 'Importar do Sistema de Notícias'}
-          </Button>
+    <div className="container mx-auto py-6 space-y-8">
+      {/* Header Modernizado */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 p-6 border shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight heading-institutional">
+              Monitoramento de Redes Sociais
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Acompanhe menções, sentimentos e engajamento em tempo real
+            </p>
+            
+            {/* Status das Plataformas */}
+            <div className="flex items-center gap-4 mt-4">
+              <div className="flex items-center gap-2">
+                <Twitter className="h-4 w-4 text-blue-500" />
+                <span className="text-sm text-muted-foreground">Twitter</span>
+                <div className="w-2 h-2 bg-success rounded-full"></div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Instagram className="h-4 w-4 text-pink-500" />
+                <span className="text-sm text-muted-foreground">Instagram</span>
+                <div className="w-2 h-2 bg-muted rounded-full"></div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Facebook className="h-4 w-4 text-blue-600" />
+                <span className="text-sm text-muted-foreground">Facebook</span>
+                <div className="w-2 h-2 bg-muted rounded-full"></div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Music className="h-4 w-4 text-gray-900" />
+                <span className="text-sm text-muted-foreground">TikTok</span>
+                <div className="w-2 h-2 bg-muted rounded-full"></div>
+              </div>
+            </div>
+          </div>
           
-          <Button 
-            onClick={handleCollectMentions}
-            disabled={isCollecting || monitoredPoliticians.length === 0}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${isCollecting ? 'animate-spin' : ''}`} />
-            {isCollecting ? 'Coletando...' : 'Coletar Menções'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={handleImportFromNews}
+              disabled={isLoadingPoliticians}
+              variant="outline"
+              className="flex items-center gap-2 hover:bg-background/80"
+            >
+              <Download className={`h-4 w-4 ${isLoadingPoliticians ? 'animate-pulse' : ''}`} />
+              {isLoadingPoliticians ? 'Importando...' : 'Importar Políticos'}
+            </Button>
+            
+            <Button 
+              onClick={handleCollectMentions}
+              disabled={isCollecting || monitoredPoliticians.length === 0}
+              className="flex items-center gap-2 shadow-sm"
+            >
+              <RefreshCw className={`h-4 w-4 ${isCollecting ? 'animate-spin' : ''}`} />
+              {isCollecting ? 'Coletando...' : 'Coletar Menções'}
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Métricas Principais */}
+      <SocialMetricsGrid 
+        selectedPolitician={selectedPolitician?.nome || "all"}
+        timeframe="7d"
+      />
 
       {/* Seção de Busca e Seleção de Políticos */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -299,7 +334,11 @@ const SocialMonitoring = () => {
 
         {/* Dashboard Principal */}
         <div className="lg:col-span-2">
-          <SocialDashboard />
+          <PlatformTabs 
+            selectedPolitician={selectedPolitician?.nome || "all"}
+            timeframe="7d"
+            onRefresh={() => window.location.reload()}
+          />
         </div>
       </div>
     </div>

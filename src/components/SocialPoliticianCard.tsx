@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, MapPin, Calendar, Shield, Crown, X, Eye, Hash } from 'lucide-react';
+import { User, MapPin, Calendar, Shield, Crown, X, Eye, Hash, TrendingUp, MessageCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,6 +16,7 @@ interface Politician {
   avatar?: string;
   addedAt?: string;
   isActive?: boolean;
+  newsCount?: number;
 }
 
 interface SocialPoliticianCardProps {
@@ -195,14 +196,26 @@ export function SocialPoliticianCard({
               )}
             </div>
 
-            {/* Status de Monitoramento */}
-            <div className="mt-2">
+            {/* Status e Mini Métricas */}
+            <div className="mt-3 flex items-center justify-between">
               <Badge 
-                className="bg-green-500/10 text-green-700 border-green-200 text-xs"
+                className="bg-success/10 text-success border-success/20 text-xs"
               >
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></div>
+                <div className="w-1.5 h-1.5 bg-success rounded-full mr-1"></div>
                 Monitorando
               </Badge>
+              
+              {/* Mini estatísticas */}
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  <span>{politician.newsCount || 0}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MessageCircle className="h-3 w-3" />
+                  <span>12</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

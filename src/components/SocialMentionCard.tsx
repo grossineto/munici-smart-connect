@@ -19,6 +19,8 @@ interface SocialMentionCardProps {
     engagement_score: number;
     raw_data?: any;
   };
+  showPlatformBadge?: boolean;
+  className?: string;
 }
 
 const platformIcons: Record<string, string> = {
@@ -40,7 +42,7 @@ const sentimentLabels: Record<string, string> = {
   neutral: "Neutro"
 };
 
-export function SocialMentionCard({ mention }: SocialMentionCardProps) {
+export function SocialMentionCard({ mention, showPlatformBadge = false, className = "" }: SocialMentionCardProps) {
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
