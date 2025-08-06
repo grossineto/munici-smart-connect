@@ -234,12 +234,12 @@ const SocialMonitoring = () => {
               <div className="flex items-center gap-2">
                 <Instagram className="h-4 w-4 text-pink-500" />
                 <span className="text-sm text-muted-foreground">Instagram</span>
-                <div className="w-2 h-2 bg-muted rounded-full"></div>
+                <div className="w-2 h-2 bg-success rounded-full"></div>
               </div>
               <div className="flex items-center gap-2">
                 <Facebook className="h-4 w-4 text-blue-600" />
                 <span className="text-sm text-muted-foreground">Facebook</span>
-                <div className="w-2 h-2 bg-muted rounded-full"></div>
+                <div className="w-2 h-2 bg-success rounded-full"></div>
               </div>
               <div className="flex items-center gap-2">
                 <Music className="h-4 w-4 text-gray-900" />
