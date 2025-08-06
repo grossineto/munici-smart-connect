@@ -11,6 +11,9 @@ import { PlatformTabs } from "@/components/PlatformTabs";
 import { SentimentLineChart } from "@/components/SentimentLineChart";
 import { TrendingTopics } from "@/components/TrendingTopics";
 import { MentionHeatmap } from "@/components/MentionHeatmap";
+import { AlertsPanel } from "@/components/AlertsPanel";
+import { SocialTimeline } from "@/components/SocialTimeline";
+import { ExportTools } from "@/components/ExportTools";
 
 const SocialMonitoring = () => {
   const [isCollecting, setIsCollecting] = useState(false);
@@ -362,6 +365,24 @@ const SocialMonitoring = () => {
 
       {/* Heatmap de Atividade */}
       <MentionHeatmap 
+        selectedPolitician={selectedPolitician?.nome || "all"}
+        timeframe="7d"
+      />
+
+      {/* Seção de Alertas e Timeline */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <AlertsPanel 
+          selectedPolitician={selectedPolitician?.nome || "all"}
+        />
+        
+        <SocialTimeline 
+          selectedPolitician={selectedPolitician?.nome || "all"}
+          timeframe="7d"
+        />
+      </div>
+
+      {/* Ferramentas de Exportação */}
+      <ExportTools 
         selectedPolitician={selectedPolitician?.nome || "all"}
         timeframe="7d"
       />
