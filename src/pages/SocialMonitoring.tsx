@@ -22,7 +22,7 @@ const SocialMonitoring = () => {
   const [isLoadingPoliticians, setIsLoadingPoliticians] = useState(false);
   const [keywords, setKeywords] = useState<any[]>([]);
 
-  // Base de políticos do sistema de notícias
+  // Base de políticos do sistema com palavras-chave específicas
   const politiciansFromNews = [
     {
       nome: "Ricardo Nunes",
@@ -31,7 +31,16 @@ const SocialMonitoring = () => {
       cidade: "São Paulo",
       uf: "SP",
       mandato: "2021-2024",
-      newsCount: 56
+      newsCount: 56,
+      keywords: [
+        "Ricardo Nunes",
+        "prefeito São Paulo",
+        "prefeitura São Paulo", 
+        "prefeito de SP",
+        "gestão Ricardo Nunes",
+        "cidade de São Paulo",
+        "MDB São Paulo"
+      ]
     },
     {
       nome: "Eduardo Paes",
@@ -40,7 +49,16 @@ const SocialMonitoring = () => {
       cidade: "Rio de Janeiro",
       uf: "RJ",
       mandato: "2021-2024",
-      newsCount: 49
+      newsCount: 49,
+      keywords: [
+        "Eduardo Paes",
+        "prefeito Rio",
+        "prefeitura Rio de Janeiro",
+        "prefeito do Rio", 
+        "gestão Eduardo Paes",
+        "cidade maravilhosa",
+        "PSD Rio"
+      ]
     },
     {
       nome: "João Campos",
@@ -49,7 +67,16 @@ const SocialMonitoring = () => {
       cidade: "Recife", 
       uf: "PE",
       mandato: "2021-2024",
-      newsCount: 22
+      newsCount: 22,
+      keywords: [
+        "João Campos",
+        "prefeito Recife",
+        "prefeitura Recife",
+        "gestão João Campos",
+        "cidade do Recife",
+        "PSB Recife",
+        "Pernambuco"
+      ]
     },
     {
       nome: "Suéllen Rosim",
@@ -58,7 +85,15 @@ const SocialMonitoring = () => {
       cidade: "Bauru",
       uf: "SP", 
       mandato: "2021-2024",
-      newsCount: 21
+      newsCount: 21,
+      keywords: [
+        "Suéllen Rosim",
+        "prefeita Bauru",
+        "prefeitura Bauru",
+        "gestão Suéllen",
+        "cidade de Bauru",
+        "Partido Verde Bauru"
+      ]
     },
     {
       nome: "Bruno Reis",
@@ -67,7 +102,16 @@ const SocialMonitoring = () => {
       cidade: "Salvador",
       uf: "BA",
       mandato: "2021-2024", 
-      newsCount: 17
+      newsCount: 17,
+      keywords: [
+        "Bruno Reis",
+        "prefeito Salvador",
+        "prefeitura Salvador",
+        "gestão Bruno Reis",
+        "cidade de Salvador",
+        "União Brasil Salvador",
+        "Bahia"
+      ]
     },
     {
       nome: "Tarcísio Gomes de Freitas",
@@ -76,7 +120,16 @@ const SocialMonitoring = () => {
       cidade: "São Paulo",
       uf: "SP",
       mandato: "2023-2026",
-      newsCount: 8
+      newsCount: 8,
+      keywords: [
+        "Tarcísio Freitas",
+        "Tarcísio Gomes",
+        "governador São Paulo",
+        "governo de SP",
+        "gestão Tarcísio",
+        "estado de São Paulo",
+        "Republicanos SP"
+      ]
     }
   ];
 
@@ -174,9 +227,17 @@ const SocialMonitoring = () => {
 
     setIsCollecting(true);
     try {
+      // Preparar políticos com suas palavras-chave específicas
+      const politiciansWithKeywords = monitoredPoliticians.map(p => ({
+        name: p.nome,
+        keywords: p.keywords || [p.nome] // usar palavras-chave específicas ou apenas o nome
+      }));
+
+      console.log('Iniciando coleta com políticos:', politiciansWithKeywords);
+
       const { data, error } = await supabase.functions.invoke('fetch-all-social-mentions', {
         body: { 
-          politicians: monitoredPoliticians.map(p => p.nome),
+          politicians: politiciansWithKeywords,
           platforms: ['twitter', 'instagram', 'facebook', 'tiktok']
         }
       });

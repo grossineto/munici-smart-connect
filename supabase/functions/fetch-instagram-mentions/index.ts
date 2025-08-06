@@ -41,11 +41,7 @@ serve(async (req) => {
 
     // Obter lista de políticos do request
     let politicians = [
-      'João Dória',
-      'Rodrigo Garcia', 
-      'Fernando Haddad',
-      'Bruno Covas',
-      'Ricardo Nunes'
+      { name: 'Ricardo Nunes', keywords: ['Ricardo Nunes', 'prefeito São Paulo'] }
     ];
 
     try {
@@ -62,6 +58,8 @@ serve(async (req) => {
 
     for (const politician of politicians) {
       try {
+        console.log(`Processando Instagram para ${politician.name || politician}...`);
+        
         // Instagram Basic Display API - buscar posts recentes
         // Nota: Para menções específicas, seria necessário Instagram Business API
         const fields = 'id,caption,media_type,timestamp,like_count,comments_count,permalink';
@@ -81,10 +79,16 @@ serve(async (req) => {
           continue;
         }
 
-        // Filtrar posts que mencionam o político
-        const relevantPosts = data.data.filter(post => 
-          post.caption && post.caption.toLowerCase().includes(politician.toLowerCase())
-        );
+        // Definir palavras-chave para busca
+        const keywords = politician.keywords || [politician.name || politician];
+        console.log(`Buscando por palavras-chave:`, keywords);
+
+        // Filtrar posts que mencionam o político (usando qualquer uma das palavras-chave)
+        const relevantPosts = data.data.filter(post => {
+          if (!post.caption) return false;
+          const content = post.caption.toLowerCase();
+          return keywords.some(keyword => content.includes(keyword.toLowerCase()));
+        });
 
         // Processar cada post relevante
         for (const post of relevantPosts) {
@@ -96,7 +100,7 @@ serve(async (req) => {
             .from('social_mentions')
             .insert({
               platform: 'instagram',
-              politician_name: politician,
+              politician_name: politician.name || politician,
               content: post.caption || '',
               timestamp: post.timestamp,
               url: post.permalink,
@@ -116,7 +120,7 @@ serve(async (req) => {
           if (error) {
             console.error('Erro ao salvar menção do Instagram:', error);
           } else {
-            console.log(`Menção do Instagram salva para ${politician}: ${post.caption?.substring(0, 50)}...`);
+            console.log(`Menção do Instagram salva para ${politician.name || politician}: ${post.caption?.substring(0, 50)}...`);
           }
         }
 

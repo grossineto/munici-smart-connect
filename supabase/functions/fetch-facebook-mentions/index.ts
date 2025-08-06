@@ -56,11 +56,7 @@ serve(async (req) => {
 
     // Obter lista de políticos do request
     let politicians = [
-      'João Dória',
-      'Rodrigo Garcia', 
-      'Fernando Haddad',
-      'Bruno Covas',
-      'Ricardo Nunes'
+      { name: 'Ricardo Nunes', keywords: ['Ricardo Nunes', 'prefeito São Paulo'] }
     ];
 
     try {
@@ -77,6 +73,8 @@ serve(async (req) => {
 
     for (const politician of politicians) {
       try {
+        console.log(`Processando Facebook para ${politician.name || politician}...`);
+        
         // Facebook Graph API - buscar posts da página
         const fields = 'id,message,created_time,likes.summary(true),comments.summary(true),shares,permalink_url';
         const searchUrl = `https://graph.facebook.com/v18.0/${facebookPageId}/posts?fields=${fields}&access_token=${facebookAccessToken}&limit=50`;
@@ -95,10 +93,16 @@ serve(async (req) => {
           continue;
         }
 
-        // Filtrar posts que mencionam o político
-        const relevantPosts = data.data.filter(post => 
-          post.message && post.message.toLowerCase().includes(politician.toLowerCase())
-        );
+        // Definir palavras-chave para busca
+        const keywords = politician.keywords || [politician.name || politician];
+        console.log(`Buscando por palavras-chave:`, keywords);
+
+        // Filtrar posts que mencionam o político (usando qualquer uma das palavras-chave)
+        const relevantPosts = data.data.filter(post => {
+          if (!post.message) return false;
+          const content = post.message.toLowerCase();
+          return keywords.some(keyword => content.includes(keyword.toLowerCase()));
+        });
 
         // Processar cada post relevante
         for (const post of relevantPosts) {
@@ -114,7 +118,7 @@ serve(async (req) => {
             .from('social_mentions')
             .insert({
               platform: 'facebook',
-              politician_name: politician,
+              politician_name: politician.name || politician,
               content: post.message || '',
               timestamp: post.created_time,
               url: post.permalink_url || `https://facebook.com/${post.id}`,
@@ -133,7 +137,7 @@ serve(async (req) => {
           if (error) {
             console.error('Erro ao salvar menção do Facebook:', error);
           } else {
-            console.log(`Menção do Facebook salva para ${politician}: ${post.message?.substring(0, 50)}...`);
+            console.log(`Menção do Facebook salva para ${politician.name || politician}: ${post.message?.substring(0, 50)}...`);
           }
         }
 
@@ -141,7 +145,7 @@ serve(async (req) => {
         await new Promise(resolve => setTimeout(resolve, 2000));
         
       } catch (error) {
-        console.error(`Erro ao processar Facebook para ${politician}:`, error);
+        console.error(`Erro ao processar Facebook para ${politician.name || politician}:`, error);
       }
     }
 
