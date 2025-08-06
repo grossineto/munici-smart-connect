@@ -1,8 +1,8 @@
 
 import { SocialDashboard } from "@/components/SocialDashboard";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Search, Plus } from "lucide-react";
-import { useState } from "react";
+import { RefreshCw, Search, Plus, Users, Download } from "lucide-react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SearchPoliticianInput } from "@/components/SearchPoliticianInput";
@@ -12,8 +12,113 @@ const SocialMonitoring = () => {
   const [isCollecting, setIsCollecting] = useState(false);
   const [selectedPolitician, setSelectedPolitician] = useState<any>(null);
   const [monitoredPoliticians, setMonitoredPoliticians] = useState<any[]>([]);
+  const [isLoadingPoliticians, setIsLoadingPoliticians] = useState(false);
+  const [keywords, setKeywords] = useState<any[]>([]);
 
-  // Função para adicionar político ao monitoramento
+  // Base de políticos do sistema de notícias
+  const politiciansFromNews = [
+    {
+      nome: "Ricardo Nunes",
+      partido: "MDB", 
+      cargo: "Prefeito",
+      cidade: "São Paulo",
+      uf: "SP",
+      mandato: "2021-2024",
+      newsCount: 56
+    },
+    {
+      nome: "Eduardo Paes",
+      partido: "PSD",
+      cargo: "Prefeito", 
+      cidade: "Rio de Janeiro",
+      uf: "RJ",
+      mandato: "2021-2024",
+      newsCount: 49
+    },
+    {
+      nome: "João Campos",
+      partido: "PSB",
+      cargo: "Prefeito",
+      cidade: "Recife", 
+      uf: "PE",
+      mandato: "2021-2024",
+      newsCount: 22
+    },
+    {
+      nome: "Suéllen Rosim",
+      partido: "PARTIDO VERDE",
+      cargo: "Prefeita",
+      cidade: "Bauru",
+      uf: "SP", 
+      mandato: "2021-2024",
+      newsCount: 21
+    },
+    {
+      nome: "Bruno Reis",
+      partido: "UNIÃO BRASIL",
+      cargo: "Prefeito",
+      cidade: "Salvador",
+      uf: "BA",
+      mandato: "2021-2024", 
+      newsCount: 17
+    },
+    {
+      nome: "Tarcísio Gomes de Freitas",
+      partido: "REPUBLICANOS",
+      cargo: "Governador",
+      cidade: "São Paulo",
+      uf: "SP",
+      mandato: "2023-2026",
+      newsCount: 8
+    }
+  ];
+
+  // Carregar palavras-chave da base
+  const loadKeywords = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('monitored_keywords')
+        .select('*')
+        .eq('active', true)
+        .order('category', { ascending: true })
+        .order('keyword', { ascending: true });
+      
+      if (error) throw error;
+      setKeywords(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar palavras-chave:', error);
+    }
+  };
+
+  // Carregar dados iniciais
+  useEffect(() => {
+    loadKeywords();
+  }, []);
+
+  // Função para importar todos os políticos das notícias
+  const handleImportFromNews = () => {
+    setIsLoadingPoliticians(true);
+    
+    const politiciansToAdd = politiciansFromNews.filter(newsPolitic => 
+      !monitoredPoliticians.some(monitored => 
+        monitored.nome === newsPolitic.nome && monitored.cidade === newsPolitic.cidade
+      )
+    );
+    
+    const importedPoliticians = politiciansToAdd.map(politician => ({
+      ...politician,
+      addedAt: new Date().toISOString(),
+      isActive: true,
+      source: 'news_system'
+    }));
+    
+    setMonitoredPoliticians(prev => [...prev, ...importedPoliticians]);
+    
+    setTimeout(() => {
+      setIsLoadingPoliticians(false);
+      toast.success(`${importedPoliticians.length} políticos importados do sistema de notícias!`);
+    }, 1000);
+  };
   const handleSelectPolitician = (politician: any) => {
     console.log('🏛️ Político selecionado para monitoramento social:', politician);
     
@@ -98,14 +203,26 @@ const SocialMonitoring = () => {
           </p>
         </div>
         
-        <Button 
-          onClick={handleCollectMentions}
-          disabled={isCollecting || monitoredPoliticians.length === 0}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${isCollecting ? 'animate-spin' : ''}`} />
-          {isCollecting ? 'Coletando...' : 'Coletar Menções'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={handleImportFromNews}
+            disabled={isLoadingPoliticians}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Download className={`h-4 w-4 ${isLoadingPoliticians ? 'animate-pulse' : ''}`} />
+            {isLoadingPoliticians ? 'Importando...' : 'Importar do Sistema de Notícias'}
+          </Button>
+          
+          <Button 
+            onClick={handleCollectMentions}
+            disabled={isCollecting || monitoredPoliticians.length === 0}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isCollecting ? 'animate-spin' : ''}`} />
+            {isCollecting ? 'Coletando...' : 'Coletar Menções'}
+          </Button>
+        </div>
       </div>
 
       {/* Seção de Busca e Seleção de Políticos */}
@@ -130,9 +247,18 @@ const SocialMonitoring = () => {
           {/* Lista de Políticos Monitorados */}
           {monitoredPoliticians.length > 0 && (
             <div className="bg-card rounded-lg border p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Plus className="h-5 w-5 text-primary" />
-                <h2 className="text-lg font-semibold">Políticos Monitorados ({monitoredPoliticians.length})</h2>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  <h2 className="text-lg font-semibold">Políticos Monitorados ({monitoredPoliticians.length})</h2>
+                </div>
+                
+                {/* Info sobre palavras-chave */}
+                {keywords.length > 0 && (
+                  <div className="text-xs text-muted-foreground">
+                    {keywords.length} palavras-chave ativas
+                  </div>
+                )}
               </div>
               
               <div className="space-y-3">
@@ -147,6 +273,26 @@ const SocialMonitoring = () => {
                   />
                 ))}
               </div>
+              
+              {/* Resumo das palavras-chave por categoria */}
+              {keywords.length > 0 && (
+                <div className="mt-4 p-3 bg-muted/50 rounded border">
+                  <h4 className="text-sm font-medium mb-2">Palavras-chave ativas por categoria:</h4>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {Object.entries(
+                      keywords.reduce((acc, kw) => {
+                        acc[kw.category] = (acc[kw.category] || 0) + 1;
+                        return acc;
+                      }, {} as Record<string, number>)
+                    ).map(([category, count]) => (
+                      <div key={category} className="flex justify-between">
+                        <span className="capitalize">{category}:</span>
+                        <span className="font-medium">{count as number}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
