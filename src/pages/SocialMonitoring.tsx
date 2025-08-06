@@ -165,7 +165,7 @@ const SocialMonitoring = () => {
     toast.success(`${politician.nome} removido do monitoramento!`);
   };
 
-  // Função para coletar menções (agora usando os políticos selecionados)
+  // Função para coletar menções de todas as redes sociais
   const handleCollectMentions = async () => {
     if (monitoredPoliticians.length === 0) {
       toast.error("Adicione pelo menos um político para monitorar!");
@@ -174,9 +174,10 @@ const SocialMonitoring = () => {
 
     setIsCollecting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('fetch-twitter-mentions', {
+      const { data, error } = await supabase.functions.invoke('fetch-all-social-mentions', {
         body: { 
-          politicians: monitoredPoliticians.map(p => p.nome)
+          politicians: monitoredPoliticians.map(p => p.nome),
+          platforms: ['twitter', 'instagram', 'facebook', 'tiktok']
         }
       });
       
@@ -184,12 +185,23 @@ const SocialMonitoring = () => {
         throw error;
       }
       
-      toast.success("Coleta de menções iniciada com sucesso!");
+      // Mostrar resultados detalhados
+      const results = data.results;
+      const successful = Object.keys(results).filter(platform => results[platform].success);
+      const failed = Object.keys(results).filter(platform => !results[platform].success);
+      
+      if (successful.length > 0) {
+        toast.success(`Coleta iniciada com sucesso! Plataformas: ${successful.join(', ')}`);
+      }
+      
+      if (failed.length > 0) {
+        toast.error(`Falha em algumas plataformas: ${failed.join(', ')}`);
+      }
       
       // Aguardar um pouco e recarregar os dados
       setTimeout(() => {
         window.location.reload();
-      }, 3000);
+      }, 5000);
       
     } catch (error) {
       console.error('Erro ao coletar menções:', error);
