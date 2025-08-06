@@ -25,7 +25,10 @@ export function SocialMetricsGrid({
       value: stats?.totalMentions || 0,
       icon: TrendingUp,
       color: "primary",
-      trend: "+12%"
+      bgColor: "bg-primary/10",
+      textColor: "text-primary",
+      trend: "+12%",
+      description: "Últimos 7 dias"
     },
     {
       title: "Engajamento Total",
@@ -35,21 +38,30 @@ export function SocialMetricsGrid({
           stats.engagementTotal) : 0,
       icon: Heart,
       color: "accent",
-      trend: "+8%"
+      bgColor: "bg-pink-500/10",
+      textColor: "text-pink-600",
+      trend: "+8%",
+      description: "Curtidas, comentários"
     },
     {
       title: "Sentimento Positivo",
       value: stats?.positiveCount || 0,
       icon: Users,
       color: "success",
-      trend: "+5%"
+      bgColor: "bg-success/10",
+      textColor: "text-success",
+      trend: "+5%",
+      description: "Menções favoráveis"
     },
     {
       title: "Sentimento Negativo", 
       value: stats?.negativeCount || 0,
       icon: AlertTriangle,
       color: "destructive",
-      trend: "-2%"
+      bgColor: "bg-destructive/10",
+      textColor: "text-destructive",
+      trend: "-2%",
+      description: "Requer atenção"
     }
   ];
 
@@ -107,24 +119,24 @@ export function SocialMetricsGrid({
         {metrics.map((metric, index) => {
           const IconComponent = metric.icon;
           return (
-            <Card key={index} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg bg-${metric.color}/10`}>
-                      <IconComponent className={`h-4 w-4 text-${metric.color}`} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{metric.title}</p>
-                      <p className="text-2xl font-bold">{metric.value}</p>
-                    </div>
+            <Card key={index} className="hover:shadow-md transition-all duration-200 border-0 shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 rounded-xl ${metric.bgColor}`}>
+                    <IconComponent className={`h-5 w-5 ${metric.textColor}`} />
                   </div>
                   <Badge 
-                    variant="secondary" 
-                    className="text-xs text-success bg-success/10 border-success/20"
+                    variant={metric.trend.startsWith('+') ? "default" : "destructive"}
+                    className="text-xs h-6"
                   >
                     {metric.trend}
                   </Badge>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground font-medium">{metric.title}</p>
+                  <p className="text-3xl font-bold tracking-tight">{metric.value}</p>
+                  <p className="text-xs text-muted-foreground">{metric.description}</p>
                 </div>
               </CardContent>
             </Card>

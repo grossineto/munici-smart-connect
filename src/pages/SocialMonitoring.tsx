@@ -8,6 +8,9 @@ import { SearchPoliticianInput } from "@/components/SearchPoliticianInput";
 import { SocialPoliticianCard } from "@/components/SocialPoliticianCard";
 import { SocialMetricsGrid } from "@/components/SocialMetricsGrid";
 import { PlatformTabs } from "@/components/PlatformTabs";
+import { SentimentLineChart } from "@/components/SentimentLineChart";
+import { TrendingTopics } from "@/components/TrendingTopics";
+import { MentionHeatmap } from "@/components/MentionHeatmap";
 
 const SocialMonitoring = () => {
   const [isCollecting, setIsCollecting] = useState(false);
@@ -332,8 +335,8 @@ const SocialMonitoring = () => {
           )}
         </div>
 
-        {/* Dashboard Principal */}
-        <div className="lg:col-span-2">
+        {/* Dashboard com Gráficos */}
+        <div className="lg:col-span-2 space-y-6">
           <PlatformTabs 
             selectedPolitician={selectedPolitician?.nome || "all"}
             timeframe="7d"
@@ -341,6 +344,27 @@ const SocialMonitoring = () => {
           />
         </div>
       </div>
+
+      {/* Seção de Análises Avançadas */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <SentimentLineChart 
+          selectedPolitician={selectedPolitician?.nome || "all"}
+          timeframe="7d"
+        />
+        
+        <div className="space-y-6">
+          <TrendingTopics 
+            selectedPolitician={selectedPolitician?.nome || "all"}
+            timeframe="7d"
+          />
+        </div>
+      </div>
+
+      {/* Heatmap de Atividade */}
+      <MentionHeatmap 
+        selectedPolitician={selectedPolitician?.nome || "all"}
+        timeframe="7d"
+      />
     </div>
   );
 };
