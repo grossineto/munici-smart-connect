@@ -19,6 +19,10 @@ export function SocialMetricsGrid({
     timeframe
   );
 
+  // Debug
+  console.log('SocialMetricsGrid - selectedPolitician:', selectedPolitician);
+  console.log('SocialMetricsGrid - stats:', stats);
+
   const metrics = [
     {
       title: "Total de Menções",

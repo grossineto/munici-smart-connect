@@ -34,7 +34,7 @@ export function AlertsPanel({ selectedPolitician, className = "" }: AlertsPanelP
   useEffect(() => {
     const generatedAlerts = generateAutomaticAlerts();
     setAlerts(generatedAlerts);
-  }, [mentions]);
+  }, [mentions.length]); // Usar length para evitar loop infinito
 
   const generateAutomaticAlerts = (): AlertData[] => {
     const alerts: AlertData[] = [];

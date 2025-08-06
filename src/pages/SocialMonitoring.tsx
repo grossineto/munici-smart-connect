@@ -186,16 +186,19 @@ const SocialMonitoring = () => {
       }
       
       // Mostrar resultados detalhados
-      const results = data.results;
-      const successful = Object.keys(results).filter(platform => results[platform].success);
-      const failed = Object.keys(results).filter(platform => !results[platform].success);
+      console.log('Resultado da coleta:', data);
+      const results = data.results || {};
+      const successful = Object.keys(results).filter(platform => results[platform]?.success);
+      const failed = Object.keys(results).filter(platform => !results[platform]?.success);
       
       if (successful.length > 0) {
         toast.success(`Coleta iniciada com sucesso! Plataformas: ${successful.join(', ')}`);
       }
       
       if (failed.length > 0) {
-        toast.error(`Falha em algumas plataformas: ${failed.join(', ')}`);
+        const errors = failed.map(platform => `${platform}: ${results[platform]?.error || 'Erro desconhecido'}`);
+        toast.error(`Falha em algumas plataformas: ${errors.join(', ')}`);
+        console.error('Erros por plataforma:', errors);
       }
       
       // Aguardar um pouco e recarregar os dados
