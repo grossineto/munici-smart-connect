@@ -15,6 +15,7 @@ interface Politician {
   cidade: string;
   uf: string;
   cargo?: string;
+  avatar?: string;
 }
 
 interface SearchPoliticianInputProps {
@@ -28,7 +29,7 @@ export function SearchPoliticianInput({
   placeholder = "Selecione um dos políticos cadastrados...",
   disabled = false 
 }: SearchPoliticianInputProps) {
-  const { getActivePoliticians } = usePoliticians();
+  const { getActivePoliticians, politicians } = usePoliticians();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -61,8 +62,6 @@ export function SearchPoliticianInput({
         .slice(0, 5)
         .map(politician => ({
           id: politician.id,
-          nome: politician.cidade,
-          uf: politician.uf,
           mayor: politician,
           source: 'local'
         }));
@@ -86,8 +85,12 @@ export function SearchPoliticianInput({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Usar contexto para dados dos políticos ativos
-  const activePoliticians = getActivePoliticians('social');
+  // Reexecuta a busca quando a lista de políticos for atualizada
+  useEffect(() => {
+    if (searchQuery.length >= 2) {
+      searchPoliticians(searchQuery);
+    }
+  }, [politicians]);
 
   // Função para obter logo do partido (expandida)
   const getPartyLogo = (partido?: string) => {
@@ -120,22 +123,6 @@ export function SearchPoliticianInput({
       default:
         return null;
     }
-  };
-
-  // Função para obter avatar do político (simulando busca de imagem)
-  const getPoliticianAvatar = (nome: string) => {
-    // Em uma implementação real, isso faria uma busca na API do Twitter
-    // por agora, retornamos um avatar baseado no nome
-    const avatarMap: Record<string, string> = {
-      "Ricardo Nunes": "/lovable-uploads/6f653b9a-a318-4b80-955c-4f7b4de6634c.png",
-      "João Campos": "/lovable-uploads/990eb197-9e97-4050-9ad7-41f0539e7ba8.png",
-      "José Sarto": "/lovable-uploads/f6d35a9d-205a-4556-ac06-3f9fbd151298.png",
-      "Tarcísio Gomes de Freitas": "/lovable-uploads/9c090c37-0d6e-4699-9cc5-028de5640b9a.png",
-      "Guto Issa": "/lovable-uploads/dc683cc5-b8bf-4311-9698-3337b29889e5.png",
-      "Suéllen Silva Rosim": "/lovable-uploads/425f80f3-21ac-4eef-984d-ba432848be17.png"
-    };
-    
-    return avatarMap[nome] || null;
   };
 
   const handlePoliticianSelect = (result: any) => {
@@ -195,9 +182,9 @@ export function SearchPoliticianInput({
                   >
                     <div className="flex items-center gap-3 w-full">
                       <div className="flex-shrink-0">
-                        {getPoliticianAvatar(mayor.nome) ? (
+                        {mayor.avatar ? (
                           <img 
-                            src={getPoliticianAvatar(mayor.nome)!}
+                            src={mayor.avatar}
                             alt={`Avatar ${mayor.nome}`}
                             className="h-8 w-8 rounded-full object-cover"
                           />
@@ -220,7 +207,7 @@ export function SearchPoliticianInput({
                         </div>
                         <div className="text-xs text-muted-foreground flex items-center gap-2">
                           <MapPin className="h-3 w-3" />
-                          {result.nome}, {result.uf}
+                          {mayor.cidade}, {mayor.uf}
                           {mayor.partido && (
                             <div className="flex items-center gap-1">
                               {getPartyLogo(mayor.partido) && (
