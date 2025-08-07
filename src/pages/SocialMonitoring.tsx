@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Search, Users, Download, Twitter, Instagram, Facebook, Music, TrendingUp } from "lucide-react";
+import { RefreshCw, Search, Users, Download, Twitter, Instagram, Facebook, Music, TrendingUp, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -281,71 +281,60 @@ const SocialMonitoring = () => {
     return (
       <div className="container mx-auto py-6 space-y-8">
         {/* Header Principal */}
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 p-8 border shadow-lg">
+        <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <div className="space-y-3">
-              <h1 className="text-4xl font-bold tracking-tight text-foreground">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">
                 Monitoramento de Redes Sociais
               </h1>
-              <p className="text-muted-foreground text-xl">
+              <p className="text-muted-foreground">
                 Acompanhe menções, sentimentos e engajamento em tempo real
               </p>
-              
-              {/* Status das Plataformas */}
-              <div className="flex items-center gap-6 mt-6">
-                <div className="flex items-center gap-3 px-3 py-2 bg-background/50 rounded-lg">
-                  <Twitter className="h-5 w-5 text-blue-500" />
-                  <span className="text-sm font-medium">Twitter</span>
-                  <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
-                </div>
-                <div className="flex items-center gap-3 px-3 py-2 bg-background/50 rounded-lg">
-                  <Instagram className="h-5 w-5 text-pink-500" />
-                  <span className="text-sm font-medium">Instagram</span>
-                  <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
-                </div>
-                <div className="flex items-center gap-3 px-3 py-2 bg-background/50 rounded-lg">
-                  <Facebook className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium">Facebook</span>
-                  <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
-                </div>
-                <div className="flex items-center gap-3 px-3 py-2 bg-background/50 rounded-lg">
-                  <Music className="h-5 w-5 text-gray-900" />
-                  <span className="text-sm font-medium">TikTok</span>
-                  <div className="w-3 h-3 bg-warning rounded-full"></div>
-                </div>
-              </div>
             </div>
             
             <div className="flex items-center gap-3">
               <Button 
-                onClick={handleImportFromNews}
-                disabled={isLoadingPoliticians}
-                variant="outline"
-                size="lg"
-                className="flex items-center gap-2 px-6"
-              >
-                <Download className={`h-5 w-5 ${isLoadingPoliticians ? 'animate-pulse' : ''}`} />
-                {isLoadingPoliticians ? 'Importando...' : 'Importar Políticos'}
-              </Button>
-              
-              <Button 
                 onClick={handleCollectMentions}
                 disabled={isCollecting || monitoredPoliticians.length === 0}
-                size="lg"
-                className="flex items-center gap-2 px-6 bg-primary hover:bg-primary/90"
+                className="flex items-center gap-2 px-6"
               >
-                <RefreshCw className={`h-5 w-5 ${isCollecting ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-4 w-4 ${isCollecting ? 'animate-spin' : ''}`} />
                 {isCollecting ? 'Coletando...' : 'Coletar Menções'}
               </Button>
               
               <Button 
-                variant="outline" 
-                size="lg"
-                className="flex items-center gap-2 px-6"
+                variant="ghost" 
+                size="sm"
+                className="text-xs"
               >
-                <Download className="h-5 w-5" />
-                Exportar Relatório
+                <Download className="h-3 w-3 mr-1" />
+                Exportar
               </Button>
+            </div>
+          </div>
+
+          {/* Status das Plataformas */}
+          <div className="bg-card rounded-lg border p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-sm text-muted-foreground">Status das Plataformas</h3>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span className="text-xs">Twitter</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-yellow-500" />
+                  <span className="text-xs">Instagram</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-yellow-500" />
+                  <span className="text-xs">Facebook</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-red-500" />
+                  <span className="text-xs">TikTok</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -356,171 +345,65 @@ const SocialMonitoring = () => {
           timeframe="7d"
         />
 
-        {/* Seção Principal - Políticos Monitorados */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight">Políticos Monitorados</h2>
-              <p className="text-muted-foreground">Selecione um político para ver dados detalhados</p>
-            </div>
+        {/* Selecionar Político */}
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold">Selecionar Político</h2>
+            <p className="text-sm text-muted-foreground">Busque e selecione um político para monitorar</p>
           </div>
+          
+          <div className="max-w-md">
+            <SearchPoliticianInput
+              onSelectPolitician={handleSelectPolitician}
+              placeholder="Buscar por nome..."
+            />
+          </div>
+        </div>
 
-          {monitoredPoliticians.length === 0 ? (
-            <div className="border-2 border-dashed border-muted rounded-xl p-12 text-center">
-              <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Nenhum político sendo monitorado</h3>
-              <p className="text-muted-foreground mb-6">
-                Comece importando políticos do sistema ou fazendo uma busca manual
-              </p>
-              
-              <div className="space-y-4 max-w-md mx-auto">
-                <SearchPoliticianInput
-                  onSelectPolitician={handleSelectPolitician}
-                  placeholder="Busque por nome, partido ou cidade..."
-                />
-                
-                <div className="text-sm text-muted-foreground">
-                  ou clique em "Importar Políticos" para carregar a base do sistema
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Políticos Selecionados */}
+        {monitoredPoliticians.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Políticos Selecionados</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {monitoredPoliticians.map((politician, index) => (
                 <div 
                   key={`${politician.nome}-${politician.cidade}-${index}`}
                   onClick={() => setSelectedPolitician(politician)}
-                  className="cursor-pointer group"
+                  className="cursor-pointer group bg-card rounded-lg border p-4 hover:border-primary/50 transition-all"
                 >
-                  <div className="bg-card rounded-xl border p-6 transition-all duration-200 hover:shadow-lg hover:border-primary/50 group-hover:scale-[1.02]">
-                    {/* Header do Card */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center">
-                          <span className="text-lg font-bold text-foreground">
-                            {politician.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                          </span>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
-                            {politician.nome}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {politician.cargo} • {politician.cidade}, {politician.uf}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemovePolitician(politician);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        ✕
-                      </Button>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-bold">
+                        {politician.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                      </span>
                     </div>
-
-                    {/* Informações */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded">
-                          {politician.partido}
-                        </div>
-                        <div className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded">
-                          {politician.mandato}
-                        </div>
-                      </div>
-
-                      {/* Pequeno Gráfico de Sentimento */}
-                      <div className="h-8 bg-muted/50 rounded flex items-center justify-center">
-                        <TrendingUp className="h-4 w-4 text-success" />
-                        <span className="text-xs text-muted-foreground ml-1">Sentimento geral</span>
-                      </div>
-
-                      {/* Indicadores de Redes */}
-                      <div className="flex items-center gap-2">
-                        <Twitter className="h-4 w-4 text-blue-500" />
-                        <Instagram className="h-4 w-4 text-pink-500" />
-                        <Facebook className="h-4 w-4 text-blue-600" />
-                        <Music className="h-4 w-4 text-gray-900" />
-                        <span className="text-xs text-muted-foreground ml-auto">4 redes ativas</span>
-                      </div>
-
-                      {/* CTA */}
-                      <div className="pt-2 border-t">
-                        <span className="text-sm font-medium text-primary group-hover:underline">
-                          Ver Detalhes →
-                        </span>
-                      </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{politician.nome}</h4>
+                      <p className="text-xs text-muted-foreground">{politician.cargo} • {politician.cidade}</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          )}
-
-          {/* Busca Adicional */}
-          {monitoredPoliticians.length > 0 && (
-            <div className="bg-muted/30 rounded-xl p-6 border border-dashed">
-              <div className="flex items-center gap-4">
-                <Search className="h-5 w-5 text-muted-foreground" />
-                <div className="flex-1">
-                  <SearchPoliticianInput
-                    onSelectPolitician={handleSelectPolitician}
-                    placeholder="Adicionar mais políticos ao monitoramento..."
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Seção de Demonstração */}
-          <div className="border rounded-xl p-6 bg-gradient-to-r from-blue-50 to-indigo-50">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  🎯 Demonstração com Dados Reais
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Ricardo Nunes tem <strong>20 menções coletadas</strong> - veja como funciona!
-                </p>
-              </div>
-              <Button 
-                onClick={() => setSelectedPolitician({
-                  nome: "Ricardo Nunes",
-                  partido: "MDB",
-                  cargo: "Prefeito",
-                  cidade: "São Paulo",
-                  uf: "SP",
-                  mandato: "2021-2024",
-                  keywords: ["Ricardo Nunes", "prefeito São Paulo", "prefeitura São Paulo"]
-                })}
-                className="flex items-center gap-2"
-              >
-                <TrendingUp className="h-4 w-4" />
-                Ver Análise Completa
-              </Button>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              💡 Para João Campos: Clique em "Coletar Menções" para buscar dados do Twitter
-            </div>
           </div>
-        </div>
+        )}
 
-        {/* Lista de Menções Gerais */}
-        <SocialMentionsList 
-          selectedPolitician="all"
-          className="col-span-full"
-        />
+        {/* Informações do Político (substitui demonstração) */}
+        {monitoredPoliticians.length > 0 && (
+          <div className="bg-card rounded-lg border p-6">
+            <h3 className="text-lg font-semibold mb-4">Informações do Político</h3>
+            <p className="text-muted-foreground text-sm">
+              Selecione um político acima para ver as informações detalhadas e análises de menções.
+            </p>
+          </div>
+        )}
 
-        {/* Alertas e Insights */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AlertsPanel />
-          <TrendingTopics />
+        {/* Lista de Menções Recentes com Abas */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Menções Recentes</h3>
+          <SocialMentionsList 
+            selectedPolitician="all"
+          />
         </div>
       </div>
     );
