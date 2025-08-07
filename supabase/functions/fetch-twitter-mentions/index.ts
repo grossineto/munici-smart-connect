@@ -69,8 +69,12 @@ serve(async (req) => {
 
     for (const politician of politicians) {
       try {
+        // Extrair nome do político (pode vir como objeto ou string)
+        const politicianName = typeof politician === 'string' ? politician : politician.name;
+        console.log(`Processando político: ${politicianName}`);
+        
         // Buscar menções do político no Twitter
-        const searchQuery = `"${politician}" -is:retweet lang:pt`;
+        const searchQuery = `"${politicianName}" -is:retweet lang:pt`;
         const searchUrl = `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(searchQuery)}&max_results=10&tweet.fields=created_at,public_metrics,author_id&expansions=author_id`;
 
         const response = await fetch(searchUrl, {
@@ -88,7 +92,7 @@ serve(async (req) => {
         const data: TwitterResponse = await response.json();
         
         if (!data.data || data.data.length === 0) {
-          console.log(`Nenhuma menção encontrada para ${politician}`);
+          console.log(`Nenhuma menção encontrada para ${politicianName}`);
           continue;
         }
 
@@ -108,7 +112,7 @@ serve(async (req) => {
             .from('social_mentions')
             .insert({
               platform: 'twitter',
-              politician_name: politician,
+              politician_name: politicianName,
               content: tweet.text,
               timestamp: tweet.created_at,
               url: `https://twitter.com/i/status/${tweet.id}`,
@@ -126,7 +130,7 @@ serve(async (req) => {
           if (error) {
             console.error('Erro ao salvar menção:', error);
           } else {
-            console.log(`Menção salva para ${politician}: ${tweet.text.substring(0, 50)}...`);
+            console.log(`Menção salva para ${politicianName}: ${tweet.text.substring(0, 50)}...`);
           }
         }
 
@@ -134,7 +138,7 @@ serve(async (req) => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         
       } catch (error) {
-        console.error(`Erro ao processar ${politician}:`, error);
+        console.error(`Erro ao processar ${politicianName}:`, error);
       }
     }
 
