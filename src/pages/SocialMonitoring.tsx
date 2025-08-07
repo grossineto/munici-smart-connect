@@ -14,6 +14,7 @@ import { MentionHeatmap } from "@/components/MentionHeatmap";
 import { AlertsPanel } from "@/components/AlertsPanel";
 import { SocialTimeline } from "@/components/SocialTimeline";
 import { ExportTools } from "@/components/ExportTools";
+import { SocialMentionsList } from "@/components/SocialMentionsList";
 
 const SocialMonitoring = () => {
   const [isCollecting, setIsCollecting] = useState(false);
@@ -476,6 +477,50 @@ const SocialMonitoring = () => {
               </div>
             </div>
           )}
+
+          {/* Seção de Demonstração */}
+          <div className="border rounded-xl p-6 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  🎯 Demonstração com Dados Reais
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Ricardo Nunes tem <strong>20 menções coletadas</strong> - veja como funciona!
+                </p>
+              </div>
+              <Button 
+                onClick={() => setSelectedPolitician({
+                  nome: "Ricardo Nunes",
+                  partido: "MDB",
+                  cargo: "Prefeito",
+                  cidade: "São Paulo",
+                  uf: "SP",
+                  mandato: "2021-2024",
+                  keywords: ["Ricardo Nunes", "prefeito São Paulo", "prefeitura São Paulo"]
+                })}
+                className="flex items-center gap-2"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Ver Análise Completa
+              </Button>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              💡 Para João Campos: Clique em "Coletar Menções" para buscar dados do Twitter
+            </div>
+          </div>
+        </div>
+
+        {/* Lista de Menções Gerais */}
+        <SocialMentionsList 
+          selectedPolitician="all"
+          className="col-span-full"
+        />
+
+        {/* Alertas e Insights */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <AlertsPanel />
+          <TrendingTopics />
         </div>
       </div>
     );
@@ -567,6 +612,12 @@ const SocialMonitoring = () => {
         selectedPolitician={selectedPolitician.nome}
         timeframe="7d"
         onRefresh={() => window.location.reload()}
+      />
+
+      {/* Lista de Menções Recentes */}
+      <SocialMentionsList 
+        selectedPolitician={selectedPolitician.nome}
+        className="col-span-full"
       />
 
       {/* Análises Avançadas */}
