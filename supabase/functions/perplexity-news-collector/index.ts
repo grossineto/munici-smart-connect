@@ -14,6 +14,87 @@ const openaiApiKey = Deno.env.get('OPENAI_API_KEY')!;
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+// Utilitários para parse robusto de JSON vindo do modelo
+function extractJsonBlock(text: string): string | null {
+  // Prioriza bloco ```json ... ``` se existir
+  const fenced = text.match(/```json[\s\S]*?```/i);
+  if (fenced) {
+    const inner = fenced[0].replace(/```json/i, '').replace(/```/g, '').trim();
+    return inner;
+  }
+  // Caso contrário, tenta o primeiro objeto {...}
+  const brace = text.match(/\{[\s\S]*\}/);
+  return brace ? brace[0] : null;
+}
+
+function sanitizeJson(text: string): string {
+  let cleaned = text
+    .replace(/[\u201C\u201D]/g, '"') // aspas curvas -> aspas duplas
+    .replace(/[\u2018\u2019]/g, "'") // apóstrofos curvos
+    .replace(/,\s*\}/g, '}')
+    .replace(/,\s*\]/g, ']')
+    .replace(/\s+\n/g, '\n');
+  return cleaned;
+}
+
+function tryParseAnalysis(text: string): any | null {
+  const block = extractJsonBlock(text);
+  if (!block) return null;
+  // Tentativa 1: parse direto
+  try {
+    return JSON.parse(block);
+  } catch (_) {}
+  // Tentativa 2: sanitizar e parsear
+  try {
+    const sanitized = sanitizeJson(block);
+    return JSON.parse(sanitized);
+  } catch (_) {}
+  // Tentativa 3: extrair campos whitelisted via regex
+  try {
+    const s = sanitizeJson(block);
+    const pick = (key: string) => {
+      const m = s.match(new RegExp(`"${key}"\\s*:\\s*"([\
+\s\S]*?)"`));
+      return m ? m[1].trim() : undefined;
+    };
+    const pickNum = (key: string) => {
+      const m = s.match(new RegExp(`"${key}"\\s*:\\s*([-]?[0-9]+(?:\\.[0-9]+)?)`));
+      return m ? Number(m[1]) : undefined;
+    };
+    const pickBool = (key: string) => {
+      const m = s.match(new RegExp(`"${key}"\\s*:\\s*(true|false)`));
+      return m ? m[1] === 'true' : undefined;
+    };
+    const pickArr = (key: string) => {
+      const m = s.match(new RegExp(`"${key}"\\s*:\\s*\\[([\
+\s\S]*?)\\]`));
+      if (!m) return undefined;
+      const inner = m[1];
+      const items = inner.split(',').map(t => t.trim().replace(/^"|"$/g, '')).filter(Boolean);
+      return items.length ? items : undefined;
+    };
+    return {
+      sentiment_score: pickNum('sentiment_score'),
+      urgency_level: pick('urgency_level'),
+      relevance_score: pickNum('relevance_score'),
+      mentions_mayor: pickBool('mentions_mayor'),
+      crisis_potential: pickBool('crisis_potential'),
+      keywords: pickArr('keywords'),
+      summary: pick('summary'),
+      impact_analysis: pick('impact_analysis'),
+      recommended_action: pick('recommended_action'),
+      public_sentiment_prediction: pick('public_sentiment_prediction'),
+      communication_strategy: pick('communication_strategy'),
+      risk_assessment: pick('risk_assessment'),
+      political_opportunity: pick('political_opportunity'),
+      citizen_impact: pick('citizen_impact'),
+      media_monitoring_focus: pick('media_monitoring_focus')
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
 serve(async (req) => {
   console.log('🚀 INICIANDO COLETA PERSONALIZADA DE NOTÍCIAS');
   
@@ -31,17 +112,23 @@ serve(async (req) => {
       // Ler parâmetros do corpo da requisição
       const body = await req.json().catch(() => ({}));
       const mayor = body.mayor;
+      const searchScope: 'city' | 'region' | 'state' = body.searchScope || 'city';
+      const recency: 'today' | 'week' = body.recency || 'today';
+      const domainWhitelist: string[] | undefined = Array.isArray(body.domainWhitelist) ? body.domainWhitelist : undefined;
       
       if (mayor) {
-        console.log(`📊 COLETA PERSONALIZADA PARA: ${mayor.nome || mayor.mayorName} - ${mayor.cidade || mayor.cityName}/${mayor.uf || mayor.state}`);
+        console.log(`📊 COLETA PERSONALIZADA PARA: ${mayor.nome || mayor.mayorName} - ${mayor.cidade || mayor.cityName}/${mayor.uf || mayor.state} • escopo=${searchScope} • recency=${recency}`);
       } else {
         console.log('📊 COLETA PADRÃO PARA: Ricardo Nunes - São Paulo/SP');
       }
       
       console.log('✅ Iniciando coleta de notícias...');
     
-    const processedArticles = [];
+    const processedArticles: any[] = [];
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const startTime = Date.now();
+    const queriesRecorded: string[] = [];
+    const datePhrase = recency === 'today' ? `hoje ${today}` : 'últimos 7 dias';
 
     // 🎯 Queries dinâmicas baseadas no prefeito selecionado com FONTES REGIONAIS
     let todayQueries;
@@ -81,29 +168,58 @@ serve(async (req) => {
 
       regionalSources = stateSources[mayor.state] || 'G1, Folha, Estadão, UOL, CNN Brasil';
 
-      todayQueries = [
-        `"${mayor.mayorName}" prefeito "${mayor.cityName}" ${mayor.state} notícias hoje ${today}`,
-        `"${mayor.cityName}" ${mayor.state} prefeitura gestão municipal hoje ${today}`,
-        `"${mayor.cityName}" ${mayor.state} transporte público problemas hoje ${today}`,
-        `"${mayor.cityName}" ${mayor.state} saúde hospitais notícias hoje ${today}`,
-        `"${mayor.cityName}" ${mayor.state} segurança criminalidade hoje ${today}`,
-        `"${mayor.cityName}" ${mayor.state} educação escolas hoje ${today}`,
-        `"${mayor.cityName}" ${mayor.state} infraestrutura obras hoje ${today}`
-      ];
+      const baseCity = `"${mayor.cityName}" ${mayor.state}`;
+      const baseState = `${mayor.state}`;
+      if (searchScope === 'state') {
+        todayQueries = [
+          `"${mayor.mayorName}" ${baseState} notícias ${datePhrase}`,
+          `${baseState} governo estadual notícias ${datePhrase}`,
+          `${baseState} segurança pública notícias ${datePhrase}`,
+          `${baseState} saúde hospitais ${datePhrase}`,
+          `${baseState} educação escolas ${datePhrase}`,
+          `${baseState} infraestrutura obras ${datePhrase}`
+        ];
+      } else if (searchScope === 'region') {
+        todayQueries = [
+          `"${mayor.mayorName}" prefeito ${baseCity} notícias ${datePhrase}`,
+          `${baseCity} prefeitura gestão municipal ${datePhrase}`,
+          `${baseCity} ${datePhrase} transporte público problemas`,
+          `${baseCity} ${datePhrase} saúde hospitais`,
+          `${baseCity} ${datePhrase} segurança criminalidade`,
+          `${baseCity} ${datePhrase} educação escolas`,
+          `${baseCity} ${datePhrase} infraestrutura obras`
+        ];
+      } else {
+        // escopo 'city' (padrão)
+        todayQueries = [
+          `"${mayor.mayorName}" prefeito ${baseCity} notícias ${datePhrase}`,
+          `${baseCity} prefeitura gestão municipal ${datePhrase}`,
+          `${baseCity} transporte público problemas ${datePhrase}`,
+          `${baseCity} saúde hospitais notícias ${datePhrase}`,
+          `${baseCity} segurança criminalidade ${datePhrase}`,
+          `${baseCity} educação escolas ${datePhrase}`,
+          `${baseCity} infraestrutura obras ${datePhrase}`
+        ];
+      }
     } else {
       // Queries padrão para São Paulo
       regionalSources = 'G1 São Paulo, Folha, Estadão, UOL São Paulo, Terra São Paulo, R7 São Paulo, CNN Brasil';
       todayQueries = [
-        `Ricardo Nunes prefeito São Paulo notícias hoje ${today}`,
-        `São Paulo transporte público problemas hoje ${today}`,
-        `São Paulo saúde hospitais notícias hoje ${today}`,
-        `São Paulo segurança criminalidade hoje ${today}`,
-        `São Paulo educação escolas hoje ${today}`
+        `Ricardo Nunes prefeito São Paulo notícias ${datePhrase}`,
+        `São Paulo transporte público problemas ${datePhrase}`,
+        `São Paulo saúde hospitais notícias ${datePhrase}`,
+        `São Paulo segurança criminalidade ${datePhrase}`,
+        `São Paulo educação escolas ${datePhrase}`
       ];
     }
 
     for (let i = 0; i < todayQueries.length; i++) {
       const query = todayQueries[i];
+      queriesRecorded.push(query);
+      if (Date.now() - startTime > 160000) {
+        console.log('⏹️ Tempo quase esgotado, interrompendo com resultados parciais');
+        break;
+      }
       console.log(`🔍 ${i+1}/${todayQueries.length}: ${query}`);
       
       try {
@@ -122,27 +238,27 @@ serve(async (req) => {
               },
               {
                 role: 'user',
-                content: `Encontre 2 notícias ATUAIS de hoje (${today}) sobre "${query}" dos portais brasileiros.
+                content: `Encontre 2 notícias ATUAIS de ${datePhrase} sobre "${query}" dos portais brasileiros.
                 
-                IMPORTANTE: Quero notícias de HOJE, mesmo que similares já existam.
+                IMPORTANTE: Use apenas notícias reais publicadas ${datePhrase} (sem redes sociais).
                 
-                FONTES PRIORITÁRIAS: ${regionalSources}
+                FONTES PRIORITÁRIAS: ${regionalSources}${domainWhitelist && domainWhitelist.length ? ', ' + domainWhitelist.join(', ') : ''}
                 FONTES NACIONAIS: G1, Folha, Estadão, UOL, R7, CNN Brasil, Metrópoles, Band
                 
-                Para cada notícia REAL encontrada hoje, retorne EXATAMENTE:
+                Para cada notícia REAL encontrada, retorne EXATAMENTE:
                 
                 NOTÍCIA 1:
                 Título: [título completo]
                 URL: [link direto]
                 Fonte: [portal]
-                Data: ${today}
+                Data: [data de publicação]
                 Resumo: [2-3 linhas sobre o conteúdo]
                 
                 NOTÍCIA 2:
                 Título: [título completo]
                 URL: [link direto]
                 Fonte: [portal]
-                Data: ${today}
+                Data: [data de publicação]
                 Resumo: [2-3 linhas sobre o conteúdo]`
               }
             ],
@@ -264,7 +380,7 @@ serve(async (req) => {
                     Fonte: ${source}
                     Data: ${today}
                     
-                    Retorne um JSON válido e completo:
+                    Responda APENAS com um JSON válido e completo (apenas o objeto, sem markdown ou texto extra):
                     {
                       "sentiment_score": [número de -1 a 1],
                       "urgency_level": ["low", "medium", "high", "critical"],
