@@ -21,7 +21,7 @@ const SocialMonitoring = () => {
   const [isCollecting, setIsCollecting] = useState(false);
   const [selectedPolitician, setSelectedPolitician] = useState<any>(null);
   const [monitoredPoliticians, setMonitoredPoliticians] = useState<any[]>([]);
-  const [isLoadingPoliticians, setIsLoadingPoliticians] = useState(false);
+  
   const [keywords, setKeywords] = useState<any[]>([]);
   const [showDetailedView, setShowDetailedView] = useState(false);
 
