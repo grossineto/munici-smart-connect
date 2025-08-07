@@ -26,20 +26,30 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 
-const items = [
+const group1 = [
+  { title: "Monitoramento de Notícias", url: "/news-monitoring", icon: Newspaper },
+  { title: "Monitoramento de Redes", url: "/social-monitoring", icon: Share2 },
+  { title: "Omnichannel", url: "/whatsapp", icon: Phone },
+];
+
+const group2 = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Insights", url: "/insights", icon: Brain },
-  { title: "Monitoramento de Notícias", url: "/news-monitoring", icon: Newspaper },
-  { title: "Monitoramento de Redes Sociais", url: "/social-monitoring", icon: Share2 },
   { title: "Gabinete de Urgência", url: "/urgency-office", icon: AlertTriangle },
-  { title: "Relatórios", url: "/reports", icon: BarChart3 },
-  { title: "WhatsApp", url: "/whatsapp", icon: Phone },
-  { title: "Solicitações", url: "/requests", icon: MessageSquare },
+  { title: "Relatorios", url: "/reports", icon: BarChart3 },
+];
+
+const group3 = [
   { title: "Munícipes", url: "/citizens", icon: Users },
+  { title: "Solicitações", url: "/requests", icon: MessageSquare },
   { title: "Agendamentos", url: "/appointments", icon: Calendar },
+];
+
+const group4 = [
   { title: "Usuários", url: "/users", icon: Shield },
 ];
 
@@ -68,8 +78,69 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Navegação</SidebarGroupLabel>
           <SidebarGroupContent>
+            {/* Grupo 1 */}
             <SidebarMenu>
-              {items.map((item) => (
+              {group1.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to={item.url} 
+                      end={item.url === "/dashboard"}
+                      className={getNavCls}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+
+            <SidebarSeparator />
+
+            {/* Grupo 2 */}
+            <SidebarMenu>
+              {group2.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to={item.url} 
+                      end={item.url === "/dashboard"}
+                      className={getNavCls}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+
+            <SidebarSeparator />
+
+            {/* Grupo 3 */}
+            <SidebarMenu>
+              {group3.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to={item.url} 
+                      end={item.url === "/dashboard"}
+                      className={getNavCls}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+
+            <SidebarSeparator />
+
+            {/* Grupo 4 */}
+            <SidebarMenu>
+              {group4.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 
