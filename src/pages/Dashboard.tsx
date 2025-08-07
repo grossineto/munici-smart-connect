@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePoliticians } from "@/contexts/PoliticiansContext";
 import { PoliticianMiniDashboard } from "@/components/PoliticianMiniDashboard";
+import { NewsSummaryCards } from "@/components/NewsSummaryCards";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     // SEO: title + meta description + canonical
-    document.title = `Dashboard Prefeito - ${selected?.nome || "BR.I.A.N."}`;
+    document.title = `Dashboard - ${selected?.nome || "BR.I.A.N."}`;
     const desc = document.querySelector('meta[name="description"]');
     if (desc) desc.setAttribute("content", `Painel do prefeito ${selected?.nome || ""}: notícias, redes e Omnichannel.`);
     let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
@@ -47,7 +48,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard do Prefeito</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">
           Monitorando: {selected?.nome} {selected ? `• ${selected.cidade} - ${selected.uf}` : ""}
         </p>
@@ -78,9 +79,14 @@ const Dashboard = () => {
 
       {/* Visão rápida (Social) */}
       {selected && (
-        <section>
-          <PoliticianMiniDashboard politicianName={selected.nome} />
-        </section>
+        <>
+          <section>
+            <PoliticianMiniDashboard politicianName={selected.nome} />
+          </section>
+          <section className="mt-4">
+            <NewsSummaryCards politicianName={selected.nome} city={selected.cidade} uf={selected.uf} />
+          </section>
+        </>
       )}
 
       {/* Blocos de Notícias e Omnichannel */}
