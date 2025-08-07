@@ -281,7 +281,7 @@ const SocialMonitoring = () => {
     return (
       <div className="container mx-auto py-6 space-y-8">
         {/* Header Principal */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -313,28 +313,27 @@ const SocialMonitoring = () => {
             </div>
           </div>
 
-          {/* Status das Plataformas */}
-          <div className="bg-card rounded-lg border p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm text-muted-foreground">Status das Plataformas</h3>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-xs">Twitter</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-yellow-500" />
-                  <span className="text-xs">Instagram</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-yellow-500" />
-                  <span className="text-xs">Facebook</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                  <span className="text-xs">TikTok</span>
-                </div>
-              </div>
+          {/* Status das Plataformas - Simplificado */}
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <Twitter className="h-4 w-4 text-blue-500" />
+              <span className="text-sm">Twitter</span>
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Instagram className="h-4 w-4 text-pink-500" />
+              <span className="text-sm">Instagram</span>
+              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Facebook className="h-4 w-4 text-blue-600" />
+              <span className="text-sm">Facebook</span>
+              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Music className="h-4 w-4 text-gray-600" />
+              <span className="text-sm">TikTok</span>
+              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
             </div>
           </div>
         </div>
