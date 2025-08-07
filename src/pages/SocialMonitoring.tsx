@@ -338,12 +338,6 @@ const SocialMonitoring = () => {
           </div>
         </div>
 
-        {/* Métricas Gerais */}
-        <SocialMetricsGrid 
-          selectedPolitician="all"
-          timeframe="7d"
-        />
-
         {/* Selecionar Político */}
         <div className="space-y-4">
           <div>
