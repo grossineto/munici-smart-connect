@@ -37,7 +37,7 @@ const SocialMonitoring = () => {
     '7d'
   );
 
-  // Base de políticos do sistema com palavras-chave específicas
+  // Base expandida de políticos com palavras-chave específicas e avatares
   const politiciansFromNews = [
     {
       nome: "Ricardo Nunes",
@@ -47,6 +47,7 @@ const SocialMonitoring = () => {
       uf: "SP",
       mandato: "2021-2024",
       newsCount: 56,
+      avatar: "/lovable-uploads/6f653b9a-a318-4b80-955c-4f7b4de6634c.png",
       keywords: [
         "Ricardo Nunes",
         "prefeito São Paulo",
@@ -55,6 +56,41 @@ const SocialMonitoring = () => {
         "gestão Ricardo Nunes",
         "cidade de São Paulo",
         "MDB São Paulo"
+      ]
+    },
+    {
+      nome: "Luiz Inácio Lula da Silva",
+      partido: "PT",
+      cargo: "Presidente", 
+      cidade: "Brasil",
+      uf: "BR",
+      mandato: "2023-2026",
+      newsCount: 150,
+      avatar: "/lovable-uploads/0d511335-415f-4a36-a437-3354866c9612.png",
+      keywords: [
+        "Lula",
+        "Luiz Inácio",
+        "presidente Lula",
+        "governo Lula",
+        "PT Brasil",
+        "presidente do Brasil"
+      ]
+    },
+    {
+      nome: "Jair Messias Bolsonaro",
+      partido: "PL",
+      cargo: "Ex-Presidente",
+      cidade: "Brasil", 
+      uf: "BR",
+      mandato: "2019-2022",
+      newsCount: 98,
+      avatar: "/lovable-uploads/15e88a34-c752-40da-b211-dbf4235418f1.png",
+      keywords: [
+        "Jair Bolsonaro",
+        "Bolsonaro",
+        "ex-presidente",
+        "PL Brasil",
+        "capitão Bolsonaro"
       ]
     },
     {
@@ -382,11 +418,19 @@ const SocialMonitoring = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center">
-                <span className="text-xl font-bold text-foreground">
-                  {selectedPolitician.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                </span>
-              </div>
+              {selectedPolitician.avatar ? (
+                <img 
+                  src={selectedPolitician.avatar}
+                  alt={`Avatar ${selectedPolitician.nome}`}
+                  className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center">
+                  <span className="text-xl font-bold text-foreground">
+                    {selectedPolitician.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                  </span>
+                </div>
+              )}
               
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-foreground">
