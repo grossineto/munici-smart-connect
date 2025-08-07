@@ -67,6 +67,9 @@ serve(async (req) => {
 
     console.log('Iniciando coleta de menções do Twitter...');
 
+    let totalInserted = 0;
+    let rateLimitHits = 0;
+
     for (const politician of politicians) {
       try {
         // Normalizar estrutura do político (aceita string ou objeto)
@@ -87,68 +90,97 @@ serve(async (req) => {
           .map(k => `"${k.replace(/\"/g, '\\\"')}"`)
           .join(' OR ');
         const searchQuery = `(${keywordQuery}) -is:retweet lang:pt`;
-        const searchUrl = `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(searchQuery)}&max_results=10&tweet.fields=created_at,public_metrics,author_id&expansions=author_id`;
+        const baseUrl = 'https://api.twitter.com/2/tweets/search/recent';
 
-        const response = await fetch(searchUrl, {
-          headers: {
-            'Authorization': `Bearer ${twitterBearerToken}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        let attempt = 0;
+        const maxAttempts = 3;
+        let fetched = false;
+        let lastError: any = null;
 
-        if (!response.ok) {
-          console.error(`Erro ao buscar menções para ${politicianName}:`, response.status, await response.text());
-          continue;
-        }
-
-        const data: TwitterResponse = await response.json();
-        
-        if (!data.data || data.data.length === 0) {
-          console.log(`Nenhuma menção encontrada para ${politicianName}`);
-          continue;
-        }
-
-        // Processar cada tweet encontrado
-        for (const tweet of data.data) {
-          const engagementScore = 
-            tweet.public_metrics.like_count + 
-            tweet.public_metrics.retweet_count + 
-            tweet.public_metrics.reply_count + 
-            tweet.public_metrics.quote_count;
-
-          // Estimativa simples de alcance (engagement * 10)
-          const reachEstimate = engagementScore * 10;
-
-          // Salvar no banco de dados
-          const { error } = await supabase
-            .from('social_mentions')
-            .insert({
-              platform: 'twitter',
-              politician_name: politicianName,
-              content: tweet.text,
-              timestamp: tweet.created_at,
-              url: `https://twitter.com/i/status/${tweet.id}`,
-              mention_type: 'mention',
-              sentiment: 'neutral', // Será analisado pela função de IA
-              reach_estimate: reachEstimate,
-              engagement_score: engagementScore,
-              raw_data: {
-                tweet_id: tweet.id,
-                author_id: tweet.author_id,
-                public_metrics: tweet.public_metrics,
-                search_keywords: keywords
-              }
-            });
-
-          if (error) {
-            console.error('Erro ao salvar menção:', error);
-          } else {
-            console.log(`Menção salva para ${politicianName}: ${tweet.text.substring(0, 50)}...`);
+        while (attempt < maxAttempts && !fetched) {
+          const backoffMs = attempt === 0 ? 0 : 1000 * Math.pow(2, attempt); // 0, 2000, 4000
+          if (backoffMs) {
+            await new Promise(r => setTimeout(r, backoffMs));
           }
+
+          const url = `${baseUrl}?query=${encodeURIComponent(searchQuery)}&max_results=10&tweet.fields=created_at,public_metrics,author_id&expansions=author_id`;
+          const response = await fetch(url, {
+            headers: {
+              'Authorization': `Bearer ${twitterBearerToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.status === 429) {
+            rateLimitHits += 1;
+            lastError = { status: 429, body: await response.text() };
+            console.error(`Rate limit no Twitter para ${politicianName} (tentativa ${attempt + 1}/${maxAttempts})`);
+            attempt += 1;
+            continue;
+          }
+
+          if (!response.ok) {
+            lastError = { status: response.status, body: await response.text() };
+            console.error(`Erro ao buscar menções para ${politicianName}:`, response.status, lastError.body);
+            // Para outros erros, não adianta retry imediato
+            break;
+          }
+
+          const data: TwitterResponse = await response.json();
+          if (!data.data || data.data.length === 0) {
+            console.log(`Nenhuma menção encontrada para ${politicianName}`);
+            fetched = true;
+            break;
+          }
+
+          // Processar cada tweet encontrado
+          for (const tweet of data.data) {
+            const engagementScore = 
+              tweet.public_metrics.like_count + 
+              tweet.public_metrics.retweet_count + 
+              tweet.public_metrics.reply_count + 
+              tweet.public_metrics.quote_count;
+
+            // Estimativa simples de alcance (engagement * 10)
+            const reachEstimate = engagementScore * 10;
+
+            const { error } = await supabase
+              .from('social_mentions')
+              .insert({
+                platform: 'twitter',
+                politician_name: politicianName,
+                content: tweet.text,
+                timestamp: tweet.created_at,
+                url: `https://twitter.com/i/status/${tweet.id}`,
+                mention_type: 'mention',
+                sentiment: 'neutral',
+                reach_estimate: reachEstimate,
+                engagement_score: engagementScore,
+                raw_data: {
+                  tweet_id: tweet.id,
+                  author_id: tweet.author_id,
+                  public_metrics: tweet.public_metrics,
+                  search_keywords: keywords
+                }
+              });
+
+            if (error) {
+              console.error('Erro ao salvar menção:', error);
+            } else {
+              totalInserted += 1;
+            }
+          }
+
+          // Concluído para este político
+          fetched = true;
+
+          // Delay curto entre políticos para evitar rate limit
+          await new Promise(resolve => setTimeout(resolve, 800));
         }
 
-        // Delay para evitar rate limit
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!fetched && lastError) {
+          console.error(`Falha final para ${politicianName}:`, lastError);
+        }
         
       } catch (error) {
         console.error(`Erro ao processar ${typeof politician === 'string' ? politician : politician.name}:`, error);
@@ -162,11 +194,13 @@ serve(async (req) => {
       console.error('Erro ao disparar análise de sentimento:', error);
     }
 
+    const success = totalInserted > 0;
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        message: 'Coleta de menções do Twitter concluída',
-        politicians_processed: politicians.length 
+        success, 
+        message: success ? 'Coleta de menções do Twitter concluída' : 'Nenhuma menção salva do Twitter',
+        inserted: totalInserted,
+        rate_limited: rateLimitHits > 0
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

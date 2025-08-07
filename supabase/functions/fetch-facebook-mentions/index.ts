@@ -47,11 +47,17 @@ serve(async (req) => {
     const facebookPageId = Deno.env.get('FACEBOOK_PAGE_ID');
     
     if (!facebookAccessToken) {
-      throw new Error('FACEBOOK_ACCESS_TOKEN não configurado');
+      return new Response(
+        JSON.stringify({ success: false, error: 'FACEBOOK_ACCESS_TOKEN não configurado' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
     
     if (!facebookPageId) {
-      throw new Error('FACEBOOK_PAGE_ID não configurado');
+      return new Response(
+        JSON.stringify({ success: false, error: 'FACEBOOK_PAGE_ID não configurado' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Obter lista de políticos do request
@@ -82,8 +88,12 @@ serve(async (req) => {
         const response = await fetch(searchUrl);
 
         if (!response.ok) {
-          console.error(`Erro ao buscar posts do Facebook:`, response.status, await response.text());
-          continue;
+          const body = await response.text();
+          console.error(`Erro ao buscar posts do Facebook:`, response.status, body);
+          return new Response(
+            JSON.stringify({ success: false, error: `Facebook API error ${response.status}`, detail: body }),
+            { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
 
         const data: FacebookPostResponse = await response.json();
@@ -156,9 +166,10 @@ serve(async (req) => {
       console.error('Erro ao disparar análise de sentimento:', error);
     }
 
+    const success = true; // execução bem-sucedida se não houve erro fatal
     return new Response(
       JSON.stringify({ 
-        success: true, 
+        success, 
         message: 'Coleta de menções do Facebook concluída',
         politicians_processed: politicians.length 
       }),

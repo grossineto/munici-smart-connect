@@ -45,7 +45,10 @@ serve(async (req) => {
     const tiktokAccessToken = Deno.env.get('TIKTOK_ACCESS_TOKEN');
     
     if (!tiktokAccessToken) {
-      throw new Error('TIKTOK_ACCESS_TOKEN não configurado');
+      return new Response(
+        JSON.stringify({ success: false, error: 'TIKTOK_ACCESS_TOKEN não configurado' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Obter lista de políticos do request
@@ -111,8 +114,12 @@ serve(async (req) => {
         });
 
         if (!response.ok) {
-          console.error(`Erro ao buscar vídeos do TikTok para ${politicianName}:`, response.status, await response.text());
-          continue;
+          const body = await response.text();
+          console.error(`Erro ao buscar vídeos do TikTok para ${politicianName}:`, response.status, body);
+          return new Response(
+            JSON.stringify({ success: false, error: `TikTok API error ${response.status}`, detail: body }),
+            { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
 
         const data: TikTokVideoResponse = await response.json();
@@ -189,9 +196,10 @@ serve(async (req) => {
       console.error('Erro ao disparar análise de sentimento:', error);
     }
 
+    const success = true; // execução bem-sucedida se não houve erro fatal
     return new Response(
       JSON.stringify({ 
-        success: true, 
+        success, 
         message: 'Coleta de menções do TikTok concluída',
         politicians_processed: politicians.length 
       }),

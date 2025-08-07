@@ -58,20 +58,21 @@ serve(async (req) => {
           throw error;
         }
         
+        const success = data?.success !== false; // default true, but respect explicit false
         results[platform as keyof typeof results] = {
-          success: true,
-          message: data.message || `Coleta do ${platform} concluída`,
-          error: null
+          success,
+          message: data?.message || `Coleta do ${platform} concluída`,
+          error: success ? null : (data?.error || 'Falha na coleta')
         };
         
-        console.log(`✅ ${platform} concluído`);
+        console.log(`✅ ${platform} ${success ? 'concluído' : 'com falhas'}`);
         
-      } catch (error) {
+      } catch (error: any) {
         console.error(`❌ Erro no ${platform}:`, error);
         results[platform as keyof typeof results] = {
           success: false,
           message: '',
-          error: error.message
+          error: error.message || String(error)
         };
       }
     });
