@@ -134,8 +134,18 @@ function NewsMonitoring() {
           .or(`title.ilike.%${politician.nome}%,title.ilike.%${politician.cidade}%,message.ilike.%${politician.nome}%,message.ilike.%${politician.cidade}%`)
           .order('created_at', { ascending: false })
           .limit(20);
+        // Evitar sobrescrever caso a seleção tenha mudado
+        if (!selectedPolitician || selectedPolitician.nome !== politician.nome || selectedPolitician.cidade !== politician.cidade || selectedPolitician.uf !== politician.uf) {
+          console.log('🔁 Seleção mudou durante carregamento de alertas; descartando resultados.');
+          return;
+        }
         setAlerts(fallbackAlerts || []);
       } else {
+        // Evitar sobrescrever caso a seleção tenha mudado
+        if (!selectedPolitician || selectedPolitician.nome !== politician.nome || selectedPolitician.cidade !== politician.cidade || selectedPolitician.uf !== politician.uf) {
+          console.log('🔁 Seleção mudou durante carregamento de alertas; descartando resultados.');
+          return;
+        }
         console.log(`📊 Alertas filtrados carregados: ${alertsData?.length || 0}`);
         setAlerts(alertsData || []);
       }
@@ -167,8 +177,18 @@ function NewsMonitoring() {
           .or(`summary.ilike.%${politician.nome}%,summary.ilike.%${politician.cidade}%,impact_analysis.ilike.%${politician.nome}%,impact_analysis.ilike.%${politician.cidade}%`)
           .order('created_at', { ascending: false })
           .limit(20);
+        // Evitar sobrescrever caso a seleção tenha mudado
+        if (!selectedPolitician || selectedPolitician.nome !== politician.nome || selectedPolitician.cidade !== politician.cidade || selectedPolitician.uf !== politician.uf) {
+          console.log('🔁 Seleção mudou durante carregamento de análises; descartando resultados.');
+          return;
+        }
         setAnalyses(fallbackAnalyses || []);
       } else {
+        // Evitar sobrescrever caso a seleção tenha mudado
+        if (!selectedPolitician || selectedPolitician.nome !== politician.nome || selectedPolitician.cidade !== politician.cidade || selectedPolitician.uf !== politician.uf) {
+          console.log('🔁 Seleção mudou durante carregamento de análises; descartando resultados.');
+          return;
+        }
         console.log(`📊 Análises filtradas carregadas: ${analysesData?.length || 0}`);
         setAnalyses(analysesData || []);
       }
@@ -252,9 +272,7 @@ function NewsMonitoring() {
     
     setSelectedPolitician(politician);
     
-    // Carregar dados filtrados
-    loadDataForPolitician(politician);
-    
+    // A carga filtrada será disparada pelo useEffect ao mudar selectedPolitician
     toast({
       title: "Político Selecionado ✅",
       description: `Monitoramento ativo para ${politician.nome} em ${politician.cidade}/${politician.uf}`,
