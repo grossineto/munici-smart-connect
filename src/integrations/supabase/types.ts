@@ -104,6 +104,48 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_role: Database["public"]["Enums"]["app_role"] | null
+          actor_type: string
+          actor_user_id: string | null
+          id: string
+          new_data: Json | null
+          occurred_at: string
+          old_data: Json | null
+          row_id: string | null
+          table_name: string
+          tenant_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_role?: Database["public"]["Enums"]["app_role"] | null
+          actor_type?: string
+          actor_user_id?: string | null
+          id?: string
+          new_data?: Json | null
+          occurred_at?: string
+          old_data?: Json | null
+          row_id?: string | null
+          table_name: string
+          tenant_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_role?: Database["public"]["Enums"]["app_role"] | null
+          actor_type?: string
+          actor_user_id?: string | null
+          id?: string
+          new_data?: Json | null
+          occurred_at?: string
+          old_data?: Json | null
+          row_id?: string | null
+          table_name?: string
+          tenant_id?: string | null
+        }
+        Relationships: []
+      }
       citizens: {
         Row: {
           address: string | null
@@ -646,6 +688,50 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          retention_days_analytics: number
+          retention_days_messages: number
+          retention_days_news: number
+          retention_days_requests: number
+          retention_days_social: number
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          retention_days_analytics?: number
+          retention_days_messages?: number
+          retention_days_news?: number
+          retention_days_requests?: number
+          retention_days_social?: number
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          retention_days_analytics?: number
+          retention_days_messages?: number
+          retention_days_news?: number
+          retention_days_requests?: number
+          retention_days_social?: number
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           city: string | null
@@ -821,6 +907,10 @@ export type Database = {
           _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
         }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
       notify_admins: {

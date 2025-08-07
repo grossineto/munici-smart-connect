@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, Send, Phone, Clock, User, Settings } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 interface WhatsAppSession {
   id: string;
@@ -125,13 +126,20 @@ const WhatsApp = () => {
 
     try {
       // Salvar mensagem no banco
+      const tenantId = await getCurrentTenantId();
+      if (!tenantId) {
+        toast({ title: "Sem acesso", description: "Não foi possível identificar seu município.", variant: "destructive" });
+        return;
+      }
+
       const { error } = await supabase
         .from('messages')
         .insert({
           sender_phone: selectedSession.phone,
           content: newMessage,
           is_from_citizen: false,
-          message_type: 'text'
+          message_type: 'text',
+          tenant_id: tenantId,
         });
 
       if (error) throw error;

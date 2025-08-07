@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 interface Appointment {
   id: string;
@@ -133,6 +134,11 @@ export default function Appointments() {
         const [hours, minutes] = newAppointment.scheduled_time.split(":");
         scheduledDateTime.setHours(parseInt(hours), parseInt(minutes));
       }
+      const tenantId = await getCurrentTenantId();
+      if (!tenantId) {
+        toast({ title: "Sem acesso", description: "Não foi possível identificar seu município.", variant: "destructive" });
+        return;
+      }
 
       const { error } = await supabase.from("appointments").insert({
         title: newAppointment.title,
@@ -140,8 +146,8 @@ export default function Appointments() {
         citizen_id: newAppointment.citizen_id,
         assigned_to: newAppointment.assigned_to === "unassigned" ? null : newAppointment.assigned_to,
         scheduled_date: scheduledDateTime.toISOString(),
+        tenant_id: tenantId,
       });
-
       if (error) throw error;
 
       toast({

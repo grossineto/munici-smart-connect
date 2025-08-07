@@ -11,6 +11,7 @@ import { Search, Plus, Filter, UserPlus, MapPin, Phone, Mail } from "lucide-reac
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 interface Citizen {
   id: string;
@@ -118,11 +119,18 @@ export default function Citizens() {
     e.preventDefault();
     
     try {
+      const tenantId = await getCurrentTenantId();
+      if (!tenantId) {
+        toast({ title: "Sem acesso", description: "Não foi possível identificar seu município.", variant: "destructive" });
+        return;
+      }
+
       const { error } = await supabase
         .from('citizens')
         .insert([{
           ...formData,
-          registration_step: 'completed'
+          registration_step: 'completed',
+          tenant_id: tenantId,
         }]);
 
       if (error) throw error;
