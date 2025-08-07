@@ -265,10 +265,7 @@ const SocialMonitoring = () => {
         console.error('Erros por plataforma:', errors);
       }
       
-      // Aguardar um pouco e recarregar os dados
-      setTimeout(() => {
-        window.location.reload();
-      }, 5000);
+      // Não recarregar a página - apenas atualizar estado se necessário
       
     } catch (error) {
       console.error('Erro ao coletar menções:', error);
@@ -292,27 +289,16 @@ const SocialMonitoring = () => {
             </p>
           </div>
           
-          <div className="flex items-center gap-3">
+          {selectedPolitician && (
             <Button 
-              onClick={handleCollectMentions}
-              disabled={isCollecting || (!selectedPolitician && monitoredPoliticians.length === 0)}
-              className="flex items-center gap-2 px-6"
+              variant="outline" 
+              size="sm"
+              className="text-xs"
             >
-              <RefreshCw className={`h-4 w-4 ${isCollecting ? 'animate-spin' : ''}`} />
-              {isCollecting ? 'Coletando...' : 'Coletar Menções'}
+              <Download className="h-3 w-3 mr-1" />
+              Exportar
             </Button>
-            
-            {selectedPolitician && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="text-xs"
-              >
-                <Download className="h-3 w-3 mr-1" />
-                Exportar
-              </Button>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Status das Plataformas */}
@@ -349,25 +335,43 @@ const SocialMonitoring = () => {
             <p className="text-sm text-muted-foreground">Selecione um político para monitorar</p>
           </div>
           
-          {/* Campo de Busca */}
+          {/* Campo de Busca e Botão de Coleta */}
           <div className="space-y-3">
-            <SearchPoliticianInput
-              onSelectPolitician={handleSelectPolitician}
-              placeholder="Buscar por nome..."
-            />
-            
-            {/* Botão para importar políticos das notícias */}
-            {monitoredPoliticians.length === 0 && (
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <SearchPoliticianInput
+                  onSelectPolitician={handleSelectPolitician}
+                  placeholder="Buscar por nome..."
+                />
+              </div>
               <Button 
-                onClick={handleImportFromNews}
-                disabled={isLoadingPoliticians}
-                variant="outline"
-                size="sm"
-                className="w-full text-xs"
+                onClick={handleCollectMentions}
+                disabled={isCollecting || monitoredPoliticians.length === 0}
+                className="flex items-center gap-2 px-4"
               >
-                <Users className="h-3 w-3 mr-1" />
-                {isLoadingPoliticians ? 'Importando...' : 'Importar do Sistema de Notícias'}
+                <RefreshCw className={`h-4 w-4 ${isCollecting ? 'animate-spin' : ''}`} />
+                {isCollecting ? 'Coletando...' : 'Coletar Menções'}
               </Button>
+            </div>
+            
+            {/* Seção "Importar do Sistema de Notícias" - apenas quando não há políticos */}
+            {monitoredPoliticians.length === 0 && (
+              <div className="mt-6 pt-4 border-t">
+                <h3 className="text-sm font-medium mb-2">Importar do Sistema de Notícias</h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Adicione rapidamente políticos já cadastrados no sistema de notícias
+                </p>
+                <Button 
+                  onClick={handleImportFromNews}
+                  disabled={isLoadingPoliticians}
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs"
+                >
+                  <Users className="h-3 w-3 mr-1" />
+                  {isLoadingPoliticians ? 'Importando...' : 'Importar Políticos'}
+                </Button>
+              </div>
             )}
           </div>
         </div>
