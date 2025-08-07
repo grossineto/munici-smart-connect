@@ -67,11 +67,18 @@ export function AppSidebar() {
       <SidebarContent>
         <div className="p-6 border-b bg-gradient-to-br from-primary/5 to-secondary/5">
           <div className="flex justify-center">
-            <img 
-              src="/lovable-uploads/15e88a34-c752-40da-b211-dbf4235418f1.png" 
-              alt="BR.I.A.N." 
-              className="w-full h-auto max-w-28 transition-transform duration-200 hover:scale-105"
-            />
+            <div className="relative">
+              <img 
+                src="/lovable-uploads/15e88a34-c752-40da-b211-dbf4235418f1.png" 
+                alt="BR.I.A.N. logo" 
+                className="w-full h-auto max-w-28 transition-transform duration-200 hover:scale-105 dark:hidden"
+              />
+              <img 
+                src="/lovable-uploads/0ec6f0c4-8dda-463e-b561-6fbdb3c27d77.png" 
+                alt="BR.I.A.N. logo — versão branca" 
+                className="w-full h-auto max-w-28 transition-transform duration-200 hover:scale-105 hidden dark:block"
+              />
+            </div>
           </div>
         </div>
 
