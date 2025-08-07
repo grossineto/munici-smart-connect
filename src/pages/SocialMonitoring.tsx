@@ -158,30 +158,6 @@ const SocialMonitoring = () => {
     loadKeywords();
   }, []);
 
-  // Função para importar todos os políticos das notícias
-  const handleImportFromNews = () => {
-    setIsLoadingPoliticians(true);
-    
-    const politiciansToAdd = politiciansFromNews.filter(newsPolitic => 
-      !monitoredPoliticians.some(monitored => 
-        monitored.nome === newsPolitic.nome && monitored.cidade === newsPolitic.cidade
-      )
-    );
-    
-    const importedPoliticians = politiciansToAdd.map(politician => ({
-      ...politician,
-      addedAt: new Date().toISOString(),
-      isActive: true,
-      source: 'news_system'
-    }));
-    
-    setMonitoredPoliticians(prev => [...prev, ...importedPoliticians]);
-    
-    setTimeout(() => {
-      setIsLoadingPoliticians(false);
-      toast.success(`${importedPoliticians.length} políticos importados do sistema de notícias!`);
-    }, 1000);
-  };
   const handleSelectPolitician = (politician: any) => {
     console.log('🏛️ Político selecionado para monitoramento social:', politician);
     
@@ -354,25 +330,6 @@ const SocialMonitoring = () => {
               </Button>
             </div>
             
-            {/* Seção "Importar do Sistema de Notícias" - apenas quando não há políticos */}
-            {monitoredPoliticians.length === 0 && (
-              <div className="mt-6 pt-4 border-t">
-                <h3 className="text-sm font-medium mb-2">Importar do Sistema de Notícias</h3>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Adicione rapidamente políticos já cadastrados no sistema de notícias
-                </p>
-                <Button 
-                  onClick={handleImportFromNews}
-                  disabled={isLoadingPoliticians}
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs"
-                >
-                  <Users className="h-3 w-3 mr-1" />
-                  {isLoadingPoliticians ? 'Importando...' : 'Importar Políticos'}
-                </Button>
-              </div>
-            )}
           </div>
         </div>
 
@@ -516,16 +473,6 @@ const SocialMonitoring = () => {
                   Escolha um político para começar o monitoramento de redes sociais e ver todas as análises em tempo real.
                 </p>
               </div>
-              {monitoredPoliticians.length === 0 && (
-                <Button 
-                  onClick={handleImportFromNews}
-                  disabled={isLoadingPoliticians}
-                  className="mt-4"
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  {isLoadingPoliticians ? 'Importando...' : 'Importar Políticos'}
-                </Button>
-              )}
             </div>
           </div>
         )}
