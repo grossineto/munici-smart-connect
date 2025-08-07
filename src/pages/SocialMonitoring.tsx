@@ -163,7 +163,7 @@ const SocialMonitoring = () => {
     
     // Verificar se já está sendo monitorado
     const isAlreadyMonitored = monitoredPoliticians.some(p => 
-      p.nome === politician.nome && p.cidade === politician.cidade
+      p.nome === politician.nome
     );
     
     if (isAlreadyMonitored) {
@@ -182,6 +182,23 @@ const SocialMonitoring = () => {
     setSelectedPolitician(politician);
     
     toast.success(`${politician.nome} adicionado ao monitoramento social!`);
+  };
+
+  // Função para buscar político diretamente (para permitir busca livre)
+  const handleDirectSearch = async (searchTerm: string) => {
+    if (!searchTerm.trim()) return;
+    
+    const directPolitician = {
+      nome: searchTerm.trim(),
+      partido: "N/A",
+      cargo: "Político",
+      cidade: "Brasil",
+      uf: "BR",
+      mandato: "N/A",
+      keywords: [searchTerm.trim()]
+    };
+    
+    handleSelectPolitician(directPolitician);
   };
 
   // Função para remover político do monitoramento
@@ -232,7 +249,15 @@ const SocialMonitoring = () => {
       const failed = Object.keys(results).filter(platform => !results[platform]?.success);
       
       if (successful.length > 0) {
-        toast.success(`Coleta iniciada com sucesso! Plataformas: ${successful.join(', ')}`);
+        toast.success(`Coleta realizada com sucesso! Dados coletados do ${successful.join(', ')}`);
+        
+        // Forçar atualização dos componentes dependentes após alguns segundos
+        setTimeout(() => {
+          // Trigger para atualizar os dados na interface
+          if (selectedPolitician) {
+            setSelectedPolitician({...selectedPolitician});
+          }
+        }, 3000);
       }
       
       if (failed.length > 0) {
@@ -240,8 +265,6 @@ const SocialMonitoring = () => {
         toast.error(`Falha em algumas plataformas: ${errors.join(', ')}`);
         console.error('Erros por plataforma:', errors);
       }
-      
-      // Não recarregar a página - apenas atualizar estado se necessário
       
     } catch (error) {
       console.error('Erro ao coletar menções:', error);
@@ -317,7 +340,7 @@ const SocialMonitoring = () => {
               <div className="flex-1">
                 <SearchPoliticianInput
                   onSelectPolitician={handleSelectPolitician}
-                  placeholder="Buscar por nome..."
+                  placeholder="Digite o nome de qualquer político..."
                 />
               </div>
               <Button 
@@ -328,6 +351,11 @@ const SocialMonitoring = () => {
                 <RefreshCw className={`h-4 w-4 ${isCollecting ? 'animate-spin' : ''}`} />
                 {isCollecting ? 'Coletando...' : 'Coletar Menções'}
               </Button>
+            </div>
+            
+            {/* Instruções de uso */}
+            <div className="text-xs text-muted-foreground">
+              💡 Digite qualquer nome de político para buscar diretamente no Twitter ou selecione da lista de sugestões
             </div>
             
           </div>

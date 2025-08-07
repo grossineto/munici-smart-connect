@@ -24,7 +24,7 @@ interface SearchPoliticianInputProps {
 
 export function SearchPoliticianInput({ 
   onSelectPolitician, 
-  placeholder = "Buscar político em mandato...",
+  placeholder = "Digite o nome de qualquer político...",
   disabled = false 
 }: SearchPoliticianInputProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -239,6 +239,37 @@ export function SearchPoliticianInput({
     setShowResults(false);
   };
 
+  // Função para busca direta (qualquer nome)
+  const handleDirectSearch = () => {
+    if (!searchQuery.trim()) return;
+    
+    const directPolitician = {
+      nome: searchQuery.trim(),
+      partido: "N/A",
+      cargo: "Político",
+      cidade: "Brasil",
+      uf: "BR",
+      mandato: "N/A",
+      keywords: [searchQuery.trim()]
+    };
+    
+    onSelectPolitician(directPolitician);
+    setSearchQuery('');
+    setShowResults(false);
+  };
+
+  // Função para lidar com Enter
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (searchResults.length > 0) {
+        handlePoliticianSelect(searchResults[0]);
+      } else if (searchQuery.trim()) {
+        handleDirectSearch();
+      }
+    }
+  };
+
   return (
     <div className="relative w-full">
       <div className="relative">
@@ -248,6 +279,7 @@ export function SearchPoliticianInput({
           placeholder={placeholder}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={handleKeyPress}
           disabled={disabled}
           className="pl-10 pr-10 h-12 text-base border-2 border-muted focus:border-primary transition-colors"
         />
@@ -308,13 +340,22 @@ export function SearchPoliticianInput({
         </Card>
       )}
 
-      {/* Mensagem quando não há resultados */}
+      {/* Mensagem quando não há resultados - com opção de busca direta */}
       {showResults && !isSearching && searchResults.length === 0 && searchQuery.length >= 2 && (
         <Card className="absolute top-full left-0 right-0 mt-2 z-50 shadow-lg border-2">
-          <CardContent className="p-4 text-center">
-            <div className="text-sm text-muted-foreground">
-              Nenhuma cidade encontrada para "{searchQuery}"
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground text-center mb-3">
+              Nenhum político cadastrado encontrado para "{searchQuery}"
             </div>
+            <Button
+              onClick={handleDirectSearch}
+              variant="outline"
+              size="sm"
+              className="w-full text-sm"
+            >
+              <Search className="h-3 w-3 mr-2" />
+              Buscar "{searchQuery}" diretamente no Twitter
+            </Button>
           </CardContent>
         </Card>
       )}
