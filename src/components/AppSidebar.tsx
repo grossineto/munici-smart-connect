@@ -34,7 +34,6 @@ const items = [
   { title: "Insights", url: "/insights", icon: Brain },
   { title: "Monitoramento de Notícias", url: "/news-monitoring", icon: Newspaper },
   { title: "Monitoramento de Redes Sociais", url: "/social-monitoring", icon: Share2 },
-  { title: "Políticos", url: "/politicians", icon: UserCheck },
   { title: "Gabinete de Urgência", url: "/urgency-office", icon: AlertTriangle },
   { title: "Relatórios", url: "/reports", icon: BarChart3 },
   { title: "WhatsApp", url: "/whatsapp", icon: Phone },

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, MapPin, Calendar, Shield, Crown, Edit, Trash2, Plus, Save, X } from 'lucide-react';
+import { User, MapPin, Calendar, Shield, Crown, Edit, Trash2, Plus, Save, X, Hash } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { usePoliticians, Politician } from '@/contexts/PoliticiansContext';
+import { KeywordManager } from '@/components/KeywordManager';
 
 export default function Politicians() {
   const { 
@@ -22,6 +23,13 @@ export default function Politicians() {
   const [editingPolitician, setEditingPolitician] = useState<Politician | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const { toast } = useToast();
+
+  // Lista completa de partidos políticos brasileiros
+  const partidos = [
+    'MDB', 'PT', 'PSB', 'PDT', 'PL', 'PSDB', 'PSD', 'UNIÃO BRASIL',
+    'REPUBLICANOS', 'PP', 'PSL', 'DEM', 'PSOL', 'PV', 'PCdoB',
+    'AVANTE', 'SOLIDARIEDADE', 'NOVO', 'REDE', 'CIDADANIA'
+  ];
 
   const getCargoIcon = (cargo?: string) => {
     switch (cargo?.toLowerCase()) {
@@ -179,6 +187,18 @@ export default function Politicians() {
                 </div>
               )}
 
+              {/* Seção de Keywords */}
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Hash className="h-4 w-4" />
+                  Palavras-chave:
+                </div>
+                <KeywordManager 
+                  politicianId={politician.id}
+                  politicianName={politician.nome}
+                />
+              </div>
+
               <div className="space-y-2 pt-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Monitoramento Social</span>
@@ -278,14 +298,22 @@ export default function Politicians() {
 
               <div>
                 <Label htmlFor="partido">Partido</Label>
-                <Input
-                  id="partido"
+                <Select
                   value={editingPolitician.partido}
-                  onChange={(e) => setEditingPolitician({
+                  onValueChange={(value) => setEditingPolitician({
                     ...editingPolitician,
-                    partido: e.target.value
+                    partido: value
                   })}
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o partido" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {partidos.map(partido => (
+                      <SelectItem key={partido} value={partido}>{partido}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
