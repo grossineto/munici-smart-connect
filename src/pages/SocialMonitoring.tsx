@@ -15,6 +15,7 @@ import { AlertsPanel } from "@/components/AlertsPanel";
 import { SocialTimeline } from "@/components/SocialTimeline";
 import { ExportTools } from "@/components/ExportTools";
 import { SocialMentionsList } from "@/components/SocialMentionsList";
+import { PoliticianMiniDashboard } from "@/components/PoliticianMiniDashboard";
 
 const SocialMonitoring = () => {
   const [isCollecting, setIsCollecting] = useState(false);
@@ -364,25 +365,39 @@ const SocialMonitoring = () => {
                   onClick={() => setSelectedPolitician(politician)}
                   className="cursor-pointer group bg-card rounded-lg border p-4 hover:border-primary/50 transition-all"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-bold">
-                        {politician.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm">{politician.nome}</h4>
-                      <p className="text-xs text-muted-foreground">{politician.cargo} • {politician.cidade}</p>
-                    </div>
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-bold">
+                    {politician.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-sm">{politician.nome}</h4>
+                  <p className="text-xs text-muted-foreground">{politician.cargo} • {politician.cidade}</p>
+                </div>
+                {selectedPolitician?.nome === politician.nome && (
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                )}
+              </div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Informações do Político (substitui demonstração) */}
-        {monitoredPoliticians.length > 0 && (
+        {/* Mini Dashboard do Político Selecionado */}
+        {monitoredPoliticians.length > 0 && selectedPolitician && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold">Dashboard - {selectedPolitician.nome}</h3>
+              <p className="text-sm text-muted-foreground">Métricas das últimas 24 horas</p>
+            </div>
+            <PoliticianMiniDashboard politicianName={selectedPolitician.nome} />
+          </div>
+        )}
+
+        {/* Informações do Político (quando não há selecionado) */}
+        {monitoredPoliticians.length > 0 && !selectedPolitician && (
           <div className="bg-card rounded-lg border p-6">
             <h3 className="text-lg font-semibold mb-4">Informações do Político</h3>
             <p className="text-muted-foreground text-sm">
