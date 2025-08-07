@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AdvancedSearchFilters } from '@/components/AdvancedSearchFilters';
+import { usePoliticians } from '@/contexts/PoliticiansContext';
 
 interface Politician {
   id?: any;
@@ -27,12 +28,13 @@ export function SearchPoliticianInput({
   placeholder = "Selecione um dos políticos cadastrados...",
   disabled = false 
 }: SearchPoliticianInputProps) {
+  const { getActivePoliticians } = usePoliticians();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
-  // Função para buscar apenas os 3 políticos cadastrados
+  // Função para buscar apenas políticos ativos
   const searchPoliticians = async (query: string) => {
     if (!query || query.length < 2) {
       setSearchResults([]);
@@ -46,31 +48,22 @@ export function SearchPoliticianInput({
     try {
       const queryLower = query.toLowerCase();
       
-      // Buscar apenas nos 3 políticos registrados
-      const registeredPoliticians = ["Ricardo Nunes", "João Campos", "José Sarto"];
+      // Buscar apenas políticos ativos para monitoramento social
+      const activePoliticians = getActivePoliticians('social');
       
-      const localResults = Object.entries(mayorData)
-        .filter(([cityName, mayor]) => {
-          // Filtrar apenas os 3 políticos cadastrados
-          const isRegistered = registeredPoliticians.some(regName => 
-            mayor.nome.includes(regName) || cityName === regName
-          );
-          
-          if (!isRegistered) return false;
-          
-          return (
-            cityName.toLowerCase().includes(queryLower) ||
-            mayor.nome.toLowerCase().includes(queryLower) ||
-            mayor.partido?.toLowerCase().includes(queryLower) ||
-            mayor.uf.toLowerCase().includes(queryLower)
-          );
-        })
-        .slice(0, 3)
-        .map(([cityName, mayor]) => ({
-          id: cityName,
-          nome: cityName,
-          uf: mayor.uf,
-          mayor: mayor,
+      const localResults = activePoliticians
+        .filter(politician => 
+          politician.nome.toLowerCase().includes(queryLower) ||
+          politician.cidade.toLowerCase().includes(queryLower) ||
+          politician.partido?.toLowerCase().includes(queryLower) ||
+          politician.uf.toLowerCase().includes(queryLower)
+        )
+        .slice(0, 5)
+        .map(politician => ({
+          id: politician.id,
+          nome: politician.cidade,
+          uf: politician.uf,
+          mayor: politician,
           source: 'local'
         }));
 
@@ -93,49 +86,8 @@ export function SearchPoliticianInput({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Base limitada aos 3 políticos cadastrados na plataforma
-  const mayorData: Record<string, Politician> = {
-    "Ricardo Nunes": { 
-      nome: "Ricardo Nunes", 
-      partido: "MDB", 
-      mandato: "2021-2024", 
-      cidade: "São Paulo", 
-      uf: "SP",
-      cargo: "Prefeito"
-    },
-    "Recife": { 
-      nome: "João Campos", 
-      partido: "PSB", 
-      mandato: "2021-2024", 
-      cidade: "Recife", 
-      uf: "PE",
-      cargo: "Prefeito"
-    },
-    "João Campos": { 
-      nome: "João Campos", 
-      partido: "PSB", 
-      mandato: "2021-2024", 
-      cidade: "Recife", 
-      uf: "PE",
-      cargo: "Prefeito"
-    },
-    "Fortaleza": { 
-      nome: "José Sarto", 
-      partido: "PDT", 
-      mandato: "2021-2024", 
-      cidade: "Fortaleza", 
-      uf: "CE",
-      cargo: "Prefeito"
-    },
-    "José Sarto": { 
-      nome: "José Sarto", 
-      partido: "PDT", 
-      mandato: "2021-2024", 
-      cidade: "Fortaleza", 
-      uf: "CE",
-      cargo: "Prefeito"
-    }
-  };
+  // Usar contexto para dados dos políticos ativos
+  const activePoliticians = getActivePoliticians('social');
 
   // Função para obter logo do partido (expandida)
   const getPartyLogo = (partido?: string) => {
@@ -187,13 +139,9 @@ export function SearchPoliticianInput({
   };
 
   const handlePoliticianSelect = (result: any) => {
-    const mayor = result.mayor || mayorData[result.nome];
+    const mayor = result.mayor;
     if (mayor) {
-      onSelectPolitician({
-        ...mayor,
-        cidade: result.nome,
-        uf: result.uf
-      });
+      onSelectPolitician(mayor);
     }
     setSearchQuery('');
     setShowResults(false);
@@ -235,7 +183,7 @@ export function SearchPoliticianInput({
           <CardContent className="p-2">
             <div className="space-y-1">
               {searchResults.map((result) => {
-                const mayor = result.mayor || mayorData[result.nome];
+                const mayor = result.mayor;
                 if (!mayor) return null;
                 
                 return (
@@ -303,7 +251,7 @@ export function SearchPoliticianInput({
         <Card className="absolute top-full left-0 right-0 mt-2 z-50 shadow-lg border-2">
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground text-center">
-              Político não encontrado. Apenas Ricardo Nunes, João Campos e José Sarto estão disponíveis.
+              Político não encontrado. Apenas políticos com monitoramento social ativo estão disponíveis.
             </div>
           </CardContent>
         </Card>

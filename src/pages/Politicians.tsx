@@ -9,118 +9,16 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-
-interface Politician {
-  id: string;
-  nome: string;
-  partido?: string;
-  mandato?: string;
-  cidade: string;
-  uf: string;
-  cargo?: string;
-  avatar?: string;
-  socialMonitoring: boolean;
-  newsMonitoring: boolean;
-  keywords?: string[];
-}
-
-// Lista inicial de políticos com dados atualizados
-const initialPoliticians: Politician[] = [
-  {
-    id: '1',
-    nome: 'Ricardo Nunes',
-    partido: 'MDB',
-    mandato: '2021-2024',
-    cidade: 'São Paulo',
-    uf: 'SP',
-    cargo: 'Prefeito',
-    avatar: '/lovable-uploads/6f653b9a-a318-4b80-955c-4f7b4de6634c.png',
-    socialMonitoring: true,
-    newsMonitoring: true,
-    keywords: ['Ricardo Nunes', 'prefeito SP', 'São Paulo']
-  },
-  {
-    id: '2',
-    nome: 'Eduardo Paes',
-    partido: 'PSD',
-    mandato: '2021-2024',
-    cidade: 'Rio de Janeiro',
-    uf: 'RJ',
-    cargo: 'Prefeito',
-    avatar: '/lovable-uploads/eceb707c-015a-4cb2-b488-493c9c6b5cac.png',
-    socialMonitoring: true,
-    newsMonitoring: true,
-    keywords: ['Eduardo Paes', 'prefeito RJ', 'Rio de Janeiro']
-  },
-  {
-    id: '3',
-    nome: 'João Campos',
-    partido: 'PSB',
-    mandato: '2021-2024',
-    cidade: 'Recife',
-    uf: 'PE',
-    cargo: 'Prefeito',
-    avatar: '/lovable-uploads/990eb197-9e97-4050-9ad7-41f0539e7ba8.png',
-    socialMonitoring: true,
-    newsMonitoring: true,
-    keywords: ['João Campos', 'prefeito Recife', 'Recife']
-  },
-  {
-    id: '4',
-    nome: 'José Sarto',
-    partido: 'UNIÃO BRASIL',
-    mandato: '2021-2024',
-    cidade: 'Fortaleza',
-    uf: 'CE',
-    cargo: 'Prefeito',
-    avatar: '/lovable-uploads/f6d35a9d-205a-4556-ac06-3f9fbd151298.png',
-    socialMonitoring: true,
-    newsMonitoring: true,
-    keywords: ['José Sarto', 'prefeito Fortaleza', 'Fortaleza']
-  },
-  {
-    id: '5',
-    nome: 'Tarcísio Gomes de Freitas',
-    partido: 'REPUBLICANOS',
-    mandato: '2023-2026',
-    cidade: 'São Paulo',
-    uf: 'SP',
-    cargo: 'Governador',
-    avatar: '/lovable-uploads/9c090c37-0d6e-4699-9cc5-028de5640b9a.png',
-    socialMonitoring: true,
-    newsMonitoring: true,
-    keywords: ['Tarcísio', 'Tarcísio Freitas', 'governador SP']
-  },
-  {
-    id: '6',
-    nome: 'Guto Issa',
-    partido: 'PV',
-    mandato: '2021-2024',
-    cidade: 'São Roque',
-    uf: 'SP',
-    cargo: 'Prefeito',
-    avatar: '/lovable-uploads/dc683cc5-b8bf-4311-9698-3337b29889e5.png',
-    socialMonitoring: false,
-    newsMonitoring: false,
-    keywords: ['Guto Issa', 'prefeito São Roque']
-  },
-  {
-    id: '7',
-    nome: 'Suéllen Silva Rosim',
-    partido: 'UNIÃO BRASIL',
-    mandato: '2021-2024',
-    cidade: 'Bauru',
-    uf: 'SP',
-    cargo: 'Prefeita',
-    avatar: '/lovable-uploads/425f80f3-21ac-4eef-984d-ba432848be17.png',
-    socialMonitoring: false,
-    newsMonitoring: false,
-    keywords: ['Suéllen Rosim', 'prefeita Bauru', 'Bauru']
-  }
-];
+import { usePoliticians, Politician } from '@/contexts/PoliticiansContext';
 
 export default function Politicians() {
-  const [politicians, setPoliticians] = useState<Politician[]>(initialPoliticians);
+  const { 
+    politicians, 
+    updatePolitician, 
+    addPolitician, 
+    deletePolitician, 
+    toggleMonitoring 
+  } = usePoliticians();
   const [editingPolitician, setEditingPolitician] = useState<Politician | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const { toast } = useToast();
@@ -157,9 +55,7 @@ export default function Politicians() {
 
   const handleSave = () => {
     if (editingPolitician) {
-      setPoliticians(prev => 
-        prev.map(p => p.id === editingPolitician.id ? editingPolitician : p)
-      );
+      updatePolitician(editingPolitician);
       setEditingPolitician(null);
       toast({
         title: "Político atualizado",
@@ -169,7 +65,7 @@ export default function Politicians() {
   };
 
   const handleDelete = (id: string) => {
-    setPoliticians(prev => prev.filter(p => p.id !== id));
+    deletePolitician(id);
     toast({
       title: "Político removido",
       description: "O político foi removido do sistema.",
@@ -196,7 +92,7 @@ export default function Politicians() {
 
   const handleSaveNew = () => {
     if (editingPolitician && editingPolitician.nome.trim()) {
-      setPoliticians(prev => [...prev, editingPolitician]);
+      addPolitician(editingPolitician);
       setEditingPolitician(null);
       setIsAddingNew(false);
       toast({
@@ -211,19 +107,8 @@ export default function Politicians() {
     setIsAddingNew(false);
   };
 
-  const toggleMonitoring = (id: string, type: 'social' | 'news') => {
-    setPoliticians(prev =>
-      prev.map(p => {
-        if (p.id === id) {
-          return {
-            ...p,
-            [type === 'social' ? 'socialMonitoring' : 'newsMonitoring']: 
-              !p[type === 'social' ? 'socialMonitoring' : 'newsMonitoring']
-          };
-        }
-        return p;
-      })
-    );
+  const handleToggleMonitoring = (id: string, type: 'social' | 'news') => {
+    toggleMonitoring(id, type);
     toast({
       title: `Monitoramento ${type === 'social' ? 'de redes sociais' : 'de notícias'} atualizado`,
       description: "As configurações foram salvas.",
@@ -300,7 +185,7 @@ export default function Politicians() {
                   <Button
                     variant={politician.socialMonitoring ? "default" : "outline"}
                     size="sm"
-                    onClick={() => toggleMonitoring(politician.id, 'social')}
+                    onClick={() => handleToggleMonitoring(politician.id, 'social')}
                   >
                     {politician.socialMonitoring ? 'Ativo' : 'Inativo'}
                   </Button>
@@ -310,7 +195,7 @@ export default function Politicians() {
                   <Button
                     variant={politician.newsMonitoring ? "default" : "outline"}
                     size="sm"
-                    onClick={() => toggleMonitoring(politician.id, 'news')}
+                    onClick={() => handleToggleMonitoring(politician.id, 'news')}
                   >
                     {politician.newsMonitoring ? 'Ativo' : 'Inativo'}
                   </Button>

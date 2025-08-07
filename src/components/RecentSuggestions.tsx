@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { usePoliticians } from '@/contexts/PoliticiansContext';
 
 interface Politician {
   nome: string;
@@ -19,6 +20,7 @@ interface RecentSuggestionsProps {
 }
 
 export function RecentSuggestions({ onSelectPolitician, className = "" }: RecentSuggestionsProps) {
+  const { getActivePoliticians } = usePoliticians();
   // Função para obter logo do partido
   const getPartyLogo = (partido?: string) => {
     switch (partido?.toUpperCase()) {
@@ -61,51 +63,8 @@ export function RecentSuggestions({ onSelectPolitician, className = "" }: Recent
     }
   };
 
-  // Principais políticos em destaque (os 6 cadastrados)
-  const featuredPoliticians: Politician[] = [
-    {
-      nome: "Ricardo Nunes",
-      cargo: "Prefeito",
-      partido: "MDB",
-      cidade: "São Paulo",
-      uf: "SP"
-    },
-    {
-      nome: "João Campos",
-      cargo: "Prefeito",
-      partido: "PSB",
-      cidade: "Recife",
-      uf: "PE"
-    },
-    {
-      nome: "José Sarto",
-      cargo: "Prefeito",
-      partido: "UNIÃO BRASIL",
-      cidade: "Fortaleza",
-      uf: "CE"
-    },
-    {
-      nome: "Tarcísio Gomes de Freitas",
-      cargo: "Governador",
-      partido: "REPUBLICANOS", 
-      cidade: "São Paulo",
-      uf: "SP"
-    },
-    {
-      nome: "Guto Issa",
-      cargo: "Prefeito",
-      partido: "PV",
-      cidade: "São Roque",
-      uf: "SP"
-    },
-    {
-      nome: "Suéllen Silva Rosim",
-      cargo: "Prefeita",
-      partido: "REPUBLICANOS",
-      cidade: "Bauru",
-      uf: "SP"
-    }
-  ];
+  // Usar apenas políticos ativos para monitoramento social
+  const featuredPoliticians = getActivePoliticians('social');
 
   return (
     <Card className={`border-2 ${className}`}>
