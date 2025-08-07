@@ -23,6 +23,7 @@ export type Database = {
           metric_type: string
           period_end: string
           period_start: string
+          tenant_id: string
           value: number
         }
         Insert: {
@@ -33,6 +34,7 @@ export type Database = {
           metric_type: string
           period_end: string
           period_start: string
+          tenant_id: string
           value: number
         }
         Update: {
@@ -43,6 +45,7 @@ export type Database = {
           metric_type?: string
           period_end?: string
           period_start?: string
+          tenant_id?: string
           value?: number
         }
         Relationships: []
@@ -56,6 +59,7 @@ export type Database = {
           id: string
           scheduled_date: string
           status: string | null
+          tenant_id: string
           title: string
           updated_at: string | null
         }
@@ -67,6 +71,7 @@ export type Database = {
           id?: string
           scheduled_date: string
           status?: string | null
+          tenant_id: string
           title: string
           updated_at?: string | null
         }
@@ -78,6 +83,7 @@ export type Database = {
           id?: string
           scheduled_date?: string
           status?: string | null
+          tenant_id?: string
           title?: string
           updated_at?: string | null
         }
@@ -110,6 +116,7 @@ export type Database = {
           phone: string
           preferred_language: string | null
           registration_step: string | null
+          tenant_id: string
           updated_at: string | null
           whatsapp_phone: string | null
         }
@@ -124,6 +131,7 @@ export type Database = {
           phone: string
           preferred_language?: string | null
           registration_step?: string | null
+          tenant_id: string
           updated_at?: string | null
           whatsapp_phone?: string | null
         }
@@ -138,6 +146,7 @@ export type Database = {
           phone?: string
           preferred_language?: string | null
           registration_step?: string | null
+          tenant_id?: string
           updated_at?: string | null
           whatsapp_phone?: string | null
         }
@@ -154,6 +163,7 @@ export type Database = {
           message_type: string | null
           request_id: string | null
           sender_phone: string
+          tenant_id: string
           whatsapp_message_id: string | null
         }
         Insert: {
@@ -166,6 +176,7 @@ export type Database = {
           message_type?: string | null
           request_id?: string | null
           sender_phone: string
+          tenant_id: string
           whatsapp_message_id?: string | null
         }
         Update: {
@@ -178,6 +189,7 @@ export type Database = {
           message_type?: string | null
           request_id?: string | null
           sender_phone?: string
+          tenant_id?: string
           whatsapp_message_id?: string | null
         }
         Relationships: [
@@ -198,6 +210,7 @@ export type Database = {
           created_at: string
           id: string
           keyword: string
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -207,6 +220,7 @@ export type Database = {
           created_at?: string
           id?: string
           keyword: string
+          tenant_id: string
           updated_at?: string
         }
         Update: {
@@ -216,6 +230,7 @@ export type Database = {
           created_at?: string
           id?: string
           keyword?: string
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: []
@@ -231,6 +246,7 @@ export type Database = {
           id: string
           message: string
           severity: string
+          tenant_id: string
           title: string
           updated_at: string
         }
@@ -244,6 +260,7 @@ export type Database = {
           id?: string
           message: string
           severity?: string
+          tenant_id: string
           title: string
           updated_at?: string
         }
@@ -257,6 +274,7 @@ export type Database = {
           id?: string
           message?: string
           severity?: string
+          tenant_id?: string
           title?: string
           updated_at?: string
         }
@@ -291,6 +309,7 @@ export type Database = {
           risk_assessment: string | null
           sentiment_score: number | null
           summary: string | null
+          tenant_id: string
           updated_at: string
           urgency_level: string
         }
@@ -314,6 +333,7 @@ export type Database = {
           risk_assessment?: string | null
           sentiment_score?: number | null
           summary?: string | null
+          tenant_id: string
           updated_at?: string
           urgency_level?: string
         }
@@ -337,6 +357,7 @@ export type Database = {
           risk_assessment?: string | null
           sentiment_score?: number | null
           summary?: string | null
+          tenant_id?: string
           updated_at?: string
           urgency_level?: string
         }
@@ -359,6 +380,7 @@ export type Database = {
           image_url: string | null
           published_at: string | null
           source_id: string | null
+          tenant_id: string
           title: string
           updated_at: string
           url: string
@@ -371,6 +393,7 @@ export type Database = {
           image_url?: string | null
           published_at?: string | null
           source_id?: string | null
+          tenant_id: string
           title: string
           updated_at?: string
           url: string
@@ -383,6 +406,7 @@ export type Database = {
           image_url?: string | null
           published_at?: string | null
           source_id?: string | null
+          tenant_id?: string
           title?: string
           updated_at?: string
           url?: string
@@ -405,6 +429,7 @@ export type Database = {
           last_crawled_at: string | null
           name: string
           region: string | null
+          tenant_id: string
           type: string
           updated_at: string
           url: string
@@ -416,6 +441,7 @@ export type Database = {
           last_crawled_at?: string | null
           name: string
           region?: string | null
+          tenant_id: string
           type?: string
           updated_at?: string
           url: string
@@ -427,6 +453,7 @@ export type Database = {
           last_crawled_at?: string | null
           name?: string
           region?: string | null
+          tenant_id?: string
           type?: string
           updated_at?: string
           url?: string
@@ -514,6 +541,7 @@ export type Database = {
           priority: Database["public"]["Enums"]["request_priority"] | null
           protocol_number: string
           status: Database["public"]["Enums"]["request_status"] | null
+          tenant_id: string
           title: string
           type: Database["public"]["Enums"]["request_type"]
           updated_at: string | null
@@ -529,6 +557,7 @@ export type Database = {
           priority?: Database["public"]["Enums"]["request_priority"] | null
           protocol_number: string
           status?: Database["public"]["Enums"]["request_status"] | null
+          tenant_id: string
           title: string
           type: Database["public"]["Enums"]["request_type"]
           updated_at?: string | null
@@ -544,6 +573,7 @@ export type Database = {
           priority?: Database["public"]["Enums"]["request_priority"] | null
           protocol_number?: string
           status?: Database["public"]["Enums"]["request_status"] | null
+          tenant_id?: string
           title?: string
           type?: Database["public"]["Enums"]["request_type"]
           updated_at?: string | null
@@ -577,6 +607,7 @@ export type Database = {
           raw_data: Json | null
           reach_estimate: number | null
           sentiment: string | null
+          tenant_id: string
           timestamp: string
           updated_at: string
           url: string | null
@@ -592,6 +623,7 @@ export type Database = {
           raw_data?: Json | null
           reach_estimate?: number | null
           sentiment?: string | null
+          tenant_id: string
           timestamp?: string
           updated_at?: string
           url?: string | null
@@ -607,9 +639,40 @@ export type Database = {
           raw_data?: Json | null
           reach_estimate?: number | null
           sentiment?: string | null
+          tenant_id?: string
           timestamp?: string
           updated_at?: string
           url?: string | null
+        }
+        Relationships: []
+      }
+      tenants: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          id: string
+          name: string
+          slug: string
+          uf: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          slug: string
+          uf?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          uf?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -643,6 +706,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_tenants: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"] | null
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"] | null
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"] | null
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tenants_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_sessions: {
         Row: {
           citizen_id: string | null
@@ -652,6 +747,7 @@ export type Database = {
           id: string
           last_activity: string | null
           phone: string
+          tenant_id: string
           updated_at: string | null
         }
         Insert: {
@@ -662,6 +758,7 @@ export type Database = {
           id?: string
           last_activity?: string | null
           phone: string
+          tenant_id: string
           updated_at?: string | null
         }
         Update: {
@@ -672,6 +769,7 @@ export type Database = {
           id?: string
           last_activity?: string | null
           phone?: string
+          tenant_id?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -734,6 +832,10 @@ export type Database = {
           _metadata?: Json
         }
         Returns: number
+      }
+      user_has_tenant: {
+        Args: { _tenant_id: string }
+        Returns: boolean
       }
     }
     Enums: {
