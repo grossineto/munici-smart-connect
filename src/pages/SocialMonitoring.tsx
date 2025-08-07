@@ -16,6 +16,7 @@ import { SocialTimeline } from "@/components/SocialTimeline";
 import { ExportTools } from "@/components/ExportTools";
 import { SocialMentionsList } from "@/components/SocialMentionsList";
 import { PoliticianMiniDashboard } from "@/components/PoliticianMiniDashboard";
+import { useSocialMentions, useSocialStats } from "@/hooks/useSocialMonitor";
 
 const SocialMonitoring = () => {
   const [isCollecting, setIsCollecting] = useState(false);
@@ -24,6 +25,17 @@ const SocialMonitoring = () => {
   
   const [keywords, setKeywords] = useState<any[]>([]);
   const [showDetailedView, setShowDetailedView] = useState(false);
+
+  // Hook para carregar dados reais do banco
+  const { data: socialMentions, isLoading: mentionsLoading } = useSocialMentions(
+    selectedPolitician?.nome, 
+    undefined, 
+    50
+  );
+  const { data: socialStats, isLoading: statsLoading } = useSocialStats(
+    selectedPolitician?.nome, 
+    '7d'
+  );
 
   // Base de políticos do sistema com palavras-chave específicas
   const politiciansFromNews = [
@@ -469,10 +481,41 @@ const SocialMonitoring = () => {
         {/* 5. Mini Dashboard */}
         {selectedPolitician && (
           <div className="bg-card rounded-xl border p-6 space-y-4">
-            <div>
-              <h2 className="text-xl font-semibold mb-2">Dashboard - {selectedPolitician.nome}</h2>
-              <p className="text-sm text-muted-foreground">Métricas das últimas 24 horas</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold mb-2">Dashboard - {selectedPolitician.nome}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {statsLoading ? 'Carregando métricas...' : 
+                   `${socialStats?.totalMentions || 0} menções encontradas nos últimos 7 dias`}
+                </p>
+              </div>
+              {statsLoading && (
+                <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
             </div>
+            
+            {/* Exibir estatísticas reais */}
+            {socialStats && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <p className="text-2xl font-bold text-foreground">{socialStats.totalMentions}</p>
+                  <p className="text-xs text-muted-foreground">Total Menções</p>
+                </div>
+                <div className="text-center p-3 bg-green-500/10 rounded-lg">
+                  <p className="text-2xl font-bold text-green-600">{socialStats.positiveCount}</p>
+                  <p className="text-xs text-muted-foreground">Positivas</p>
+                </div>
+                <div className="text-center p-3 bg-red-500/10 rounded-lg">
+                  <p className="text-2xl font-bold text-red-600">{socialStats.negativeCount}</p>
+                  <p className="text-xs text-muted-foreground">Negativas</p>
+                </div>
+                <div className="text-center p-3 bg-yellow-500/10 rounded-lg">
+                  <p className="text-2xl font-bold text-yellow-600">{socialStats.neutralCount}</p>
+                  <p className="text-xs text-muted-foreground">Neutras</p>
+                </div>
+              </div>
+            )}
+            
             <PoliticianMiniDashboard politicianName={selectedPolitician.nome} />
           </div>
         )}
@@ -480,10 +523,63 @@ const SocialMonitoring = () => {
         {/* 6. Menções Relacionadas ao Político */}
         {selectedPolitician && (
           <div className="bg-card rounded-xl border p-6 space-y-4">
-            <div>
-              <h2 className="text-xl font-semibold mb-2">Menções Recentes</h2>
-              <p className="text-sm text-muted-foreground">Últimas menções encontradas nas redes sociais</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold mb-2">Menções Recentes</h2>
+                <p className="text-sm text-muted-foreground">
+                  {mentionsLoading ? 'Carregando menções...' : 
+                   `${socialMentions?.length || 0} menções encontradas`}
+                </p>
+              </div>
+              {mentionsLoading && (
+                <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
             </div>
+            
+            {/* Exibir menções reais */}
+            {socialMentions && socialMentions.length > 0 ? (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {socialMentions.slice(0, 10).map((mention, index) => (
+                  <div key={mention.id} className="p-3 border rounded-lg space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {mention.platform === 'twitter' && <Twitter className="h-4 w-4 text-blue-500" />}
+                        {mention.platform === 'instagram' && <Instagram className="h-4 w-4 text-pink-500" />}
+                        {mention.platform === 'facebook' && <Facebook className="h-4 w-4 text-blue-600" />}
+                        <span className="text-xs font-medium capitalize">{mention.platform}</span>
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          mention.sentiment === 'positive' ? 'bg-green-100 text-green-700' :
+                          mention.sentiment === 'negative' ? 'bg-red-100 text-red-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {mention.sentiment}
+                        </span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(mention.timestamp).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+                    <p className="text-sm">{mention.content}</p>
+                    {mention.url && (
+                      <a 
+                        href={mention.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Ver post original →
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : !mentionsLoading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Nenhuma menção encontrada para este político.</p>
+                <p className="text-xs mt-1">Tente coletar dados clicando em "Coletar Menções"</p>
+              </div>
+            ) : null}
+            
             <SocialMentionsList selectedPolitician={selectedPolitician.nome} />
           </div>
         )}

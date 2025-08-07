@@ -80,8 +80,16 @@ export function SearchPoliticianInput({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Dados dos prefeitos (base expandida)
+  // Dados dos prefeitos (base expandida) - incluindo políticos com dados no sistema
   const mayorData: Record<string, Politician> = {
+    "Ricardo Nunes": { 
+      nome: "Ricardo Nunes", 
+      partido: "MDB", 
+      mandato: "2021-2024", 
+      cidade: "São Paulo", 
+      uf: "SP",
+      cargo: "Prefeito"
+    },
     "São Paulo": { 
       nome: "Tarcísio Gomes de Freitas", 
       partido: "Republicanos", 
@@ -201,6 +209,14 @@ export function SearchPoliticianInput({
       cidade: "Pederneiras", 
       uf: "SP",
       cargo: "Prefeita"
+    },
+    "José Sarto": { 
+      nome: "José Sarto", 
+      partido: "PDT", 
+      mandato: "2021-2024", 
+      cidade: "Fortaleza", 
+      uf: "CE",
+      cargo: "Prefeito"
     }
   };
 
@@ -221,6 +237,8 @@ export function SearchPoliticianInput({
         return '/lovable-uploads/c3695bb8-feda-48d4-beff-f390ac899551.png';
       case 'REPUBLICANOS':
         return '/lovable-uploads/5459eeca-7b7d-463c-b793-35eba82ba4f3.png';
+      case 'PDT':
+        return '/lovable-uploads/425f80f3-21ac-4eef-984d-ba432848be17.png';
       default:
         return null;
     }
