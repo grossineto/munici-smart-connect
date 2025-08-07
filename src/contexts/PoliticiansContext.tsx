@@ -157,9 +157,9 @@ export const PoliticiansProvider: React.FC<PoliticiansProviderProps> = ({ childr
     }
   }, [politicians]);
 
-  // Migração única: definir listas específicas de palavras‑chave por político
+  // Aplicar listas específicas de keywords (override único)
   useEffect(() => {
-    const flagKey = 'keywords-initialized-2025-08-07';
+    const flagKey = 'keywords-applied-2025-08-07-v2';
     if (localStorage.getItem(flagKey)) return;
 
     const updates: Record<string, string[]> = {
