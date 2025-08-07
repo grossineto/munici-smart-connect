@@ -360,10 +360,13 @@ const SocialMonitoring = () => {
             <h3 className="text-lg font-semibold">Políticos Selecionados</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {monitoredPoliticians.map((politician, index) => (
-                <div 
-                  key={`${politician.nome}-${politician.cidade}-${index}`}
-                  onClick={() => setSelectedPolitician(politician)}
-                  className="cursor-pointer group bg-card rounded-lg border p-4 hover:border-primary/50 transition-all"
+                 <div 
+                   key={`${politician.nome}-${politician.cidade}-${index}`}
+                   onClick={() => {
+                     console.log('Político selecionado:', politician);
+                     setSelectedPolitician(politician);
+                   }}
+                   className="cursor-pointer group bg-card rounded-lg border p-4 hover:border-primary/50 transition-all"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
@@ -386,7 +389,7 @@ const SocialMonitoring = () => {
         )}
 
         {/* Mini Dashboard do Político Selecionado */}
-        {monitoredPoliticians.length > 0 && selectedPolitician && (
+        {selectedPolitician && (
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-semibold">Dashboard - {selectedPolitician.nome}</h3>
@@ -406,13 +409,24 @@ const SocialMonitoring = () => {
           </div>
         )}
 
-        {/* Lista de Menções Recentes com Abas */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Menções Recentes</h3>
-          <SocialMentionsList 
-            selectedPolitician="all"
-          />
-        </div>
+        {/* Lista de Menções Recentes */}
+        {selectedPolitician && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Menções Recentes - {selectedPolitician.nome}</h3>
+            <SocialMentionsList 
+              selectedPolitician={selectedPolitician.nome}
+            />
+          </div>
+        )}
+        
+        {!selectedPolitician && monitoredPoliticians.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Menções Recentes</h3>
+            <SocialMentionsList 
+              selectedPolitician="all"
+            />
+          </div>
+        )}
       </div>
     );
   }

@@ -9,11 +9,43 @@ interface PoliticianMiniDashboardProps {
 }
 
 export function PoliticianMiniDashboard({ politicianName }: PoliticianMiniDashboardProps) {
+  console.log('🎯 Dashboard carregando para:', politicianName);
+  
   // Buscar menções das últimas 24h
-  const { data: mentions24h = [] } = useSocialMentions(politicianName, undefined, 100);
+  const { data: mentions24h = [], isLoading } = useSocialMentions(politicianName, undefined, 100);
   
   // Buscar menções dos últimos 2 dias para comparação
   const { data: mentions48h = [] } = useSocialMentions(politicianName, undefined, 200);
+
+  console.log('📊 Mentions 24h:', mentions24h?.length || 0);
+  console.log('📈 Mentions 48h:', mentions48h?.length || 0);
+
+  // Se ainda está carregando ou não há dados suficientes, mostrar estado de carregamento
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        {[1,2,3,4,5].map(i => (
+          <div key={i} className="bg-card rounded-lg border p-4 animate-pulse">
+            <div className="h-4 bg-muted rounded w-20 mb-2"></div>
+            <div className="h-8 bg-muted rounded w-16 mb-1"></div>
+            <div className="h-3 bg-muted rounded w-24"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Se não há menções, mostrar estado vazio
+  if (!mentions24h || mentions24h.length === 0) {
+    return (
+      <div className="bg-muted/30 rounded-lg border-2 border-dashed p-8 text-center">
+        <div className="text-muted-foreground">
+          <h4 className="font-medium mb-2">Nenhuma menção encontrada</h4>
+          <p className="text-sm">Execute "Coletar Menções" para buscar dados deste político.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Filtrar apenas menções das últimas 24h
   const now = new Date();
