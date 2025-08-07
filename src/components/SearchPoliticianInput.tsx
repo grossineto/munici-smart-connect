@@ -49,8 +49,8 @@ export function SearchPoliticianInput({
     try {
       const queryLower = query.toLowerCase();
       
-      // Buscar apenas políticos ativos para monitoramento social
-      const activePoliticians = getActivePoliticians('social');
+      // Buscar apenas políticos ativos para monitoramento de notícias
+      const activePoliticians = getActivePoliticians('news');
       
       const localResults = activePoliticians
         .filter(politician => 
@@ -238,7 +238,7 @@ export function SearchPoliticianInput({
         <Card className="absolute top-full left-0 right-0 mt-2 z-50 shadow-lg border-2">
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground text-center">
-              Político não encontrado. Apenas políticos com monitoramento social ativo estão disponíveis.
+              Político não encontrado. Apenas políticos com monitoramento de notícias ativo estão disponíveis.
             </div>
           </CardContent>
         </Card>

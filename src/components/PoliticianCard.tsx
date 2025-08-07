@@ -46,27 +46,8 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
     }
   };
 
-  // Função para obter avatar do político
-  const getPoliticianAvatar = (nome: string) => {
-    switch (nome) {
-      case 'Ricardo Nunes':
-        return '/lovable-uploads/6f653b9a-a318-4b80-955c-4f7b4de6634c.png';
-      case 'Eduardo Paes':
-        return '/lovable-uploads/eceb707c-015a-4cb2-b488-493c9c6b5cac.png';
-      case 'João Campos':
-        return '/lovable-uploads/990eb197-9e97-4050-9ad7-41f0539e7ba8.png';
-      case 'José Sarto':
-        return '/lovable-uploads/f6d35a9d-205a-4556-ac06-3f9fbd151298.png';
-      case 'Tarcísio Gomes de Freitas':
-        return '/lovable-uploads/9c090c37-0d6e-4699-9cc5-028de5640b9a.png';
-      case 'Guto Issa':
-        return '/lovable-uploads/dc683cc5-b8bf-4311-9698-3337b29889e5.png';
-      case 'Suéllen Silva Rosim':
-        return '/lovable-uploads/425f80f3-21ac-4eef-984d-ba432848be17.png';
-      default:
-        return politician.avatar;
-    }
-  };
+  // Avatar do político vem do PoliticiansContext (página de gerenciamento)
+  // Usamos politician.avatar diretamente, com fallback para iniciais.
 
   // Função para obter logo do partido
   const getPartyLogo = (partido?: string) => {
@@ -97,7 +78,7 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
           {/* Avatar */}
           <Avatar className="h-16 w-16 border-2 border-muted">
             <AvatarImage 
-              src={getPoliticianAvatar(politician.nome)} 
+              src={politician.avatar}
               alt={`Foto de ${politician.nome}`}
             />
             <AvatarFallback className="text-lg font-semibold bg-primary/10 text-primary">

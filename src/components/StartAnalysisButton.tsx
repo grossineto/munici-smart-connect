@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Brain, Rocket, Database, TrendingUp } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -34,25 +34,25 @@ export function StartAnalysisButton({ politician, onClick, disabled = false }: S
     {
       id: 'collecting',
       label: 'Coletando notícias...',
-      icon: Database,
+      icon: Search,
       duration: 3000
     },
     {
       id: 'analyzing', 
       label: 'Analisando sentimento...',
-      icon: Brain,
+      icon: Search,
       duration: 4000
     },
     {
       id: 'generating',
       label: 'Gerando relatório...',
-      icon: TrendingUp,
+      icon: Search,
       duration: 2000
     },
     {
       id: 'complete',
       label: 'Análise concluída!',
-      icon: Rocket,
+      icon: Search,
       duration: 1000
     }
   ];
@@ -124,7 +124,6 @@ export function StartAnalysisButton({ politician, onClick, disabled = false }: S
             <>
               <div className="flex items-center gap-2">
                 <Search className="h-5 w-5 transition-transform group-hover:scale-110" />
-                <Brain className="h-5 w-5 transition-transform group-hover:scale-110" />
               </div>
               <span className="flex-1 text-center font-semibold text-institutional">
                 {politician ? (
@@ -133,7 +132,6 @@ export function StartAnalysisButton({ politician, onClick, disabled = false }: S
                   "Iniciar Coleta e Análise"
                 )}
               </span>
-              <Rocket className="h-5 w-5 transition-transform group-hover:scale-110 group-hover:translate-x-1" />
             </>
           )}
         </div>

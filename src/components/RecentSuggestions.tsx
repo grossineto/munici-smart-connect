@@ -43,28 +43,11 @@ export function RecentSuggestions({ onSelectPolitician, className = "" }: Recent
     }
   };
 
-  // Função para obter avatar do político
-  const getPoliticianAvatar = (nome: string) => {
-    switch (nome) {
-      case 'Ricardo Nunes':
-        return '/lovable-uploads/6f653b9a-a318-4b80-955c-4f7b4de6634c.png';
-      case 'João Campos':
-        return '/lovable-uploads/990eb197-9e97-4050-9ad7-41f0539e7ba8.png';
-      case 'José Sarto':
-        return '/lovable-uploads/f6d35a9d-205a-4556-ac06-3f9fbd151298.png';
-      case 'Tarcísio Gomes de Freitas':
-        return '/lovable-uploads/9c090c37-0d6e-4699-9cc5-028de5640b9a.png';
-      case 'Guto Issa':
-        return '/lovable-uploads/dc683cc5-b8bf-4311-9698-3337b29889e5.png';
-      case 'Suéllen Silva Rosim':
-        return '/lovable-uploads/425f80f3-21ac-4eef-984d-ba432848be17.png';
-      default:
-        return undefined;
-    }
-  };
+  // Avatar do político vem da página de gerenciamento (PoliticiansContext)
+  // Usamos politician.avatar diretamente, com fallback para iniciais.
 
-  // Usar apenas políticos ativos para monitoramento social
-  const featuredPoliticians = getActivePoliticians('social');
+  // Usar apenas políticos ativos para monitoramento de notícias
+  const featuredPoliticians = getActivePoliticians('news');
 
   return (
     <Card className={`border-2 ${className}`}>
@@ -88,7 +71,7 @@ export function RecentSuggestions({ onSelectPolitician, className = "" }: Recent
               <div className="flex items-center gap-3 w-full">
                 <Avatar className="w-10 h-10 border border-muted">
                   <AvatarImage 
-                    src={getPoliticianAvatar(politician.nome)} 
+                    src={politician.avatar}
                     alt={`Foto de ${politician.nome}`}
                   />
                   <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
