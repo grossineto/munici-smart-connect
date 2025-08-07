@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { usePoliticians } from "@/contexts/PoliticiansContext";
 import { PoliticianMiniDashboard } from "@/components/PoliticianMiniDashboard";
 import { NewsSummaryCards } from "@/components/NewsSummaryCards";
+import { TrendingTopics } from "@/components/TrendingTopics";
+import { WeeklyComparisonCard } from "@/components/WeeklyComparisonCard";
+import { CrisisAlertsCard } from "@/components/CrisisAlertsCard";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -85,6 +88,13 @@ const Dashboard = () => {
           </section>
           <section className="mt-4">
             <NewsSummaryCards politicianName={selected.nome} city={selected.cidade} uf={selected.uf} />
+          </section>
+          <section className="mt-4 grid gap-4 md:grid-cols-3">
+            <CrisisAlertsCard />
+            <WeeklyComparisonCard politicianName={selected.nome} />
+            <div className="md:col-span-3">
+              <TrendingTopics selectedPolitician={selected.nome} timeframe="24h" />
+            </div>
           </section>
         </>
       )}
