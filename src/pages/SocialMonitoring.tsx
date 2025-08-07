@@ -365,19 +365,19 @@ const SocialMonitoring = () => {
                   onClick={() => setSelectedPolitician(politician)}
                   className="cursor-pointer group bg-card rounded-lg border p-4 hover:border-primary/50 transition-all"
                 >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-bold">
-                    {politician.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                  </span>
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm">{politician.nome}</h4>
-                  <p className="text-xs text-muted-foreground">{politician.cargo} • {politician.cidade}</p>
-                </div>
-                {selectedPolitician?.nome === politician.nome && (
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                )}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-bold">
+                        {politician.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{politician.nome}</h4>
+                      <p className="text-xs text-muted-foreground">{politician.cargo} • {politician.cidade}</p>
+                    </div>
+                    {selectedPolitician?.nome === politician.nome && (
+                      <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    )}
               </div>
                 </div>
               ))}
