@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 export interface Politician {
   id: string;
@@ -133,7 +133,29 @@ interface PoliticiansProviderProps {
 }
 
 export const PoliticiansProvider: React.FC<PoliticiansProviderProps> = ({ children }) => {
-  const [politicians, setPoliticians] = useState<Politician[]>(initialPoliticians);
+  // Carregar dados do localStorage na inicialização
+  const loadPoliticians = (): Politician[] => {
+    try {
+      const stored = localStorage.getItem('politicians-data');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados dos políticos:', error);
+    }
+    return initialPoliticians;
+  };
+
+  const [politicians, setPoliticians] = useState<Politician[]>(loadPoliticians);
+
+  // Salvar automaticamente no localStorage sempre que os dados mudarem
+  useEffect(() => {
+    try {
+      localStorage.setItem('politicians-data', JSON.stringify(politicians));
+    } catch (error) {
+      console.error('Erro ao salvar dados dos políticos:', error);
+    }
+  }, [politicians]);
 
   const updatePolitician = (updatedPolitician: Politician) => {
     setPoliticians(prev => 
