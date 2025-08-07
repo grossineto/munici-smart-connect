@@ -71,7 +71,19 @@ serve(async (req) => {
 
     for (const politician of politicians) {
       try {
-        // TikTok Research API - buscar vídeos por palavra-chave
+        // Normalizar estrutura (string ou objeto)
+        const politicianObj = typeof politician === 'string'
+          ? { name: politician, keywords: [politician] }
+          : politician;
+        const politicianName: string = politicianObj.name || (typeof politician === 'string' ? politician : '');
+        const keywords: string[] = Array.isArray(politicianObj.keywords) && politicianObj.keywords.length > 0
+          ? politicianObj.keywords
+          : [politicianName];
+
+        console.log(`Processando TikTok para ${politicianName}...`);
+        console.log('Palavras-chave:', keywords);
+        
+        // TikTok Research API - buscar vídeos por palavras-chave
         const searchUrl = `https://open.tiktokapis.com/v2/research/video/query/`;
         
         const searchPayload = {
@@ -80,7 +92,7 @@ serve(async (req) => {
               {
                 operation: "IN",
                 field_name: "keyword",
-                field_values: [politician]
+                field_values: keywords
               }
             ]
           },
@@ -99,7 +111,7 @@ serve(async (req) => {
         });
 
         if (!response.ok) {
-          console.error(`Erro ao buscar vídeos do TikTok para ${politician}:`, response.status, await response.text());
+          console.error(`Erro ao buscar vídeos do TikTok para ${politicianName}:`, response.status, await response.text());
           continue;
         }
 
@@ -111,7 +123,7 @@ serve(async (req) => {
         }
 
         if (!data.data?.videos || data.data.videos.length === 0) {
-          console.log(`Nenhum vídeo encontrado no TikTok para ${politician}`);
+          console.log(`Nenhum vídeo encontrado no TikTok para ${politicianName}`);
           continue;
         }
 
@@ -135,8 +147,8 @@ serve(async (req) => {
             .from('social_mentions')
             .insert({
               platform: 'tiktok',
-              politician_name: politician,
-              content: content || `Vídeo mencionando ${politician}`,
+              politician_name: politicianName,
+              content: content || `Vídeo mencionando ${politicianName}`,
               timestamp: new Date(video.create_time * 1000).toISOString(),
               url: video.share_url || `https://tiktok.com/@user/video/${video.id}`,
               mention_type: 'post',
@@ -150,14 +162,15 @@ serve(async (req) => {
                 share_count: shareCount,
                 view_count: viewCount,
                 duration: video.duration,
-                cover_image_url: video.cover_image_url
+                cover_image_url: video.cover_image_url,
+                search_keywords: keywords
               }
             });
 
           if (error) {
             console.error('Erro ao salvar menção do TikTok:', error);
           } else {
-            console.log(`Menção do TikTok salva para ${politician}: ${content.substring(0, 50)}...`);
+            console.log(`Menção do TikTok salva para ${politicianName}: ${content.substring(0, 50)}...`);
           }
         }
 
@@ -165,7 +178,7 @@ serve(async (req) => {
         await new Promise(resolve => setTimeout(resolve, 3000));
         
       } catch (error) {
-        console.error(`Erro ao processar TikTok para ${politician}:`, error);
+        console.error(`Erro ao processar TikTok para ${typeof politician === 'string' ? politician : politician.name}:`, error);
       }
     }
 

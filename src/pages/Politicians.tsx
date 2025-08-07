@@ -196,6 +196,11 @@ export default function Politicians() {
                 <KeywordManager 
                   politicianId={politician.id}
                   politicianName={politician.nome}
+                  initialKeywords={politician.keywords}
+                  onKeywordsChange={(list) => {
+                    const activeTerms = list.filter((k: any) => k.active).map((k: any) => k.term);
+                    updatePolitician({ ...politician, keywords: activeTerms });
+                  }}
                 />
               </div>
 

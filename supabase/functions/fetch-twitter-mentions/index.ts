@@ -69,12 +69,24 @@ serve(async (req) => {
 
     for (const politician of politicians) {
       try {
-        // Extrair nome do político (pode vir como objeto ou string)
-        const politicianName = typeof politician === 'string' ? politician : politician.name;
+        // Normalizar estrutura do político (aceita string ou objeto)
+        const politicianObj = typeof politician === 'string' 
+          ? { name: politician, keywords: [politician] } 
+          : politician;
+
+        const politicianName: string = politicianObj.name || (typeof politician === 'string' ? politician : '');
+        const keywords: string[] = Array.isArray(politicianObj.keywords) && politicianObj.keywords.length > 0
+          ? politicianObj.keywords
+          : [politicianName];
+
         console.log(`Processando político: ${politicianName}`);
+        console.log('Palavras-chave:', keywords);
         
-        // Buscar menções do político no Twitter
-        const searchQuery = `"${politicianName}" -is:retweet lang:pt`;
+        // Montar query com todas as palavras-chave (OR) e filtros
+        const keywordQuery = keywords
+          .map(k => `"${k.replace(/\"/g, '\\\"')}"`)
+          .join(' OR ');
+        const searchQuery = `(${keywordQuery}) -is:retweet lang:pt`;
         const searchUrl = `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(searchQuery)}&max_results=10&tweet.fields=created_at,public_metrics,author_id&expansions=author_id`;
 
         const response = await fetch(searchUrl, {
@@ -85,7 +97,7 @@ serve(async (req) => {
         });
 
         if (!response.ok) {
-          console.error(`Erro ao buscar menções para ${politician}:`, response.status, await response.text());
+          console.error(`Erro ao buscar menções para ${politicianName}:`, response.status, await response.text());
           continue;
         }
 
@@ -123,7 +135,8 @@ serve(async (req) => {
               raw_data: {
                 tweet_id: tweet.id,
                 author_id: tweet.author_id,
-                public_metrics: tweet.public_metrics
+                public_metrics: tweet.public_metrics,
+                search_keywords: keywords
               }
             });
 
@@ -138,7 +151,7 @@ serve(async (req) => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         
       } catch (error) {
-        console.error(`Erro ao processar ${politicianName}:`, error);
+        console.error(`Erro ao processar ${typeof politician === 'string' ? politician : politician.name}:`, error);
       }
     }
 

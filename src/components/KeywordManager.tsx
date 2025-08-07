@@ -28,6 +28,7 @@ interface KeywordCategory {
 interface KeywordManagerProps {
   politicianId?: string;
   politicianName?: string;
+  initialKeywords?: string[];
   onKeywordsChange?: (keywords: Keyword[]) => void;
   className?: string;
 }
@@ -81,6 +82,7 @@ const defaultKeywords: Record<string, string[]> = {
 export function KeywordManager({ 
   politicianId, 
   politicianName = "Político",
+  initialKeywords,
   onKeywordsChange, 
   className = "" 
 }: KeywordManagerProps) {
@@ -90,22 +92,34 @@ export function KeywordManager({
   const [newKeyword, setNewKeyword] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('geral');
 
-  // Carregar palavras-chave padrão
-  useEffect(() => {
-    const defaultKeywordList: Keyword[] = [];
-    Object.entries(defaultKeywords).forEach(([category, terms]) => {
-      terms.forEach((term, index) => {
-        defaultKeywordList.push({
-          id: `${category}-${index}`,
-          term,
-          category,
-          politicianId,
-          active: true
-        });
+// Carregar palavras-chave iniciais
+useEffect(() => {
+  if (initialKeywords && initialKeywords.length > 0) {
+    const initialList: Keyword[] = initialKeywords.map((term, index) => ({
+      id: `initial-${index}`,
+      term,
+      category: 'geral',
+      politicianId,
+      active: true
+    }));
+    setKeywords(initialList);
+    return;
+  }
+
+  const defaultKeywordList: Keyword[] = [];
+  Object.entries(defaultKeywords).forEach(([category, terms]) => {
+    terms.forEach((term, index) => {
+      defaultKeywordList.push({
+        id: `${category}-${index}`,
+        term,
+        category,
+        politicianId,
+        active: true
       });
     });
-    setKeywords(defaultKeywordList);
-  }, [politicianId]);
+  });
+  setKeywords(defaultKeywordList);
+}, [politicianId, initialKeywords]);
 
   // Notificar mudanças
   useEffect(() => {
