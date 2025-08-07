@@ -132,20 +132,54 @@ const SocialMonitoring = () => {
       ]
     },
     {
-      nome: "Suéllen Rosim",
-      partido: "PARTIDO VERDE",
+      nome: "José Sarto",
+      partido: "UNIÃO BRASIL",
+      cargo: "Prefeito",
+      cidade: "Fortaleza",
+      uf: "CE", 
+      mandato: "2021-2024",
+      newsCount: 18,
+      keywords: [
+        "José Sarto",
+        "prefeito Fortaleza",
+        "prefeitura Fortaleza",
+        "gestão José Sarto",
+        "cidade de Fortaleza",
+        "União Brasil Fortaleza"
+      ]
+    },
+    {
+      nome: "Guto Issa",
+      partido: "PV",
+      cargo: "Prefeito",
+      cidade: "São Roque",
+      uf: "SP", 
+      mandato: "2021-2024",
+      newsCount: 3,
+      keywords: [
+        "Guto Issa",
+        "prefeito São Roque",
+        "prefeitura São Roque",
+        "gestão Guto",
+        "cidade de São Roque",
+        "Partido Verde São Roque"
+      ]
+    },
+    {
+      nome: "Suéllen Silva Rosim",
+      partido: "REPUBLICANOS",
       cargo: "Prefeita",
       cidade: "Bauru",
       uf: "SP", 
       mandato: "2021-2024",
       newsCount: 21,
       keywords: [
-        "Suéllen Rosim",
+        "Suéllen Silva Rosim",
         "prefeita Bauru",
         "prefeitura Bauru",
         "gestão Suéllen",
         "cidade de Bauru",
-        "Partido Verde Bauru"
+        "Republicanos Bauru"
       ]
     },
     {
