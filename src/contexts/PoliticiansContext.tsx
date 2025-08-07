@@ -157,6 +157,67 @@ export const PoliticiansProvider: React.FC<PoliticiansProviderProps> = ({ childr
     }
   }, [politicians]);
 
+  // Migração única: definir listas específicas de palavras‑chave por político
+  useEffect(() => {
+    const flagKey = 'keywords-initialized-2025-08-07';
+    if (localStorage.getItem(flagKey)) return;
+
+    const updates: Record<string, string[]> = {
+      'Ricardo Nunes': [
+        'Ricardo Nunes', 'Ricardo Nunes SP', 'prefeito Ricardo Nunes',
+        'prefeito de São Paulo', 'prefeito SP', 'prefeitura de São Paulo', 'prefeitura SP',
+        'gestão Ricardo Nunes', 'Nunes São Paulo', 'São Paulo', 'Sao Paulo', 'SP capital',
+        'obras São Paulo', 'saúde São Paulo', 'educação São Paulo', 'segurança São Paulo',
+        'transporte São Paulo', 'mobilidade SP', 'zeladoria SP', 'MDB São Paulo', 'MDB SP'
+      ],
+      'Eduardo Paes': [
+        'Eduardo Paes', 'prefeito Eduardo Paes',
+        'prefeito do Rio de Janeiro', 'prefeito Rio', 'prefeitura do Rio', 'prefeitura RJ',
+        'gestão Eduardo Paes', 'Paes Rio', 'Rio de Janeiro', 'RJ capital',
+        'obras Rio', 'saúde Rio', 'educação Rio', 'segurança Rio',
+        'mobilidade Rio', 'BRT Rio', 'urbanismo Rio', 'PSD Rio', 'PSD RJ'
+      ],
+      'João Campos': [
+        'João Campos', 'Joao Campos', 'prefeito João Campos',
+        'prefeito do Recife', 'prefeito Recife', 'prefeitura do Recife', 'prefeitura Recife',
+        'gestão João Campos', 'Campos Recife', 'Recife', 'Recife PE', 'PE capital',
+        'obras Recife', 'saúde Recife', 'educação Recife', 'segurança Recife',
+        'mobilidade Recife', 'PSB Recife', 'PSB PE', 'litoral Recife'
+      ],
+      'José Sarto': [
+        'José Sarto', 'Jose Sarto', 'prefeito José Sarto',
+        'prefeito de Fortaleza', 'prefeito Fortaleza', 'prefeitura de Fortaleza', 'prefeitura Fortaleza',
+        'gestão José Sarto', 'Sarto Fortaleza', 'Fortaleza', 'Fortaleza CE', 'CE capital',
+        'obras Fortaleza', 'saúde Fortaleza', 'educação Fortaleza', 'segurança Fortaleza',
+        'mobilidade Fortaleza', 'União Brasil Fortaleza', 'União Brasil CE'
+      ],
+      'Tarcísio Gomes de Freitas': [
+        'Tarcísio de Freitas', 'Tarcisio de Freitas', 'Tarcísio Gomes de Freitas', 'Tarcisio Gomes',
+        'governador de São Paulo', 'governador SP', 'governo de SP', 'Governo SP',
+        'Palácio dos Bandeirantes', 'gestão Tarcísio', 'São Paulo', 'SP',
+        'infraestrutura SP', 'rodovias SP', 'concessões SP', 'segurança SP', 'educação SP', 'saúde SP',
+        'Republicanos SP', 'Republicanos São Paulo', 'investimento SP', 'obras estaduais SP'
+      ],
+      'Guto Issa': [
+        'Guto Issa', 'prefeito Guto Issa',
+        'prefeito de São Roque', 'prefeito São Roque', 'prefeitura de São Roque', 'prefeitura São Roque',
+        'gestão Guto Issa', 'Issa São Roque', 'São Roque', 'Sao Roque', 'São Roque SP',
+        'obras São Roque', 'saúde São Roque', 'educação São Roque', 'segurança São Roque',
+        'PV São Roque', 'Partido Verde São Roque', 'turismo São Roque'
+      ],
+      'Suéllen Silva Rosim': [
+        'Suéllen Rosim', 'Suellen Rosim', 'prefeita Suéllen Rosim',
+        'prefeita de Bauru', 'prefeita Bauru', 'prefeitura de Bauru', 'prefeitura Bauru',
+        'gestão Suéllen', 'Rosim Bauru', 'Bauru', 'Bauru SP',
+        'obras Bauru', 'saúde Bauru', 'educação Bauru', 'segurança Bauru',
+        'mobilidade Bauru', 'União Brasil Bauru', 'União Brasil SP'
+      ]
+    };
+
+    setPoliticians(prev => prev.map(p => updates[p.nome] ? { ...p, keywords: updates[p.nome] } : p));
+    localStorage.setItem(flagKey, '1');
+  }, []);
+
   const updatePolitician = (updatedPolitician: Politician) => {
     setPoliticians(prev => 
       prev.map(p => p.id === updatedPolitician.id ? updatedPolitician : p)
