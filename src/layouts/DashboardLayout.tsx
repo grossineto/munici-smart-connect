@@ -5,15 +5,42 @@ import { useAuth } from "@/hooks/useAuth";
 import { NotificationBell } from "@/components/ui/notification-bell";
 import { UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string | null>(null);
+  const initials = useMemo(() => {
+    const base = fullName || user?.email || "U";
+    const parts = base.split(" ");
+    const first = parts[0]?.charAt(0) ?? "U";
+    const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
+    return (first + last).toUpperCase();
+  }, [fullName, user?.email]);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles" as any)
+        .select("full_name, avatar_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setAvatarUrl((data as any)?.avatar_url || null);
+      setFullName((data as any)?.full_name || null);
+    };
+    load();
+  }, [user]);
 
   return (
     <ProtectedRoute>
@@ -44,9 +71,24 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <UserCheck className="h-4 w-4" />
                 </Button>
                 <NotificationBell />
-                <span className="hidden sm:inline text-xs md:text-sm text-muted-foreground bg-muted/50 px-2 md:px-3 py-1 md:py-1.5 rounded-full truncate max-w-[120px] md:max-w-none">
-                  {user?.email}
-                </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="p-0 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={avatarUrl || undefined} alt={user?.email || 'Conta'} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs">{initials}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>{fullName || user?.email}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/account">Minha conta</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={signOut}>Sair</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </header>
             

@@ -161,6 +161,16 @@ export function AppSidebar() {
         <div className="mt-auto p-4 border-t bg-muted/30">
           <Button
             variant="ghost"
+            className="w-full justify-start mb-2"
+            asChild
+          >
+            <NavLink to="/account" end className={({ isActive }) => isActive ? "bg-primary/10 text-primary font-medium w-full justify-start" : "w-full justify-start hover:bg-muted/50"}>
+              <Settings className="h-4 w-4" />
+              <span className="ml-2">Configurações</span>
+            </NavLink>
+          </Button>
+          <Button
+            variant="ghost"
             onClick={signOut}
             className="w-full justify-start hover:bg-destructive/10 hover:text-destructive transition-colors"
           >
