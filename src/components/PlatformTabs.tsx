@@ -6,7 +6,8 @@ import { Twitter, Instagram, Facebook, Music, RefreshCw, Users } from "lucide-re
 import { SocialMentionCard } from "./SocialMentionCard";
 import { useSocialMentions, useSocialStats } from "@/hooks/useSocialMonitor";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import { useState } from "react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 interface PlatformTabsProps {
   selectedPolitician?: string;
   timeframe?: string;
@@ -27,6 +28,8 @@ export function PlatformTabs({
     selectedPolitician === "all" ? undefined : selectedPolitician, 
     timeframe
   );
+
+  const [typeFilter, setTypeFilter] = useState<'all' | 'post' | 'mention'>('all');
 
   const platforms = [
     { 
@@ -106,9 +109,14 @@ export function PlatformTabs({
 
         {platforms.map(platform => {
           const IconComponent = platform.icon;
-          const filteredMentions = platform.id === "all" 
+          let filteredMentions = platform.id === "all" 
             ? mentions 
             : mentions.filter(mention => mention.platform === platform.id);
+          if (typeFilter !== 'all') {
+            filteredMentions = filteredMentions.filter(m => 
+              typeFilter === 'post' ? m.mention_type === 'post' : m.mention_type === 'mention'
+            );
+          }
           const count = filteredMentions.length;
 
           return (
@@ -137,15 +145,27 @@ export function PlatformTabs({
                       )}
                     </CardTitle>
                     
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={onRefresh}
-                      className="flex items-center gap-2"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                      Atualizar
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <ToggleGroup
+                        type="single"
+                        value={typeFilter}
+                        onValueChange={(v) => v && setTypeFilter(v as 'all' | 'post' | 'mention')}
+                        className="mr-2"
+                      >
+                        <ToggleGroupItem value="all" aria-label="Todos">Todos</ToggleGroupItem>
+                        <ToggleGroupItem value="post" aria-label="Do político">Do político</ToggleGroupItem>
+                        <ToggleGroupItem value="mention" aria-label="Menções">Menções</ToggleGroupItem>
+                      </ToggleGroup>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={onRefresh}
+                        className="flex items-center gap-2"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                        Atualizar
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
 

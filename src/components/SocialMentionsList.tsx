@@ -76,6 +76,41 @@ export function SocialMentionsList({
     return { icon: <MessageCircle className="h-3 w-3" />, label: 'Baixo', color: 'text-gray-600' };
   };
 
+  // Extrai informações do autor a partir dos dados brutos por plataforma
+  const getAuthorName = (m: any): string => {
+    if (m.author_name) return m.author_name;
+    const rd = m.raw_data || {};
+    switch ((m.platform || '').toLowerCase()) {
+      case 'twitter':
+        return rd.user?.name || rd.author?.name || rd.includes?.users?.[0]?.name || 'Conta no Twitter';
+      case 'instagram':
+        return rd.user?.username || rd.username || rd.owner?.username || 'Conta no Instagram';
+      case 'facebook':
+        return rd.from?.name || rd.page?.name || 'Conta no Facebook';
+      case 'tiktok':
+        return rd.author?.nickname || rd.author?.uniqueId || 'Conta no TikTok';
+      default:
+        return 'Autor desconhecido';
+    }
+  };
+
+  const getAuthorHandle = (m: any): string => {
+    if (m.author_username) return `@${m.author_username}`;
+    const rd = m.raw_data || {};
+    switch ((m.platform || '').toLowerCase()) {
+      case 'twitter':
+        return rd.user?.screen_name ? `@${rd.user.screen_name}` : rd.includes?.users?.[0]?.username ? `@${rd.includes.users[0].username}` : '';
+      case 'instagram':
+        return rd.user?.username ? `@${rd.user.username}` : rd.username ? `@${rd.username}` : '';
+      case 'facebook':
+        return '';
+      case 'tiktok':
+        return rd.author?.uniqueId ? `@${rd.author.uniqueId}` : '';
+      default:
+        return '';
+    }
+  };
+
   if (isLoading) {
     return (
       <Card className={className}>
@@ -147,7 +182,10 @@ export function SocialMentionsList({
                       {getPlatformIcon(mention.platform)}
                       <div>
                         <h4 className="font-semibold text-sm">
-                          {mention.politician_name}
+                          {getAuthorName(mention)}{' '}
+                          {getAuthorHandle(mention) && (
+                            <span className="text-xs text-muted-foreground">({getAuthorHandle(mention)})</span>
+                          )}
                         </h4>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" />
@@ -155,6 +193,9 @@ export function SocialMentionsList({
                             addSuffix: true, 
                             locale: ptBR 
                           })}
+                          <span>
+                            • {mention.mention_type === 'post' ? `Alvo: ${mention.politician_name}` : `Menciona: ${mention.politician_name}`}
+                          </span>
                         </div>
                       </div>
                     </div>

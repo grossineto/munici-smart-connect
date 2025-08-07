@@ -17,6 +17,11 @@ interface SocialMentionCardProps {
     sentiment: "positive" | "negative" | "neutral";
     reach_estimate: number;
     engagement_score: number;
+    // Optional author metadata
+    author_name?: string;
+    author_username?: string;
+    author_profile_image_url?: string;
+    author_url?: string;
     raw_data?: any;
   };
   showPlatformBadge?: boolean;
@@ -27,7 +32,8 @@ const platformIcons: Record<string, string> = {
   twitter: "𝕏",
   instagram: "📷",
   facebook: "👤",
-  tiktok: "🎵"
+  tiktok: "🎵",
+  x: "𝕏"
 };
 
 const sentimentColors: Record<string, string> = {
@@ -49,6 +55,40 @@ export function SocialMentionCard({ mention, showPlatformBadge = false, classNam
     return num.toString();
   };
 
+  const getAuthorName = () => {
+    if (mention.author_name) return mention.author_name;
+    const rd = mention.raw_data || {};
+    switch ((mention.platform || '').toLowerCase()) {
+      case 'twitter':
+        return rd.user?.name || rd.author?.name || rd.includes?.users?.[0]?.name || 'Conta no Twitter';
+      case 'instagram':
+        return rd.user?.username || rd.username || rd.owner?.username || 'Conta no Instagram';
+      case 'facebook':
+        return rd.from?.name || rd.page?.name || 'Conta no Facebook';
+      case 'tiktok':
+        return rd.author?.nickname || rd.author?.uniqueId || 'Conta no TikTok';
+      default:
+        return 'Autor desconhecido';
+    }
+  };
+
+  const getAuthorHandle = () => {
+    if (mention.author_username) return `@${mention.author_username}`;
+    const rd = mention.raw_data || {};
+    switch ((mention.platform || '').toLowerCase()) {
+      case 'twitter':
+        return rd.user?.screen_name ? `@${rd.user.screen_name}` : rd.includes?.users?.[0]?.username ? `@${rd.includes.users[0].username}` : '';
+      case 'instagram':
+        return rd.user?.username ? `@${rd.user.username}` : rd.username ? `@${rd.username}` : '';
+      case 'facebook':
+        return '';
+      case 'tiktok':
+        return rd.author?.uniqueId ? `@${rd.author.uniqueId}` : '';
+      default:
+        return '';
+    }
+  };
+
   return (
     <Card className="social-mention-card hover:shadow-md transition-all">
       <CardHeader className="pb-3">
@@ -57,14 +97,17 @@ export function SocialMentionCard({ mention, showPlatformBadge = false, classNam
             <span className="text-lg">{platformIcons[mention.platform] || "📱"}</span>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm">{mention.politician_name}</span>
+                <span className="font-semibold text-sm">{getAuthorName()}</span>
+                {getAuthorHandle() && (
+                  <span className="text-xs text-muted-foreground">{getAuthorHandle()}</span>
+                )}
                 <Badge variant="outline" className="text-xs">
-                  {mention.mention_type === "post" ? "Post Oficial" : 
+                  {mention.mention_type === "post" ? "Post do político" : 
                    mention.mention_type === "mention" ? "Menção" : "Comentário"}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">
-                {format(new Date(mention.timestamp), "PPp", { locale: ptBR })}
+                {format(new Date(mention.timestamp), "PPp", { locale: ptBR })} • {mention.mention_type === 'post' ? `Alvo: ${mention.politician_name}` : `Menciona: ${mention.politician_name}`}
               </p>
             </div>
           </div>

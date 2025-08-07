@@ -12,6 +12,11 @@ export interface SocialMention {
   sentiment: "positive" | "negative" | "neutral";
   reach_estimate: number;
   engagement_score: number;
+  // Optional author metadata extracted from the source
+  author_name?: string;
+  author_username?: string;
+  author_profile_image_url?: string;
+  author_url?: string;
   raw_data?: any;
 }
 
