@@ -12,7 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Requests from "./pages/Requests";
 import Reports from "./pages/Reports";
 import Insights from "./pages/Insights";
-import WhatsApp from "./pages/WhatsApp";
+import Omnichannel from "./pages/Omnichannel";
 import UrgencyOffice from "./pages/UrgencyOffice";
 import Citizens from "./pages/Citizens";
 import Appointments from "./pages/Appointments";
@@ -40,7 +40,7 @@ const App = () => (
               <Route path="/requests" element={<DashboardLayout><Requests /></DashboardLayout>} />
               <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>} />
               <Route path="/insights" element={<DashboardLayout><Insights /></DashboardLayout>} />
-              <Route path="/whatsapp" element={<DashboardLayout><WhatsApp /></DashboardLayout>} />
+              <Route path="/whatsapp" element={<DashboardLayout><Omnichannel /></DashboardLayout>} />
               <Route path="/urgency-office" element={<DashboardLayout><UrgencyOffice /></DashboardLayout>} />
               <Route path="/citizens" element={<DashboardLayout><Citizens /></DashboardLayout>} />
               <Route path="/appointments" element={<DashboardLayout><Appointments /></DashboardLayout>} />
