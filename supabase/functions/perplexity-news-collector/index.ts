@@ -615,6 +615,8 @@ serve(async (req) => {
       articles: processedArticles,
       target: targetInfo,
       date: today,
+      config: { searchScope, recency, domainWhitelist: domainWhitelist || null, regionalSources },
+      queries: queriesRecorded,
       debug: 'Coleta personalizada executada com sucesso'
     };
     };
