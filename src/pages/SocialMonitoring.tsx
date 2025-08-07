@@ -213,7 +213,7 @@ const SocialMonitoring = () => {
     
     // Verificar se já está sendo monitorado
     const isAlreadyMonitored = monitoredPoliticians.some(p => 
-      p.nome === politician.nome
+      p.nome === politician.nome && p.cidade === politician.cidade
     );
     
     if (isAlreadyMonitored) {
@@ -221,17 +221,20 @@ const SocialMonitoring = () => {
       return;
     }
     
-    // Adicionar à lista de monitorados
+    // Garantir que o político tenha todas as propriedades necessárias
     const newPolitician = {
       ...politician,
+      id: politician.id || Date.now().toString(),
       addedAt: new Date().toISOString(),
-      isActive: true
+      isActive: true,
+      avatar: politician.avatar || politician.avatarUrl || null,
+      keywords: politician.keywords || [politician.nome]
     };
     
     setMonitoredPoliticians(prev => [...prev, newPolitician]);
-    setSelectedPolitician(politician);
+    setSelectedPolitician(newPolitician);
     
-    toast.success(`${politician.nome} adicionado ao monitoramento social!`);
+    toast.success(`✅ ${politician.nome} adicionado ao monitoramento social!`);
   };
 
   // Função para buscar político diretamente (para permitir busca livre)
@@ -289,6 +292,13 @@ const SocialMonitoring = () => {
       });
       
       if (error) {
+        // Verificar se é erro de rate limit
+        if (error.message?.includes('Too Many Requests') || 
+            error.message?.includes('Rate limit') ||
+            error.message?.includes('429')) {
+          toast.warning(`⚠️ Rate limit atingido na API do Twitter. Tente novamente em alguns minutos.`);
+          return;
+        }
         throw error;
       }
       
@@ -297,9 +307,14 @@ const SocialMonitoring = () => {
       const results = data.results || {};
       const successful = Object.keys(results).filter(platform => results[platform]?.success);
       const failed = Object.keys(results).filter(platform => !results[platform]?.success);
+      const rateLimited = Object.keys(results).filter(platform => 
+        results[platform]?.error?.includes('Too Many Requests') ||
+        results[platform]?.error?.includes('Rate limit') ||
+        results[platform]?.error?.includes('429')
+      );
       
       if (successful.length > 0) {
-        toast.success(`Coleta realizada com sucesso! Dados coletados do ${successful.join(', ')}`);
+        toast.success(`✅ Coleta realizada com sucesso! Dados coletados do ${successful.join(', ')}`);
         
         // Forçar atualização dos componentes dependentes após alguns segundos
         setTimeout(() => {
@@ -310,15 +325,27 @@ const SocialMonitoring = () => {
         }, 3000);
       }
       
-      if (failed.length > 0) {
+      if (rateLimited.length > 0) {
+        toast.warning(`⚠️ Rate limit atingido em: ${rateLimited.join(', ')}. Tente novamente em alguns minutos.`);
+      }
+      
+      if (failed.length > 0 && rateLimited.length === 0) {
         const errors = failed.map(platform => `${platform}: ${results[platform]?.error || 'Erro desconhecido'}`);
-        toast.error(`Falha em algumas plataformas: ${errors.join(', ')}`);
+        toast.error(`❌ Falha em algumas plataformas: ${errors.join(', ')}`);
         console.error('Erros por plataforma:', errors);
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao coletar menções:', error);
-      toast.error("Erro ao coletar menções. Verifique as configurações da API.");
+      
+      // Verificar se é erro de rate limit no catch geral
+      if (error.message?.includes('Too Many Requests') || 
+          error.message?.includes('Rate limit') ||
+          error.message?.includes('429')) {
+        toast.warning(`⚠️ Rate limit atingido na API. Tente novamente em alguns minutos.`);
+      } else {
+        toast.error("❌ Erro ao coletar menções. Verifique as configurações da API.");
+      }
     } finally {
       setIsCollecting(false);
     }

@@ -66,23 +66,17 @@ export function SocialPoliticianCard({
   const getPoliticianAvatar = (nome: string) => {
     switch (nome) {
       case 'Ricardo Nunes':
-        return '/lovable-uploads/e8407b5a-3324-4fad-ae94-1c4214ff64da.png';
-      case 'Eduardo Paes':
-        return '/lovable-uploads/eceb707c-015a-4cb2-b488-493c9c6b5cac.png';
+        return '/lovable-uploads/6f653b9a-a318-4b80-955c-4f7b4de6634c.png';
       case 'João Campos':
         return '/lovable-uploads/990eb197-9e97-4050-9ad7-41f0539e7ba8.png';
-      case 'Bruno Reis':
-        return '/lovable-uploads/0d511335-415f-4a36-a437-3354866c9612.png';
-      case 'Suéllen Rosim':
-        return '/lovable-uploads/6f653b9a-a318-4b80-955c-4f7b4de6634c.png';
-      case 'Fábio Leite':
+      case 'José Sarto':
+        return '/lovable-uploads/f6d35a9d-205a-4556-ac06-3f9fbd151298.png';
+      case 'Tarcísio Gomes de Freitas':
         return '/lovable-uploads/9c090c37-0d6e-4699-9cc5-028de5640b9a.png';
       case 'Guto Issa':
-        return '/lovable-uploads/f6d35a9d-205a-4556-ac06-3f9fbd151298.png';
-      case 'Ivana Camarinha':
-        return '/lovable-uploads/67267154-40d4-465f-aa9d-fcca131002f0.png';
-      case 'Tarcísio Gomes de Freitas':
         return '/lovable-uploads/dc683cc5-b8bf-4311-9698-3337b29889e5.png';
+      case 'Suéllen Silva Rosim':
+        return '/lovable-uploads/425f80f3-21ac-4eef-984d-ba432848be17.png';
       default:
         return politician.avatar;
     }

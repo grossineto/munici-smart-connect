@@ -175,11 +175,12 @@ export function SearchPoliticianInput({
     // Em uma implementação real, isso faria uma busca na API do Twitter
     // por agora, retornamos um avatar baseado no nome
     const avatarMap: Record<string, string> = {
-      "Luiz Inácio Lula da Silva": "/lovable-uploads/0d511335-415f-4a36-a437-3354866c9612.png",
-      "Jair Messias Bolsonaro": "/lovable-uploads/15e88a34-c752-40da-b211-dbf4235418f1.png",
       "Ricardo Nunes": "/lovable-uploads/6f653b9a-a318-4b80-955c-4f7b4de6634c.png",
-      "João Campos": "/lovable-uploads/dc683cc5-b8bf-4311-9698-3337b29889e5.png",
-      "José Sarto": "/lovable-uploads/e8407b5a-3324-4fad-ae94-1c4214ff64da.png",
+      "João Campos": "/lovable-uploads/990eb197-9e97-4050-9ad7-41f0539e7ba8.png",
+      "José Sarto": "/lovable-uploads/f6d35a9d-205a-4556-ac06-3f9fbd151298.png",
+      "Tarcísio Gomes de Freitas": "/lovable-uploads/9c090c37-0d6e-4699-9cc5-028de5640b9a.png",
+      "Guto Issa": "/lovable-uploads/dc683cc5-b8bf-4311-9698-3337b29889e5.png",
+      "Suéllen Silva Rosim": "/lovable-uploads/425f80f3-21ac-4eef-984d-ba432848be17.png"
     };
     
     return avatarMap[nome] || null;
