@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Search, Users, Download, Twitter, Instagram, Facebook, Music, TrendingUp, CheckCircle, Clock, AlertCircle, X } from "lucide-react";
+import { RefreshCw, Search, Users, Download, Twitter, Instagram, Facebook, Music, TrendingUp, CheckCircle, Clock, AlertCircle, X, UserPlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import { ExportTools } from "@/components/ExportTools";
 import { SocialMentionsList } from "@/components/SocialMentionsList";
 import { PoliticianMiniDashboard } from "@/components/PoliticianMiniDashboard";
 import { useSocialMentions, useSocialStats } from "@/hooks/useSocialMonitor";
+import { ManualPoliticianInput } from "@/components/ManualPoliticianInput";
 
 const SocialMonitoring = () => {
   const [isCollecting, setIsCollecting] = useState(false);
@@ -25,6 +26,7 @@ const SocialMonitoring = () => {
   
   const [keywords, setKeywords] = useState<any[]>([]);
   const [showDetailedView, setShowDetailedView] = useState(false);
+  const [showManualInput, setShowManualInput] = useState(false);
 
   // Hook para carregar dados reais do banco
   const { data: socialMentions, isLoading: mentionsLoading } = useSocialMentions(
@@ -388,7 +390,7 @@ const SocialMonitoring = () => {
               <div className="flex-1">
                 <SearchPoliticianInput
                   onSelectPolitician={handleSelectPolitician}
-                  placeholder="Digite o nome de qualquer político..."
+                  placeholder="Selecione um dos políticos cadastrados..."
                 />
               </div>
               <Button 
@@ -401,9 +403,20 @@ const SocialMonitoring = () => {
               </Button>
             </div>
             
-            {/* Instruções de uso */}
-            <div className="text-xs text-muted-foreground">
-              💡 Digite qualquer nome de político para buscar diretamente no Twitter ou selecione da lista de sugestões
+            {/* Instruções de uso e botão para adicionar */}
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-muted-foreground">
+                💡 Selecione entre os políticos cadastrados: Ricardo Nunes, João Campos ou José Sarto
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowManualInput(true)}
+                className="text-xs"
+              >
+                <UserPlus className="h-3 w-3 mr-1" />
+                Adicionar Político
+              </Button>
             </div>
             
           </div>
@@ -731,6 +744,14 @@ const SocialMonitoring = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Modal para Input Manual */}
+      {showManualInput && (
+        <ManualPoliticianInput
+          onAddPolitician={handleSelectPolitician}
+          onClose={() => setShowManualInput(false)}
+        />
       )}
     </div>
   );

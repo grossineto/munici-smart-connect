@@ -24,7 +24,7 @@ interface SearchPoliticianInputProps {
 
 export function SearchPoliticianInput({ 
   onSelectPolitician, 
-  placeholder = "Digite o nome de qualquer político...",
+  placeholder = "Selecione um dos políticos cadastrados...",
   disabled = false 
 }: SearchPoliticianInputProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,7 +32,7 @@ export function SearchPoliticianInput({
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
-  // Função para buscar políticos na base local e através da API do Twitter
+  // Função para buscar apenas os 3 políticos cadastrados
   const searchPoliticians = async (query: string) => {
     if (!query || query.length < 2) {
       setSearchResults([]);
@@ -46,9 +46,18 @@ export function SearchPoliticianInput({
     try {
       const queryLower = query.toLowerCase();
       
-      // 1. Buscar na base local primeiro
+      // Buscar apenas nos 3 políticos registrados
+      const registeredPoliticians = ["Ricardo Nunes", "João Campos", "José Sarto"];
+      
       const localResults = Object.entries(mayorData)
         .filter(([cityName, mayor]) => {
+          // Filtrar apenas os 3 políticos cadastrados
+          const isRegistered = registeredPoliticians.some(regName => 
+            mayor.nome.includes(regName) || cityName === regName
+          );
+          
+          if (!isRegistered) return false;
+          
           return (
             cityName.toLowerCase().includes(queryLower) ||
             mayor.nome.toLowerCase().includes(queryLower) ||
@@ -56,7 +65,7 @@ export function SearchPoliticianInput({
             mayor.uf.toLowerCase().includes(queryLower)
           );
         })
-        .slice(0, 5)
+        .slice(0, 3)
         .map(([cityName, mayor]) => ({
           id: cityName,
           nome: cityName,
@@ -65,40 +74,7 @@ export function SearchPoliticianInput({
           source: 'local'
         }));
 
-      // 2. Se poucos resultados locais, buscar também na API do Twitter para auto-complete
-      let twitterResults: any[] = [];
-      if (localResults.length < 3 && query.length >= 3) {
-        try {
-          // Simular busca de usuários do Twitter (aqui você pode integrar a API real)
-          const commonPoliticians = [
-            { nome: "Lula", partido: "PT", cargo: "Presidente", cidade: "Brasil", uf: "BR" },
-            { nome: "Jair Bolsonaro", partido: "PL", cargo: "Ex-Presidente", cidade: "Brasil", uf: "BR" },
-            { nome: "Ciro Gomes", partido: "PDT", cargo: "Político", cidade: "Ceará", uf: "CE" },
-            { nome: "Marina Silva", partido: "REDE", cargo: "Ministra", cidade: "Brasil", uf: "BR" },
-            { nome: "Sergio Moro", partido: "UNIÃO", cargo: "Senador", cidade: "Paraná", uf: "PR" },
-            { nome: "Geraldo Alckmin", partido: "PSB", cargo: "Vice-Presidente", cidade: "Brasil", uf: "BR" },
-            { nome: "Flávio Dino", partido: "PSB", cargo: "Ministro", cidade: "Maranhão", uf: "MA" },
-            { nome: "Alexandre Frota", partido: "PROS", cargo: "Deputado", cidade: "São Paulo", uf: "SP" },
-            { nome: "Tabata Amaral", partido: "PSB", cargo: "Deputada", cidade: "São Paulo", uf: "SP" },
-            { nome: "Kim Kataguiri", partido: "DEM", cargo: "Deputado", cidade: "São Paulo", uf: "SP" },
-          ].filter(pol => 
-            pol.nome.toLowerCase().includes(queryLower)
-          ).slice(0, 3).map(pol => ({
-            id: pol.nome,
-            nome: pol.nome,
-            uf: pol.uf,
-            mayor: pol,
-            source: 'twitter'
-          }));
-          
-          twitterResults = twitterResults;
-        } catch (error) {
-          console.log('Erro ao buscar no Twitter:', error);
-        }
-      }
-
-      const allResults = [...localResults, ...twitterResults];
-      setSearchResults(allResults);
+      setSearchResults(localResults);
       
     } catch (error) {
       console.error('Erro ao buscar políticos:', error);
@@ -117,7 +93,7 @@ export function SearchPoliticianInput({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Base expandida de políticos - cadastro ampliado para suportar mais políticos
+  // Base limitada aos 3 políticos cadastrados na plataforma
   const mayorData: Record<string, Politician> = {
     "Ricardo Nunes": { 
       nome: "Ricardo Nunes", 
@@ -125,54 +101,6 @@ export function SearchPoliticianInput({
       mandato: "2021-2024", 
       cidade: "São Paulo", 
       uf: "SP",
-      cargo: "Prefeito"
-    },
-    "Tarcísio Freitas": { 
-      nome: "Tarcísio Gomes de Freitas", 
-      partido: "Republicanos", 
-      mandato: "2023-2026", 
-      cidade: "São Paulo", 
-      uf: "SP",
-      cargo: "Governador"
-    },
-    "Lula": { 
-      nome: "Luiz Inácio Lula da Silva", 
-      partido: "PT", 
-      mandato: "2023-2026", 
-      cidade: "Brasil", 
-      uf: "BR",
-      cargo: "Presidente"
-    },
-    "Jair Bolsonaro": { 
-      nome: "Jair Messias Bolsonaro", 
-      partido: "PL", 
-      mandato: "2019-2022", 
-      cidade: "Brasil", 
-      uf: "BR",
-      cargo: "Ex-Presidente"
-    },
-    "Rio de Janeiro": { 
-      nome: "Eduardo Paes", 
-      partido: "PSD", 
-      mandato: "2021-2024", 
-      cidade: "Rio de Janeiro", 
-      uf: "RJ",
-      cargo: "Prefeito"
-    },
-    "Belo Horizonte": { 
-      nome: "Fuad Noman", 
-      partido: "PSD", 
-      mandato: "2025-2028", 
-      cidade: "Belo Horizonte", 
-      uf: "MG",
-      cargo: "Prefeito"
-    },
-    "Curitiba": { 
-      nome: "Rafael Greca", 
-      partido: "PMN", 
-      mandato: "2017-2024", 
-      cidade: "Curitiba", 
-      uf: "PR",
       cargo: "Prefeito"
     },
     "Recife": { 
@@ -183,20 +111,12 @@ export function SearchPoliticianInput({
       uf: "PE",
       cargo: "Prefeito"
     },
-    "Porto Alegre": { 
-      nome: "Sebastião Melo", 
-      partido: "MDB", 
+    "João Campos": { 
+      nome: "João Campos", 
+      partido: "PSB", 
       mandato: "2021-2024", 
-      cidade: "Porto Alegre", 
-      uf: "RS",
-      cargo: "Prefeito"
-    },
-    "Salvador": { 
-      nome: "Bruno Reis", 
-      partido: "União Brasil", 
-      mandato: "2021-2024", 
-      cidade: "Salvador", 
-      uf: "BA",
+      cidade: "Recife", 
+      uf: "PE",
       cargo: "Prefeito"
     },
     "Fortaleza": { 
@@ -206,62 +126,6 @@ export function SearchPoliticianInput({
       cidade: "Fortaleza", 
       uf: "CE",
       cargo: "Prefeito"
-    },
-    "Brasília": { 
-      nome: "Ibaneis Rocha", 
-      partido: "MDB", 
-      mandato: "2019-2026", 
-      cidade: "Brasília", 
-      uf: "DF",
-      cargo: "Governador"
-    },
-    "Manaus": { 
-      nome: "David Almeida", 
-      partido: "Avante", 
-      mandato: "2021-2024", 
-      cidade: "Manaus", 
-      uf: "AM",
-      cargo: "Prefeito"
-    },
-    "São Paulo Estado": { 
-      nome: "Tarcísio Gomes de Freitas", 
-      partido: "Republicanos", 
-      mandato: "2023-2026", 
-      cidade: "São Paulo", 
-      uf: "SP",
-      cargo: "Governador"
-    },
-    "Bauru": { 
-      nome: "Suéllen Rosim", 
-      partido: "PSD", 
-      mandato: "2025-2028", 
-      cidade: "Bauru", 
-      uf: "SP",
-      cargo: "Prefeita"
-    },
-    "Botucatu": { 
-      nome: "Fábio Leite", 
-      partido: "PSD", 
-      mandato: "2021-2024", 
-      cidade: "Botucatu", 
-      uf: "SP",
-      cargo: "Prefeito"
-    },
-    "São Roque": { 
-      nome: "Guto Issa", 
-      partido: "PSD", 
-      mandato: "2021-2024", 
-      cidade: "São Roque", 
-      uf: "SP",
-      cargo: "Prefeito"
-    },
-    "Pederneiras": { 
-      nome: "Ivana Camarinha", 
-      partido: "PV", 
-      mandato: "2021-2024", 
-      cidade: "Pederneiras", 
-      uf: "SP",
-      cargo: "Prefeita"
     },
     "José Sarto": { 
       nome: "José Sarto", 
@@ -334,33 +198,14 @@ export function SearchPoliticianInput({
     setShowResults(false);
   };
 
-  // Função para busca direta (qualquer nome)
-  const handleDirectSearch = () => {
-    if (!searchQuery.trim()) return;
-    
-    const directPolitician = {
-      nome: searchQuery.trim(),
-      partido: "N/A",
-      cargo: "Político",
-      cidade: "Brasil",
-      uf: "BR",
-      mandato: "N/A",
-      keywords: [searchQuery.trim()]
-    };
-    
-    onSelectPolitician(directPolitician);
-    setSearchQuery('');
-    setShowResults(false);
-  };
+  // Função removida - não permitimos busca direta
 
-  // Função para lidar com Enter
+  // Função para lidar com Enter - apenas seleção de resultados
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       if (searchResults.length > 0) {
         handlePoliticianSelect(searchResults[0]);
-      } else if (searchQuery.trim()) {
-        handleDirectSearch();
       }
     }
   };
@@ -452,22 +297,13 @@ export function SearchPoliticianInput({
         </Card>
       )}
 
-      {/* Mensagem quando não há resultados - com opção de busca direta */}
+      {/* Mensagem quando não há resultados */}
       {showResults && !isSearching && searchResults.length === 0 && searchQuery.length >= 2 && (
         <Card className="absolute top-full left-0 right-0 mt-2 z-50 shadow-lg border-2">
           <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground text-center mb-3">
-              Nenhum político cadastrado encontrado para "{searchQuery}"
+            <div className="text-sm text-muted-foreground text-center">
+              Político não encontrado. Apenas Ricardo Nunes, João Campos e José Sarto estão disponíveis.
             </div>
-            <Button
-              onClick={handleDirectSearch}
-              variant="outline"
-              size="sm"
-              className="w-full text-sm"
-            >
-              <Search className="h-3 w-3 mr-2" />
-              Buscar "{searchQuery}" diretamente no Twitter
-            </Button>
           </CardContent>
         </Card>
       )}
