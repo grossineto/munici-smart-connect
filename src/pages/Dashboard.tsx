@@ -1,82 +1,126 @@
 
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Users, AlertTriangle, MessageSquare, Calendar, FileText, Phone, Eye, Share2, Newspaper } from "lucide-react";
+import { Newspaper, Share2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { usePoliticians } from "@/contexts/PoliticiansContext";
+import { PoliticianMiniDashboard } from "@/components/PoliticianMiniDashboard";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { politicians, getActivePoliticians } = usePoliticians();
 
-  const stats = [
-    { title: "Solicitações Pendentes", value: "24", change: "+12%", icon: MessageSquare },
-    { title: "Cidadãos Ativos", value: "1,234", change: "+5%", icon: Users },
-    { title: "Urgências Hoje", value: "3", change: "-2%", icon: AlertTriangle },
-    { title: "Agendamentos", value: "18", change: "+8%", icon: Calendar },
-  ];
+  // Prefeitos(as) primeiro
+  const mayorCandidates = useMemo(
+    () => politicians.filter((p) => (p.cargo || "").toLowerCase().includes("prefeit")),
+    [politicians]
+  );
 
-  const quickActions = [
-    { title: "Ver Insights", description: "Análises e tendências da cidade", icon: TrendingUp, path: "/insights" },
-    { title: "Monitorar Notícias", description: "Acompanhe as notícias da região", icon: Newspaper, path: "/news-monitoring" },
-    { title: "Monitorar Redes Sociais", description: "Acompanhe menções e engajamento", icon: Share2, path: "/social-monitoring" },
-    { title: "Gabinete de Urgência", description: "Situações que precisam de atenção", icon: AlertTriangle, path: "/urgency-office" },
-    { title: "WhatsApp", description: "Central de atendimento", icon: Phone, path: "/whatsapp" },
-    { title: "Relatórios", description: "Gere relatórios detalhados", icon: FileText, path: "/reports" },
-  ];
+  const defaultId = useMemo(() => {
+    return (
+      mayorCandidates[0]?.id ||
+      getActivePoliticians("social")[0]?.id ||
+      politicians[0]?.id ||
+      ""
+    );
+  }, [mayorCandidates, getActivePoliticians, politicians]);
+
+  const [selectedId, setSelectedId] = useState<string>(defaultId);
+  const selected = useMemo(() => politicians.find((p) => p.id === selectedId), [politicians, selectedId]);
+
+  useEffect(() => {
+    // SEO: title + meta description + canonical
+    document.title = `Dashboard Prefeito - ${selected?.nome || "BR.I.A.N."}`;
+    const desc = document.querySelector('meta[name="description"]');
+    if (desc) desc.setAttribute("content", `Painel do prefeito ${selected?.nome || ""}: notícias, redes e Omnichannel.`);
+    let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!link) {
+      link = document.createElement("link");
+      link.setAttribute("rel", "canonical");
+      document.head.appendChild(link);
+    }
+    link!.setAttribute("href", window.location.href);
+  }, [selected?.nome]);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard do Prefeito</h1>
         <p className="text-muted-foreground">
-          Bem-vindo ao painel de controle do BR.I.A.N.
+          Monitorando: {selected?.nome} {selected ? `• ${selected.cidade} - ${selected.uf}` : ""}
         </p>
-      </div>
+      </header>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">
-                {stat.change} em relação ao mês anterior
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Quick Actions */}
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Ações Rápidas</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {quickActions.map((action) => (
-            <Card key={action.title} className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-center space-x-2">
-                  <action.icon className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">{action.title}</CardTitle>
-                </div>
-                <CardDescription>{action.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate(action.path)}
-                  className="w-full"
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  Acessar
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+      {/* Seletor de Prefeito */}
+      <section className="grid gap-3 md:grid-cols-2 items-end">
+        <div>
+          <label className="block text-sm text-muted-foreground mb-2">Selecionar prefeito(a)</label>
+          <Select value={selectedId} onValueChange={setSelectedId}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Escolha o prefeito" />
+            </SelectTrigger>
+            <SelectContent>
+              {mayorCandidates.length > 0 ? (
+                mayorCandidates.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.nome} • {p.cidade}/{p.uf}</SelectItem>
+                ))
+              ) : (
+                politicians.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.nome} • {p.cidade}/{p.uf}</SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
         </div>
-      </div>
+      </section>
+
+      {/* Visão rápida (Social) */}
+      {selected && (
+        <section>
+          <PoliticianMiniDashboard politicianName={selected.nome} />
+        </section>
+      )}
+
+      {/* Blocos de Notícias e Omnichannel */}
+      <main className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Monitoramento de Notícias</CardTitle>
+                <CardDescription>Resumo e análises sobre {selected?.nome}</CardDescription>
+              </div>
+              <Newspaper className="h-5 w-5 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-3">
+              Integração ativa com coleta de notícias. Acesse a visualização detalhada para ver matérias, veículos e sentimento.
+            </p>
+            <Button variant="outline" className="w-full" onClick={() => navigate("/news-monitoring")}>Ver notícias</Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Omnichannel</CardTitle>
+                <CardDescription>Atendimento automatizado por IA (white label)</CardDescription>
+              </div>
+              <Share2 className="h-5 w-5 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-3">
+              Preparado para integrar com a plataforma de IA. Esta área consolidará conversas e indicadores por canal para {selected?.nome}.
+            </p>
+            <Button className="w-full" onClick={() => navigate("/whatsapp")}>Abrir Omnichannel</Button>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
 };
