@@ -121,10 +121,7 @@ useEffect(() => {
   setKeywords(defaultKeywordList);
 }, [politicianId, initialKeywords]);
 
-  // Notificar mudanças
-  useEffect(() => {
-    onKeywordsChange?.(keywords);
-  }, [keywords, onKeywordsChange]);
+// (removido) Evitar loop: agora notificamos apenas em ações do usuário
 
   const addKeyword = () => {
     if (!newKeyword.trim()) return;
@@ -137,7 +134,9 @@ useEffect(() => {
       active: true
     };
 
-    setKeywords(prev => [...prev, keyword]);
+    const next = [...keywords, keyword];
+    setKeywords(next);
+    onKeywordsChange?.(next);
     setNewKeyword('');
     
     toast({
@@ -149,7 +148,9 @@ useEffect(() => {
 
   const removeKeyword = (keywordId: string) => {
     const keyword = keywords.find(k => k.id === keywordId);
-    setKeywords(prev => prev.filter(k => k.id !== keywordId));
+    const next = keywords.filter(k => k.id !== keywordId);
+    setKeywords(next);
+    onKeywordsChange?.(next);
     
     if (keyword) {
       toast({
@@ -161,9 +162,11 @@ useEffect(() => {
   };
 
   const toggleKeyword = (keywordId: string) => {
-    setKeywords(prev => prev.map(k => 
+    const next = keywords.map(k => 
       k.id === keywordId ? { ...k, active: !k.active } : k
-    ));
+    );
+    setKeywords(next);
+    onKeywordsChange?.(next);
   };
 
   const getKeywordsByCategory = (categoryId: string) => {
