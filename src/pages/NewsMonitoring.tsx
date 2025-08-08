@@ -18,6 +18,7 @@ import { RecentSuggestions } from "@/components/RecentSuggestions";
 import { AdvancedSearchFilters } from "@/components/AdvancedSearchFilters";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { PerplexitySettings, PerplexityConfig } from "@/components/PerplexitySettings";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 function NewsMonitoring() {
   const { toast } = useToast();
@@ -556,16 +557,40 @@ function NewsMonitoring() {
       {/* Header Profissional */}
       <div className="border-b-2 border-muted bg-card shadow-sm">
         <div className="container mx-auto px-6 py-8">
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Newspaper className="h-6 w-6 text-primary" />
+          <div className="mb-8 flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Newspaper className="h-6 w-6 text-primary" />
+                </div>
+                <h1 className="text-3xl font-bold text-foreground">Monitoramento de Notícias</h1>
               </div>
-              <h1 className="text-3xl font-bold text-foreground">Monitoramento de Notícias</h1>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Inteligência em tempo real sobre políticos em atividade e impactos na administração pública
+              </p>
             </div>
-            <p className="text-muted-foreground text-lg leading-relaxed">
-              Inteligência em tempo real sobre políticos em atividade e impactos na administração pública
-            </p>
+
+            <div className="shrink-0">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Brain className="h-4 w-4" />
+                    Configurações da Perplexity
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Configurações da Perplexity</DialogTitle>
+                  </DialogHeader>
+                  <PerplexitySettings value={perplexityConfig} onChange={setPerplexityConfig} />
+                  <div className="flex justify-end">
+                    <Button onClick={runPerplexityNews} className="gap-2">
+                      <Search className="h-4 w-4" /> Coletar agora
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           {/* Nova Seção de Seleção de Político */}
@@ -659,10 +684,7 @@ function NewsMonitoring() {
         </Card>
       )}
 
-      <PerplexitySettings 
-        value={perplexityConfig} 
-        onChange={setPerplexityConfig} 
-      />
+{/* Configurações movidas para o botão no topo (Dialog) */}
 
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
