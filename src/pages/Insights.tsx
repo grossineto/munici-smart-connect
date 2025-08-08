@@ -68,19 +68,33 @@ const Insights = () => {
     loadInsightsData();
   }, []);
 
-  // Debounce para evitar recriação constante do mapa
+  // Estado para controle de inicialização do mapa
+  const [mapReady, setMapReady] = useState(false);
+
+  // Carregar token salvo e inicializar automaticamente se existir
   useEffect(() => {
+    const saved = localStorage.getItem('mapbox_public_token');
+    if (saved) setMapboxToken(saved);
+  }, []);
+
+  // Inicializar mapa quando o token estiver disponível e o container existir
+  useEffect(() => {
+    if (mapReady) return;
     if (!mapboxToken) return;
-    
-    const timeoutId = setTimeout(() => {
+    if (!mapContainer.current) return;
+    if (map.current) return;
+    initializeMap();
+  }, [mapboxToken]);
+
+  // Cleanup do mapa ao desmontar
+  useEffect(() => {
+    return () => {
       if (map.current) {
         map.current.remove();
         map.current = null;
       }
-    }, 1000); // Aguarda 1 segundo após parar de digitar
-
-    return () => clearTimeout(timeoutId);
-  }, [mapboxToken]);
+    };
+  }, []);
 
   const loadInsightsData = async () => {
     try {
@@ -313,6 +327,10 @@ const Insights = () => {
     if (!mapContainer.current || !mapboxToken) return;
 
     mapboxgl.accessToken = mapboxToken;
+    // Persistir token para uso futuro
+    try {
+      localStorage.setItem('mapbox_public_token', mapboxToken);
+    } catch {}
     
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -337,6 +355,7 @@ const Insights = () => {
         .addTo(map.current!);
     });
 
+    setMapReady(true);
     setShowTokenInput(false);
   };
 
@@ -395,7 +414,7 @@ const Insights = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!mapboxToken ? (
+          {!mapReady ? (
             <div className="text-center py-8">
               <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="mb-4">Para visualizar o mapa, insira seu token do Mapbox</p>
@@ -409,6 +428,7 @@ const Insights = () => {
                     placeholder="Cole seu token público do Mapbox aqui"
                     value={mapboxToken}
                     onChange={(e) => setMapboxToken(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') initializeMap(); }}
                   />
                   <div className="flex gap-2">
                     <Button onClick={initializeMap} className="flex-1">
