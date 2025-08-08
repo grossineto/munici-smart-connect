@@ -19,9 +19,11 @@ import { AdvancedSearchFilters } from "@/components/AdvancedSearchFilters";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { PerplexitySettings, PerplexityConfig } from "@/components/PerplexitySettings";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/useAuth";
 
 function NewsMonitoring() {
   const { toast } = useToast();
+  const { user } = useAuth();
   
   // Estados principais
   const [alerts, setAlerts] = useState<any[]>([]);
@@ -54,11 +56,87 @@ function NewsMonitoring() {
     scope: 'amplo',
     deduplicate: true,
   });
+  const [savingSettings, setSavingSettings] = useState(false);
 
 
 
 
 
+
+  // Carregar/Salvar configurações da Perplexity
+  useEffect(() => {
+    (async () => {
+      try {
+        const tenantId = await getCurrentTenantId();
+        if (!tenantId || !user) return;
+        const { data, error } = await supabase
+          .from('perplexity_settings' as any)
+          .select('recency, scope, max_articles, deduplicate')
+          .eq('tenant_id', tenantId)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (error) {
+          console.error('Erro ao carregar configs Perplexity:', error);
+          return;
+        }
+        if (data) {
+          const row: any = data as any;
+          setPerplexityConfig({
+            recency: row.recency as PerplexityConfig['recency'],
+            scope: row.scope as PerplexityConfig['scope'],
+            maxArticles: row.max_articles,
+            deduplicate: row.deduplicate,
+          });
+        }
+      } catch (e) {
+        console.error('Erro geral ao carregar configs Perplexity:', e);
+      }
+    })();
+  }, [user]);
+
+  const savePerplexitySettings = async () => {
+    try {
+      setSavingSettings(true);
+      const tenantId = await getCurrentTenantId();
+      if (!tenantId || !user) {
+        toast({
+          title: 'Sessão inválida',
+          description: 'Faça login novamente.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const payload = {
+        user_id: user.id,
+        tenant_id: tenantId,
+        recency: perplexityConfig.recency,
+        scope: perplexityConfig.scope,
+        max_articles: perplexityConfig.maxArticles,
+        deduplicate: perplexityConfig.deduplicate,
+      };
+
+      const { error } = await supabase
+        .from('perplexity_settings' as any)
+        .upsert(payload, { onConflict: 'user_id,tenant_id' });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Configurações salvas',
+        description: 'Usaremos estas preferências ao iniciar a análise.',
+      });
+    } catch (error) {
+      console.error('Erro ao salvar configs Perplexity:', error);
+      toast({
+        title: 'Erro ao salvar',
+        description: 'Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   // Função para carregar dados gerais
   const loadData = async () => {
@@ -582,8 +660,8 @@ function NewsMonitoring() {
 
                   <PerplexitySettings value={perplexityConfig} onChange={setPerplexityConfig} />
                   <div className="flex justify-end">
-                    <Button onClick={runPerplexityNews} className="gap-2">
-                      <Search className="h-4 w-4" /> Coletar agora
+                    <Button onClick={savePerplexitySettings} className="gap-2" disabled={savingSettings}>
+                      <CheckCircle className={`h-4 w-4 ${savingSettings ? 'animate-spin' : ''}`} /> {savingSettings ? 'Salvando...' : 'Salvar'}
                     </Button>
                   </div>
                 </DialogContent>
