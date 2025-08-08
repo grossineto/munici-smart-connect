@@ -42,10 +42,11 @@ serve(async (req) => {
       );
     }
 
-    // Obter lista de políticos do request
-    let politicians = [
+    // Obter lista de políticos e tenant do request
+    let politicians: any[] = [
       { name: 'Ricardo Nunes', keywords: ['Ricardo Nunes', 'prefeito São Paulo'] }
     ];
+    let tenantId: string | null = null;
 
     try {
       const body = await req.json();
@@ -53,8 +54,18 @@ serve(async (req) => {
         politicians = body.politicians;
         console.log('Usando políticos personalizados:', politicians);
       }
+      if (typeof body.tenantId === 'string') {
+        tenantId = body.tenantId;
+      }
     } catch (error) {
       console.log('Usando lista padrão de políticos');
+    }
+
+    if (!tenantId) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'tenantId é obrigatório' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Iniciando coleta de menções do Instagram...');
@@ -106,6 +117,7 @@ serve(async (req) => {
           const { error } = await supabase
             .from('social_mentions')
             .insert({
+              tenant_id: tenantId,
               platform: 'instagram',
               politician_name: politician.name || politician,
               content: post.caption || '',

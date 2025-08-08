@@ -19,8 +19,9 @@ serve(async (req) => {
     );
 
     // Obter parâmetros do request
-    let politicians = [];
-    let platforms = ['twitter', 'instagram', 'facebook', 'tiktok'];
+    let politicians: any[] = [];
+    let platforms: string[] = ['twitter', 'instagram', 'facebook', 'tiktok'];
+    let tenantId: string | null = null;
 
     try {
       const body = await req.json();
@@ -30,8 +31,18 @@ serve(async (req) => {
       if (body.platforms && Array.isArray(body.platforms)) {
         platforms = body.platforms;
       }
+      if (typeof body.tenantId === 'string') {
+        tenantId = body.tenantId;
+      }
     } catch (error) {
       console.log('Usando configurações padrão');
+    }
+
+    if (!tenantId) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'tenantId é obrigatório' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Iniciando coleta de todas as redes sociais...');
@@ -72,7 +83,7 @@ serve(async (req) => {
         console.log(`Iniciando coleta do ${platform}...`);
         
         const { data, error } = await supabase.functions.invoke(`fetch-${platform}-mentions`, {
-          body: { politicians }
+          body: { politicians, tenantId }
         });
         
         if (error) {

@@ -45,14 +45,15 @@ serve(async (req) => {
       throw new Error('TWITTER_BEARER_TOKEN não configurado');
     }
 
-    // Obter lista de políticos do request (ou usar lista padrão)
-    let politicians = [
+    // Obter lista de políticos e tenant do request (ou usar lista padrão)
+    let politicians: any[] = [
       'João Dória',
       'Rodrigo Garcia', 
       'Fernando Haddad',
       'Bruno Covas',
       'Ricardo Nunes'
     ];
+    let tenantId: string | null = null;
 
     // Se houver políticos específicos no body da requisição, usar eles
     try {
@@ -61,8 +62,18 @@ serve(async (req) => {
         politicians = body.politicians;
         console.log('Usando políticos personalizados:', politicians);
       }
+      if (typeof body.tenantId === 'string') {
+        tenantId = body.tenantId;
+      }
     } catch (error) {
       console.log('Usando lista padrão de políticos');
+    }
+
+    if (!tenantId) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'tenantId é obrigatório' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Iniciando coleta de menções do Twitter...');
@@ -163,6 +174,7 @@ serve(async (req) => {
               const { error } = await supabase
                 .from('social_mentions')
                 .insert({
+                  tenant_id: tenantId,
                   platform: 'twitter',
                   politician_name: politicianName,
                   content: tweet.text,

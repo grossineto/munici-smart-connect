@@ -51,14 +51,15 @@ serve(async (req) => {
       );
     }
 
-    // Obter lista de políticos do request
-    let politicians = [
+    // Obter lista de políticos e tenant do request
+    let politicians: any[] = [
       'João Dória',
       'Rodrigo Garcia', 
       'Fernando Haddad',
       'Bruno Covas',
       'Ricardo Nunes'
     ];
+    let tenantId: string | null = null;
 
     try {
       const body = await req.json();
@@ -66,8 +67,18 @@ serve(async (req) => {
         politicians = body.politicians;
         console.log('Usando políticos personalizados:', politicians);
       }
+      if (typeof body.tenantId === 'string') {
+        tenantId = body.tenantId;
+      }
     } catch (error) {
       console.log('Usando lista padrão de políticos');
+    }
+
+    if (!tenantId) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'tenantId é obrigatório' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Iniciando coleta de menções do TikTok...');

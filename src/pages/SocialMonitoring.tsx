@@ -18,6 +18,7 @@ import { SocialMentionsList } from "@/components/SocialMentionsList";
 import { PoliticianMiniDashboard } from "@/components/PoliticianMiniDashboard";
 import { useSocialMentions, useSocialStats } from "@/hooks/useSocialMonitor";
 import { ManualPoliticianInput } from "@/components/ManualPoliticianInput";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 const SocialMonitoring = () => {
   const [isCollecting, setIsCollecting] = useState(false);
@@ -310,6 +311,11 @@ const SocialMonitoring = () => {
 
     setIsCollecting(true);
     try {
+      const tenantId = await getCurrentTenantId();
+      if (!tenantId) {
+        toast.error("Sem tenant vinculado à sua conta. Contate o suporte.");
+        return;
+      }
       // Preparar políticos com suas palavras-chave específicas
       const politiciansWithKeywords = monitoredPoliticians.map(p => ({
         name: p.nome,
@@ -321,7 +327,8 @@ const SocialMonitoring = () => {
       const { data, error } = await supabase.functions.invoke('fetch-all-social-mentions', {
         body: { 
           politicians: politiciansWithKeywords,
-          platforms: ['twitter', 'instagram', 'facebook', 'tiktok']
+          platforms: ['twitter', 'instagram', 'facebook', 'tiktok'],
+          tenantId
         }
       });
       
