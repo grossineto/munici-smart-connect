@@ -63,6 +63,7 @@ const Insights = () => {
   const [showTokenInput, setShowTokenInput] = useState(false);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
 
   useEffect(() => {
     loadInsightsData();
@@ -342,26 +343,57 @@ const Insights = () => {
   const initializeMap = () => {
     if (!mapContainer.current || !mapboxToken) return;
 
-    mapboxgl.accessToken = mapboxToken;
-    // Persistir token para uso futuro
+    // Persist token
+    try { localStorage.setItem('mapbox_public_token', mapboxToken); } catch {}
+
     try {
-      localStorage.setItem('mapbox_public_token', mapboxToken);
-    } catch {}
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: [-46.6333, -23.5505], // São Paulo como centro
-      zoom: 10
-    });
+      // Destroy previous instance just in case
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      mapboxgl.accessToken = mapboxToken;
+      const instance = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: [-46.6333, -23.5505],
+        zoom: 10,
+        attributionControl: true,
+      });
 
-    // Adicionar marcadores para áreas urgentes
+      instance.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+
+      instance.on('load', () => {
+        map.current = instance;
+        setMapReady(true);
+        // Ensure proper sizing after first paint
+        setTimeout(() => instance.resize(), 0);
+      });
+
+    } catch (err) {
+      console.error('Erro ao inicializar o Mapbox:', err);
+      setMapReady(false);
+      toast({
+        title: 'Erro ao inicializar mapa',
+        description: 'Verifique o token do Mapbox e tente novamente.',
+        variant: 'destructive',
+      });
+    }
+
+    setShowTokenInput(false);
+  };
+
+  // Adicionar/atualizar marcadores quando os dados mudarem e o mapa estiver pronto
+  useEffect(() => {
+    if (!mapReady || !map.current) return;
+    // Limpar marcadores antigos
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
+
     insights.urgentAreas.forEach((area, index) => {
       const color = area.severity === 'high' ? '#ef4444' : area.severity === 'medium' ? '#f59e0b' : '#22c55e';
-      
-      new mapboxgl.Marker({ color })
+      const marker = new mapboxgl.Marker({ color })
         .setLngLat([-46.6333 + (index - 3) * 0.1, -23.5505 + (index % 2) * 0.1])
         .setPopup(new mapboxgl.Popup().setHTML(`
           <h3>${area.region}</h3>
@@ -369,11 +401,9 @@ const Insights = () => {
           <p>Problema principal: ${area.primaryIssue}</p>
         `))
         .addTo(map.current!);
+      markersRef.current.push(marker);
     });
-
-    setMapReady(true);
-    setShowTokenInput(false);
-  };
+  }, [insights.urgentAreas, mapReady]);
 
   const exportInsights = () => {
     const data = {
