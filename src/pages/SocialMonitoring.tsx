@@ -327,7 +327,8 @@ const SocialMonitoring = () => {
       const { data, error } = await supabase.functions.invoke('fetch-all-social-mentions', {
         body: { 
           politicians: politiciansWithKeywords,
-          platforms: ['twitter', 'instagram', 'facebook', 'tiktok'],
+          // Limitação temporária solicitada: coletar apenas do Twitter
+          platforms: ['twitter'],
           tenantId
         }
       });
