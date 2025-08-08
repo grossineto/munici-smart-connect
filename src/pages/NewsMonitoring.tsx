@@ -17,6 +17,7 @@ import { StartAnalysisButton } from "@/components/StartAnalysisButton";
 import { RecentSuggestions } from "@/components/RecentSuggestions";
 import { AdvancedSearchFilters } from "@/components/AdvancedSearchFilters";
 import { getCurrentTenantId } from "@/lib/tenant";
+import { PerplexitySettings, PerplexityConfig } from "@/components/PerplexitySettings";
 
 function NewsMonitoring() {
   const { toast } = useToast();
@@ -45,6 +46,14 @@ function NewsMonitoring() {
     crisisPotential: false
   });
   const [showFilters, setShowFilters] = useState(false);
+
+  const [perplexityConfig, setPerplexityConfig] = useState<PerplexityConfig>({
+    recency: 'week',
+    maxArticles: 3,
+    scope: 'amplo',
+    domains: '',
+    deduplicate: true,
+  });
 
   // Função para carregar dados gerais
   const loadData = async () => {
@@ -298,8 +307,22 @@ function NewsMonitoring() {
     try {
       setIsCollecting(true);
       
+      const tenantId = await getCurrentTenantId();
+      const settings = {
+        recency: perplexityConfig.recency,
+        maxArticles: perplexityConfig.maxArticles,
+        scope: perplexityConfig.scope,
+        domains: perplexityConfig.domains
+          .split(',')
+          .map((d) => d.trim())
+          .filter(Boolean),
+        deduplicate: perplexityConfig.deduplicate,
+      };
+      
       const { data, error } = await supabase.functions.invoke('perplexity-news-collector', {
         body: { 
+          tenantId,
+          settings,
           mayor: selectedPolitician ? {
             mayorName: selectedPolitician.nome,
             cityName: selectedPolitician.cidade,
@@ -365,8 +388,22 @@ function NewsMonitoring() {
         setTimeout(() => reject(new Error('Timeout local: Coleta excedeu 4 minutos')), 240000);
       });
       
+      const tenantId = await getCurrentTenantId();
+      const settings = {
+        recency: perplexityConfig.recency,
+        maxArticles: perplexityConfig.maxArticles,
+        scope: perplexityConfig.scope,
+        domains: perplexityConfig.domains
+          .split(',')
+          .map((d) => d.trim())
+          .filter(Boolean),
+        deduplicate: perplexityConfig.deduplicate,
+      };
+      
       const collectionPromise = supabase.functions.invoke('perplexity-news-collector', {
         body: { 
+          tenantId,
+          settings,
           mayor: {
             nome: politician.nome,
             cidade: politician.cidade,
@@ -622,6 +659,10 @@ function NewsMonitoring() {
         </Card>
       )}
 
+      <PerplexitySettings 
+        value={perplexityConfig} 
+        onChange={setPerplexityConfig} 
+      />
 
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
