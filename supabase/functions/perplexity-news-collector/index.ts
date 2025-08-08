@@ -115,6 +115,12 @@ serve(async (req) => {
       const searchScope: 'city' | 'region' | 'state' = body.searchScope || 'city';
       const recency: 'today' | 'week' = body.recency || 'today';
       const domainWhitelist: string[] | undefined = Array.isArray(body.domainWhitelist) ? body.domainWhitelist : undefined;
+      const tenantId: string | null = typeof body.tenantId === 'string' ? body.tenantId : null;
+
+      if (!tenantId) {
+        console.error('❌ tenantId ausente no corpo da requisição');
+        return new Response(JSON.stringify({ success: false, error: 'tenantId é obrigatório' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
       
       if (mayor) {
         console.log(`📊 COLETA PERSONALIZADA PARA: ${mayor.nome || mayor.mayorName} - ${mayor.cidade || mayor.cityName}/${mayor.uf || mayor.state} • escopo=${searchScope} • recency=${recency}`);
@@ -323,6 +329,7 @@ serve(async (req) => {
                 author: source,
                 content: resumo,
                 published_at: new Date().toISOString(),
+                tenant_id: tenantId,
               })
               .select()
               .single();
@@ -430,7 +437,8 @@ serve(async (req) => {
                   related_municipal_areas: ['Gabinete do Prefeito'],
                   media_monitoring_focus: 'Acompanhar repercussão',
                   citizen_impact: 'Impacto a ser avaliado',
-                  political_opportunity: 'Aguardando análise'
+                  political_opportunity: 'Aguardando análise',
+                  tenant_id: tenantId,
                 });
 
               if (analysisError) {
@@ -482,7 +490,8 @@ serve(async (req) => {
                   related_municipal_areas: ['Gabinete do Prefeito'],
                   media_monitoring_focus: analysis.media_monitoring_focus,
                   citizen_impact: analysis.citizen_impact,
-                  political_opportunity: analysis.political_opportunity
+                  political_opportunity: analysis.political_opportunity,
+                  tenant_id: tenantId,
                 });
 
               if (analysisError) {
@@ -500,7 +509,8 @@ serve(async (req) => {
                       severity: analysis.urgency_level,
                       title: `ALERTA: ${title.substring(0, 60)}...`,
                       message: analysis.impact_analysis.substring(0, 200) + '...',
-                      acknowledged: false
+                      acknowledged: false,
+                      tenant_id: tenantId,
                     });
                   
                   console.log('🚨 Alerta criado para notícia urgente');
@@ -557,6 +567,7 @@ serve(async (req) => {
                   author: fallback.source,
                   content: fallback.content,
                   published_at: new Date().toISOString(),
+                  tenant_id: tenantId,
                 })
                 .select()
                 .single();

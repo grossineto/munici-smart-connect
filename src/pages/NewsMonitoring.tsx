@@ -16,6 +16,7 @@ import { PoliticianCard } from "@/components/PoliticianCard";
 import { StartAnalysisButton } from "@/components/StartAnalysisButton";
 import { RecentSuggestions } from "@/components/RecentSuggestions";
 import { AdvancedSearchFilters } from "@/components/AdvancedSearchFilters";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 function NewsMonitoring() {
   const { toast } = useToast();
