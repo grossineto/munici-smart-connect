@@ -236,7 +236,7 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'sonar-pro',
+            model: 'llama-3.1-sonar-large-128k-online',
             messages: [
               {
                 role: 'system',
@@ -244,7 +244,7 @@ serve(async (req) => {
               },
               {
                 role: 'user',
-                content: `Encontre 2 notícias ATUAIS de ${datePhrase} sobre "${query}" dos portais brasileiros.
+                content: `Encontre até 3 notícias ATUAIS de ${datePhrase} sobre "${query}" dos portais brasileiros.
                 
                 IMPORTANTE: Use apenas notícias reais publicadas ${datePhrase} (sem redes sociais).
                 
@@ -265,11 +265,25 @@ serve(async (req) => {
                 URL: [link direto]
                 Fonte: [portal]
                 Data: [data de publicação]
+                Resumo: [2-3 linhas sobre o conteúdo]
+                
+                NOTÍCIA 3:
+                Título: [título completo]
+                URL: [link direto]
+                Fonte: [portal]
+                Data: [data de publicação]
                 Resumo: [2-3 linhas sobre o conteúdo]`
               }
             ],
             temperature: 0.2,
-            max_tokens: 800
+            top_p: 0.9,
+            max_tokens: 1200,
+            return_images: false,
+            return_related_questions: false,
+            frequency_penalty: 1,
+            presence_penalty: 0,
+            search_domain_filter: domainWhitelist && domainWhitelist.length ? domainWhitelist : undefined,
+            search_recency_filter: recency === 'today' ? 'day' : 'week'
           }),
         });
 
@@ -314,25 +328,46 @@ serve(async (req) => {
             const source = sourceMatch ? sourceMatch[1].trim() : 'Portal de Notícias';
             const resumo = resumoMatch ? resumoMatch[1].trim() : 'Conteúdo da notícia coletada via Perplexity';
 
-            // FORÇAR URL ÚNICA para não conflitar com notícias antigas
-            const uniqueUrl = `${url}?collected=${Date.now()}&query=${i}`;
-
-            console.log(`✅ Processando: ${title.substring(0, 60)}...`);
-            console.log(`🔗 URL única: ${uniqueUrl}`);
-
-            // Inserir notícia SEMPRE (ignorar duplicatas)
-            const { data: article, error: articleError } = await supabase
+            // Deduplicar por URL + tenant
+            const { data: existing, error: existingError } = await supabase
               .from('news_articles')
-              .insert({
-                title: `[${today}] ${title}`,
-                url: uniqueUrl,
-                author: source,
-                content: resumo,
-                published_at: new Date().toISOString(),
-                tenant_id: tenantId,
-              })
-              .select()
-              .single();
+              .select('id')
+              .eq('url', url)
+              .eq('tenant_id', tenantId)
+              .limit(1);
+
+            if (existingError) {
+              console.error('❌ Erro ao verificar duplicidade:', existingError);
+            }
+
+            let articleId: string;
+
+            if (existing && existing.length) {
+              console.log('ℹ️ Notícia já existente, reutilizando id:', existing[0].id);
+              articleId = existing[0].id;
+            } else {
+              console.log(`✅ Inserindo nova notícia: ${title.substring(0, 60)}...`);
+              const { data: inserted, error: articleError } = await supabase
+                .from('news_articles')
+                .insert({
+                  title: `[${today}] ${title}`,
+                  url,
+                  author: source,
+                  content: resumo,
+                  published_at: new Date().toISOString(),
+                  tenant_id: tenantId,
+                })
+                .select('id')
+                .single();
+
+              if (articleError || !inserted) {
+                console.error('❌ Erro ao inserir notícia:', articleError);
+                continue;
+              }
+
+              articleId = inserted.id;
+              console.log(`✅ Notícia inserida: ${articleId}`);
+            }
 
             if (articleError) {
               console.error('❌ Erro ao inserir notícia:', articleError);
@@ -420,7 +455,7 @@ serve(async (req) => {
               const { error: analysisError } = await supabase
                 .from('news_analysis')
                 .insert({
-                  article_id: article.id,
+                  article_id: articleId,
                   sentiment_score: 0,
                   urgency_level: 'medium',
                   relevance_score: 5,
@@ -448,7 +483,7 @@ serve(async (req) => {
                 
                 processedArticles.push({
                   title,
-                  url: uniqueUrl,
+                  url: url,
                   source,
                   analysis: `Análise básica: ${title.substring(0, 50)}...`,
                   urgency: 'medium',
@@ -473,7 +508,7 @@ serve(async (req) => {
               const { error: analysisError } = await supabase
                 .from('news_analysis')
                 .insert({
-                  article_id: article.id,
+                  article_id: articleId,
                   sentiment_score: analysis.sentiment_score || 0,
                   urgency_level: analysis.urgency_level || 'medium',
                   relevance_score: analysis.relevance_score || 5,
@@ -504,7 +539,7 @@ serve(async (req) => {
                   await supabase
                     .from('news_alerts')
                     .insert({
-                      article_id: article.id,
+                      article_id: articleId,
                       alert_type: analysis.crisis_potential ? 'crisis' : 'urgent',
                       severity: analysis.urgency_level,
                       title: `ALERTA: ${title.substring(0, 60)}...`,
@@ -518,7 +553,7 @@ serve(async (req) => {
                 
                 processedArticles.push({
                   title,
-                  url: uniqueUrl,
+                  url: url,
                   source,
                   analysis: analysis.summary,
                   urgency: analysis.urgency_level,
