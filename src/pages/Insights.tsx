@@ -430,42 +430,46 @@ const Insights = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!mapReady ? (
-            <div className="text-center py-8">
-              <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="mb-4">Para visualizar o mapa, insira seu token do Mapbox</p>
-              {!showTokenInput ? (
-                <Button onClick={() => setShowTokenInput(true)}>
-                  Configurar Mapbox
-                </Button>
-              ) : (
-                <div className="max-w-md mx-auto space-y-2">
-                  <Input
-                    placeholder="Cole seu token público do Mapbox aqui"
-                    value={mapboxToken}
-                    onChange={(e) => setMapboxToken(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') initializeMap(); }}
-                  />
-                  <div className="flex gap-2">
-                    <Button onClick={initializeMap} className="flex-1">
-                      Inicializar Mapa
+          <div className="relative h-96 rounded-lg">
+            <div ref={mapContainer} className="absolute inset-0 rounded-lg" />
+
+            {!mapReady && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm rounded-lg">
+                <div className="text-center py-8 px-4">
+                  <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="mb-4">Para visualizar o mapa, insira seu token do Mapbox</p>
+                  {!showTokenInput ? (
+                    <Button onClick={() => setShowTokenInput(true)}>
+                      Configurar Mapbox
                     </Button>
-                    <Button variant="outline" onClick={() => setShowTokenInput(false)}>
-                      Cancelar
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Obtenha seu token em{" "}
-                    <a href="https://mapbox.com/" target="_blank" rel="noopener noreferrer" className="underline">
-                      mapbox.com
-                    </a>
-                  </p>
+                  ) : (
+                    <div className="max-w-md mx-auto space-y-2">
+                      <Input
+                        placeholder="Cole seu token público do Mapbox aqui"
+                        value={mapboxToken}
+                        onChange={(e) => setMapboxToken(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') initializeMap(); }}
+                      />
+                      <div className="flex gap-2">
+                        <Button onClick={initializeMap} className="flex-1">
+                          Inicializar Mapa
+                        </Button>
+                        <Button variant="outline" onClick={() => setShowTokenInput(false)}>
+                          Cancelar
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Obtenha seu token em{" "}
+                        <a href="https://mapbox.com/" target="_blank" rel="noopener noreferrer" className="underline">
+                          mapbox.com
+                        </a>
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ) : (
-            <div ref={mapContainer} className="h-96 rounded-lg" />
-          )}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
