@@ -414,13 +414,6 @@ serve(async (req) => {
               console.log(`✅ Notícia inserida: ${articleId}`);
             }
 
-            if (articleError) {
-              console.error('❌ Erro ao inserir notícia:', articleError);
-              continue;
-            }
-
-            console.log(`✅ Notícia inserida: ${article.id}`);
-
             // OpenAI: Análise PERSONALIZADA
             console.log('🤖 Gerando análise personalizada...');
             
@@ -706,7 +699,7 @@ serve(async (req) => {
       articles: processedArticles,
       target: targetInfo,
       date: today,
-      config: { searchScope, recency, domainWhitelist: domainWhitelist || null, regionalSources },
+      config: { searchScope, recency: settings.recency, domainWhitelist: domainFilter, regionalSources },
       queries: queriesRecorded,
       debug: 'Coleta personalizada executada com sucesso'
     };
