@@ -45,8 +45,29 @@ serve(async (req) => {
       tiktok: { success: false, message: '', error: null }
     };
 
-    // Executar coletas em paralelo para diferentes plataformas
-    const promises = platforms.map(async (platform) => {
+    // Determinar plataformas ativas com base nos tokens configurados
+    const tokenPresence: Record<string, boolean> = {
+      twitter: !!Deno.env.get('TWITTER_BEARER_TOKEN'),
+      instagram: !!Deno.env.get('INSTAGRAM_ACCESS_TOKEN'),
+      facebook: !!(Deno.env.get('FACEBOOK_ACCESS_TOKEN') && Deno.env.get('FACEBOOK_PAGE_ID')),
+      tiktok: !!Deno.env.get('TIKTOK_ACCESS_TOKEN'),
+    };
+
+    const disabledPlatforms = platforms.filter((p: string) => !tokenPresence[p]);
+    const activePlatforms = platforms.filter((p: string) => tokenPresence[p]);
+
+    // Marcar plataformas sem token como 'pulado'
+    disabledPlatforms.forEach((p: string) => {
+      (results as any)[p] = {
+        success: true,
+        message: 'Pulado: token ausente (configure o token para habilitar)',
+        error: null,
+        skipped: true,
+      };
+    });
+
+    // Executar coletas em paralelo apenas para plataformas ativas
+    const promises = activePlatforms.map(async (platform: string) => {
       try {
         console.log(`Iniciando coleta do ${platform}...`);
         
@@ -80,20 +101,26 @@ serve(async (req) => {
     // Aguardar todas as coletas
     await Promise.allSettled(promises);
 
-    // Contar sucessos e falhas
-    const successCount = Object.values(results).filter(r => r.success).length;
-    const totalCount = platforms.length;
+    // Contar sucessos, falhas e pulos
+    const values = Object.values(results) as any[];
+    const skippedCount = values.filter(r => r?.skipped).length;
+    const successCount = values.filter(r => r?.success && !r?.skipped).length;
+    const totalRequested = platforms.length;
 
     return new Response(
       JSON.stringify({
         success: successCount > 0,
-        message: `Coleta concluída: ${successCount}/${totalCount} plataformas processadas com sucesso`,
+        message: `Coleta concluída: ${successCount}/${totalRequested} plataformas com dados; ${skippedCount} puladas por falta de token`,
         results,
         summary: {
-          total_platforms: totalCount,
+          requested_platforms: totalRequested,
+          active_platforms: totalRequested - skippedCount,
+          skipped_platforms: skippedCount,
           successful_platforms: successCount,
-          failed_platforms: totalCount - successCount,
-          politicians_processed: politicians.length
+          failed_platforms: (totalRequested - skippedCount) - successCount,
+          politicians_processed: politicians.length,
+          disabled: disabledPlatforms,
+          active: activePlatforms,
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
