@@ -78,14 +78,15 @@ const Insights = () => {
     if (saved) setMapboxToken(saved);
   }, []);
 
-  // Inicializar mapa quando o token estiver disponível e o container existir
+  // Inicializar mapa quando o token, o container e os dados estiverem prontos
   useEffect(() => {
     if (mapReady) return;
     if (!mapboxToken) return;
+    if (loading) return;
     if (!mapContainer.current) return;
     if (map.current) return;
     initializeMap();
-  }, [mapboxToken]);
+  }, [mapboxToken, loading]);
 
   // Cleanup do mapa ao desmontar
   useEffect(() => {
