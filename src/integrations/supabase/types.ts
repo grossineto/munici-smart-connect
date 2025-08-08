@@ -541,6 +541,42 @@ export type Database = {
         }
         Relationships: []
       }
+      perplexity_settings: {
+        Row: {
+          created_at: string
+          deduplicate: boolean
+          id: string
+          max_articles: number
+          recency: string
+          scope: string
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deduplicate?: boolean
+          id?: string
+          max_articles?: number
+          recency?: string
+          scope?: string
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deduplicate?: boolean
+          id?: string
+          max_articles?: number
+          recency?: string
+          scope?: string
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
