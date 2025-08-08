@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
@@ -9,7 +9,6 @@ export type PerplexityConfig = {
   recency: "day" | "week" | "month";
   maxArticles: number;
   scope: "amplo" | "local" | "restrito";
-  domains: string; // comma-separated list
   deduplicate: boolean;
 };
 
@@ -78,14 +77,6 @@ export function PerplexitySettings({ value, onChange }: Props) {
           </Select>
         </div>
 
-        <div className="space-y-2 lg:col-span-2">
-          <Label>Domínios preferidos (lista separada por vírgula)</Label>
-          <Input
-            placeholder="g1.globo.com, folha.uol.com.br, estadao.com.br"
-            value={value.domains}
-            onChange={(e) => onChange({ ...value, domains: e.target.value })}
-          />
-        </div>
 
         <div className="flex items-center justify-between border rounded-md p-3">
           <div className="space-y-1">

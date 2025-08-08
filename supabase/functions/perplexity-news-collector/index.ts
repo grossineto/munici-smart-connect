@@ -14,6 +14,31 @@ const openaiApiKey = Deno.env.get('OPENAI_API_KEY')!;
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+const BRAZIL_DOMAINS = [
+  'g1.globo.com', 'oglobo.globo.com', 'folha.uol.com.br', 'estadao.com.br', 'valor.globo.com',
+  'noticias.uol.com.br', 'cnnbrasil.com.br', 'noticias.r7.com', 'terra.com.br', 'exame.com',
+  'veja.abril.com.br', 'metropoles.com', 'poder360.com.br', 'agenciabrasil.ebc.com.br',
+  'bbc.com', 'dw.com', 'nexojornal.com.br', 'cartacapital.com.br', 'gazetadopovo.com.br',
+  'em.com.br', 'otempo.com.br', 'correiobraziliense.com.br', 'extra.globo.com', 'odia.com.br'
+];
+
+const CITY_DOMAINS: Record<string, string[]> = {
+  'sao-paulo': ['g1.globo.com', 'folha.uol.com.br', 'estadao.com.br', 'vejasp.abril.com.br', 'r7.com', 'uol.com.br'],
+  'rio-de-janeiro': ['oglobo.globo.com', 'extra.globo.com', 'odia.com.br', 'vejario.abril.com.br', 'g1.globo.com'],
+  'bauru': ['g1.globo.com', 'jcnet.com.br', 'socialbauru.com.br', '96fmbauru.com.br'],
+  'sao-roque': ['jeonline.com.br', 'odemocrata.com.br', 'girosa.com.br', 'cruzeirodosul.com.br'],
+  'botucatu': ['acontecebotucatu.com.br', 'leianoticias.com.br', 'radioclubebotucatu.com.br'],
+};
+
+function slugifyCity(s: string): string {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '');
+}
+
 // Utilitários para parse robusto de JSON vindo do modelo
 function extractJsonBlock(text: string): string | null {
   // Prioriza bloco ```json ... ``` se existir
@@ -111,19 +136,39 @@ serve(async (req) => {
     const mainOperation = async () => {
       // Ler parâmetros do corpo da requisição
       const body = await req.json().catch(() => ({}));
-      const mayor = body.mayor;
-      const searchScope: 'city' | 'region' | 'state' = body.searchScope || 'city';
-      const recency: 'today' | 'week' = body.recency || 'today';
-      const domainWhitelist: string[] | undefined = Array.isArray(body.domainWhitelist) ? body.domainWhitelist : undefined;
+      const rawSettings = body.settings || {};
+      const settings = {
+        recency: (rawSettings.recency === 'week' || rawSettings.recency === 'month') ? rawSettings.recency : 'day',
+        maxArticles: Number(rawSettings.maxArticles) || 3,
+        scope: (rawSettings.scope === 'local' || rawSettings.scope === 'amplo' || rawSettings.scope === 'restrito') ? rawSettings.scope : 'amplo',
+        deduplicate: rawSettings.deduplicate !== false,
+      } as {
+        recency: 'day' | 'week' | 'month';
+        maxArticles: number;
+        scope: 'amplo' | 'local' | 'restrito';
+        deduplicate: boolean;
+      };
+      const mayor = body.mayor || null;
       const tenantId: string | null = typeof body.tenantId === 'string' ? body.tenantId : null;
 
+      // Escopo interno para queries (city/region/state)
+      const searchScope: 'city' | 'region' | 'state' = settings.scope === 'local' ? 'city' : 'region';
+
+      // Domínios: Padrão Brasil sempre incluso; se local, somar da cidade
+      const cityName: string = mayor?.cityName || mayor?.cidade || '';
+      const state: string = mayor?.state || mayor?.uf || '';
+      const citySlug = slugifyCity(cityName);
+      const domainFilter: string[] = Array.from(new Set(
+        settings.scope === 'local' ? [...BRAZIL_DOMAINS, ...(CITY_DOMAINS[citySlug] || [])] : [...BRAZIL_DOMAINS]
+      ));
+      const perplexRecency: 'day' | 'week' | 'month' = settings.recency === 'month' ? 'month' : (settings.recency === 'week' ? 'week' : 'day');
       if (!tenantId) {
         console.error('❌ tenantId ausente no corpo da requisição');
         return new Response(JSON.stringify({ success: false, error: 'tenantId é obrigatório' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       
       if (mayor) {
-        console.log(`📊 COLETA PERSONALIZADA PARA: ${mayor.nome || mayor.mayorName} - ${mayor.cidade || mayor.cityName}/${mayor.uf || mayor.state} • escopo=${searchScope} • recency=${recency}`);
+        console.log(`📊 COLETA PERSONALIZADA PARA: ${mayor.nome || mayor.mayorName} - ${(mayor.cidade || mayor.cityName)}/${(mayor.uf || mayor.state)} • escopo=${settings.scope} • recency=${settings.recency}`);
       } else {
         console.log('📊 COLETA PADRÃO PARA: Ricardo Nunes - São Paulo/SP');
       }
@@ -134,7 +179,7 @@ serve(async (req) => {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     const startTime = Date.now();
     const queriesRecorded: string[] = [];
-    const datePhrase = recency === 'today' ? `hoje ${today}` : 'últimos 7 dias';
+    const datePhrase = settings.recency === 'day' ? `hoje ${today}` : (settings.recency === 'week' ? 'últimos 7 dias' : 'últimos 30 dias');
 
     // 🎯 Queries dinâmicas baseadas no prefeito selecionado com FONTES REGIONAIS
     let todayQueries;
@@ -244,11 +289,11 @@ serve(async (req) => {
               },
               {
                 role: 'user',
-                content: `Encontre até 3 notícias ATUAIS de ${datePhrase} sobre "${query}" dos portais brasileiros.
+                content: `Encontre até ${settings.maxArticles} notícias ATUAIS de ${datePhrase} sobre "${query}" dos portais brasileiros.
                 
                 IMPORTANTE: Use apenas notícias reais publicadas ${datePhrase} (sem redes sociais).
                 
-                FONTES PRIORITÁRIAS: ${regionalSources}${domainWhitelist && domainWhitelist.length ? ', ' + domainWhitelist.join(', ') : ''}
+                FONTES PRIORITÁRIAS: ${regionalSources}, ${domainFilter.join(', ')}
                 FONTES NACIONAIS: G1, Folha, Estadão, UOL, R7, CNN Brasil, Metrópoles, Band
                 
                 Para cada notícia REAL encontrada, retorne EXATAMENTE:
@@ -282,8 +327,8 @@ serve(async (req) => {
             return_related_questions: false,
             frequency_penalty: 1,
             presence_penalty: 0,
-            search_domain_filter: domainWhitelist && domainWhitelist.length ? domainWhitelist : undefined,
-            search_recency_filter: recency === 'today' ? 'day' : 'week'
+            search_domain_filter: domainFilter,
+            search_recency_filter: perplexRecency
           }),
         });
 

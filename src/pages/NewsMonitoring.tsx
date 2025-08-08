@@ -52,67 +52,12 @@ function NewsMonitoring() {
     recency: 'week',
     maxArticles: 3,
     scope: 'amplo',
-    domains: '',
     deduplicate: true,
   });
 
-  const [selectedPreset, setSelectedPreset] = useState('padrao-brasil');
 
-  const PRESET_DOMAINS: Record<string, string[]> = {
-    'padrao-brasil': [
-      'g1.globo.com', 'oglobo.globo.com', 'folha.uol.com.br', 'estadao.com.br', 'valor.globo.com',
-      'noticias.uol.com.br', 'cnnbrasil.com.br', 'noticias.r7.com', 'terra.com.br', 'exame.com',
-      'veja.abril.com.br', 'metropoles.com', 'poder360.com.br', 'agenciabrasil.ebc.com.br',
-      'bbc.com', 'dw.com', 'nexojornal.com.br', 'cartacapital.com.br', 'gazetadopovo.com.br',
-      'em.com.br', 'otempo.com.br', 'correiobraziliense.com.br', 'extra.globo.com', 'odia.com.br'
-    ],
-    'sao-paulo': [
-      'g1.globo.com', 'folha.uol.com.br', 'estadao.com.br', 'vejasp.abril.com.br', 'r7.com', 'uol.com.br'
-    ],
-    'rio-de-janeiro': [
-      'oglobo.globo.com', 'extra.globo.com', 'odia.com.br', 'vejario.abril.com.br', 'g1.globo.com'
-    ],
-    'bauru': [
-      'g1.globo.com', 'jcnet.com.br', 'socialbauru.com.br', '96fmbauru.com.br'
-    ],
-    'sao-roque': [
-      'jeonline.com.br', 'odemocrata.com.br', 'girosa.com.br', 'cruzeirodosul.com.br'
-    ],
-    'botucatu': [
-      'acontecebotucatu.com.br', 'leianoticias.com.br', 'radioclubebotucatu.com.br'
-    ]
-  };
 
-  const applyPresetDomains = (key: string) => {
-    const list = PRESET_DOMAINS[key] || [];
-    setPerplexityConfig((prev) => ({ ...prev, domains: list.join(', ') }));
-  };
 
-  useEffect(() => {
-    (async () => {
-      const tenantId = await getCurrentTenantId();
-      const saved = localStorage.getItem(`perplexity:settings:${tenantId}`);
-      if (saved) {
-        try {
-          setPerplexityConfig(JSON.parse(saved));
-          return;
-        } catch {}
-      }
-      // Default inicial: Padrão Brasil
-      const list = PRESET_DOMAINS['padrao-brasil'];
-      setPerplexityConfig((prev) => ({ ...prev, domains: list.join(', ') }));
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const saveTenantSettings = async () => {
-    const tenantId = await getCurrentTenantId();
-    localStorage.setItem(`perplexity:settings:${tenantId}`, JSON.stringify(perplexityConfig));
-    toast({
-      title: 'Preferências salvas',
-      description: 'Essas configurações serão usadas como padrão para este tenant.',
-    });
-  };
 
 
   // Função para carregar dados gerais
@@ -372,10 +317,6 @@ function NewsMonitoring() {
         recency: perplexityConfig.recency,
         maxArticles: perplexityConfig.maxArticles,
         scope: perplexityConfig.scope,
-        domains: perplexityConfig.domains
-          .split(',')
-          .map((d) => d.trim())
-          .filter(Boolean),
         deduplicate: perplexityConfig.deduplicate,
       };
       
@@ -453,10 +394,6 @@ function NewsMonitoring() {
         recency: perplexityConfig.recency,
         maxArticles: perplexityConfig.maxArticles,
         scope: perplexityConfig.scope,
-        domains: perplexityConfig.domains
-          .split(',')
-          .map((d) => d.trim())
-          .filter(Boolean),
         deduplicate: perplexityConfig.deduplicate,
       };
       
@@ -642,24 +579,6 @@ function NewsMonitoring() {
                     <DialogTitle>Configurações da Perplexity</DialogTitle>
                   </DialogHeader>
 
-                  <div className="space-y-3 mb-2">
-                    <Label>Preset de domínios</Label>
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <Select value={selectedPreset} onValueChange={setSelectedPreset}>
-                        <SelectTrigger className="w-[260px]"><SelectValue placeholder="Selecione um preset" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="padrao-brasil">Padrão Brasil</SelectItem>
-                          <SelectItem value="sao-paulo">São Paulo</SelectItem>
-                          <SelectItem value="rio-de-janeiro">Rio de Janeiro</SelectItem>
-                          <SelectItem value="bauru">Bauru</SelectItem>
-                          <SelectItem value="sao-roque">São Roque</SelectItem>
-                          <SelectItem value="botucatu">Botucatu</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button variant="secondary" onClick={() => applyPresetDomains(selectedPreset)}>Aplicar lista recomendada</Button>
-                      <Button variant="outline" onClick={saveTenantSettings}>Salvar como padrão do tenant</Button>
-                    </div>
-                  </div>
 
                   <PerplexitySettings value={perplexityConfig} onChange={setPerplexityConfig} />
                   <div className="flex justify-end">
