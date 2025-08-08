@@ -96,6 +96,22 @@ const Insights = () => {
     };
   }, []);
 
+  // Buscar token do Supabase Edge Function se não houver salvo
+  useEffect(() => {
+    if (mapboxToken) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        if (!cancelled && data?.token && !error) {
+          setMapboxToken(data.token as string);
+          try { localStorage.setItem('mapbox_public_token', data.token as string); } catch {}
+        }
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [mapboxToken]);
+
   const loadInsightsData = async () => {
     try {
       // Carregar dados das solicitações para análise
