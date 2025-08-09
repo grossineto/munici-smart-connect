@@ -8,7 +8,7 @@ export function KpiCard({ label, value }: { label: string; value: string }) {
         <Users size={18}/>
       </div>
       <div>
-        <div className="text-xs font-medium text-text-muted">{label}</div>
+        <div className="text-xs font-medium text-muted-foreground">{label}</div>
         <div className="text-[28px] font-bold tabular-nums leading-none mt-1">{value}</div>
       </div>
     </Card>
