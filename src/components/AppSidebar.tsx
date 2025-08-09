@@ -35,12 +35,12 @@ const group1 = [
   { title: "Monitoramento de Notícias", url: "/news-monitoring", icon: Newspaper },
   { title: "Monitoramento de Redes", url: "/social-monitoring", icon: Share2 },
   { title: "Omnichannel", url: "/whatsapp", icon: Phone },
+  { title: "Secretarias", url: "/departments", icon: Building2 },
 ];
 
 const group2 = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Insights", url: "/insights", icon: Brain },
-  { title: "Secretarias", url: "/departments", icon: Building2 },
   { title: "Gabinete de Urgência", url: "/urgency-office", icon: AlertTriangle },
   { title: "Relatorios", url: "/reports", icon: BarChart3 },
 ];
