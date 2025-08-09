@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --------- Tokens (Light) --------- */
+:root{
+  --bg: 215 33% 98%;
+  --surface: 0 0% 100%;
+  --surface-muted: 210 20% 96%;
+  --border: 214 28% 90%;
+
+  --text: 222 47% 11%;
+  --text-muted: 215 19% 35%;
+
+  --primary: 225 100% 60%;
+  --primary-hover: 225 100% 54%;
+  --primary-pressed: 225 100% 50%;
+  --primary-foreground: 0 0% 100%;
+  --primary-ring: 225 100% 70%;
+  --primary-soft: 225 100% 94%;
+
+  --success: 142 72% 35%;
+  --warning: 42 96% 50%;
+  --destructive: 0 84% 60%;
+  --info: 188 81% 41%;
+}
+
+/* --------- Tokens (Dark) --------- */
+.dark{
+  --bg: 220 38% 9%;
+  --surface: 220 26% 12%;
+  --surface-muted: 220 23% 16%;
+  --border: 215 20% 22%;
+
+  --text: 210 40% 98%;
+  --text-muted: 215 16% 72%;
+
+  --primary: 225 100% 66%;
+  --primary-hover: 225 100% 62%;
+  --primary-pressed: 225 100% 58%;
+  --primary-foreground: 0 0% 100%;
+  --primary-ring: 225 100% 75%;
+  --primary-soft: 225 100% 20%;
+}
+
+html, body { @apply bg-bg text-text antialiased; }
+h1,h2,h3,h4 { @apply tracking-[-0.01em]; }
+.container-XL { @apply max-w-[1280px] mx-auto; }
+
+.focus-ring { @apply outline-none ring-2 ring-primary/50 ring-offset-2 ring-offset-surface; }
+
+.card { @apply bg-surface rounded-lg shadow-card p-6 border border-border; }
+.card-hover:hover{ @apply shadow-cardHover -translate-y-[1px] transition; }
+
+.sidebar-item { @apply flex items-center gap-3 px-3 py-2 rounded-pill text-text-muted hover:bg-surface-muted; }
+.sidebar-item--active { @apply bg-primary-soft text-primary font-semibold; }
+
+.dropdown { @apply bg-surface border border-border shadow-dropdown rounded-lg z-[60]; }
+
+.pill { @apply inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-primary-soft text-primary text-sm; }
