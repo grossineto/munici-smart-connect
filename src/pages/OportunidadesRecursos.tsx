@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import SEO from "@/components/SEO";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
+import jsPDF from "jspdf";
 
 // Mock data
 const AREAS = ["Saúde", "Educação", "Infraestrutura", "Meio Ambiente", "Assistência Social"] as const;
@@ -38,6 +40,45 @@ const OportunidadesRecursos: React.FC = () => {
   const [termo, setTermo] = useState("");
   const [results, setResults] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(false);
+  const [providers, setProviders] = useState({ perplexity: true, bndes: true, portal: true });
+
+  const selectedProviders = useMemo(() => {
+    const arr: string[] = [];
+    if (providers.perplexity) arr.push('perplexity');
+    if (providers.bndes) arr.push('bndes');
+    if (providers.portal) arr.push('caixa'); // Portal da Transparência (provider "caixa")
+    return arr;
+  }, [providers]);
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    doc.setFontSize(16);
+    doc.text('Relatório de Oportunidades', 40, 40);
+    doc.setFontSize(10);
+    doc.text(`Ideia: ${idea || '-'}`, 40, 60);
+    doc.text(`Área: ${area}`, 40, 75);
+    doc.text(`Provedores: ${selectedProviders.join(', ') || '-'}`, 40, 90);
+    let y = 120;
+    filtered.forEach((o, i) => {
+      doc.setFont(undefined, 'bold');
+      doc.text(`${i + 1}. ${o.nome}`, 40, y);
+      doc.setFont(undefined, 'normal');
+      y += 14;
+      doc.text(`Órgão: ${o.orgao} | Área: ${o.area} | Valor: ${o.valor}`, 40, y);
+      y += 14;
+      doc.text(`Prazo: ${o.prazo ? new Date(o.prazo).toLocaleDateString() : '-'}`, 40, y);
+      y += 14;
+      if (o.link) {
+        doc.textWithLink('Link', 40, y, { url: o.link });
+      }
+      y += 20;
+      if (y > 780) {
+        doc.addPage();
+        y = 40;
+      }
+    });
+    doc.save('oportunidades.pdf');
+  };
 
   const filtered = useMemo(() => {
     const base = results.length ? results : opportunities;
@@ -55,7 +96,7 @@ const OportunidadesRecursos: React.FC = () => {
         body: { 
           idea, 
           area: area !== 'Todas' ? area : undefined,
-          providers: ['bndes']
+          providers: selectedProviders
         }
       });
       if (error) throw error;
@@ -133,14 +174,32 @@ const OportunidadesRecursos: React.FC = () => {
               <label className="text-xs text-muted-foreground">Buscar</label>
               <Input placeholder="Filtrar por nome/órgão" value={termo} onChange={(e) => setTermo(e.target.value)} />
             </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Fontes</label>
+              <div className="mt-1 grid grid-cols-1 gap-1">
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={providers.perplexity} onCheckedChange={(v) => setProviders(p => ({ ...p, perplexity: Boolean(v) }))} />
+                  Perplexity
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={providers.bndes} onCheckedChange={(v) => setProviders(p => ({ ...p, bndes: Boolean(v) }))} />
+                  BNDES
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={providers.portal} onCheckedChange={(v) => setProviders(p => ({ ...p, portal: Boolean(v) }))} />
+                  Portal da Transparência
+                </label>
+              </div>
+            </div>
             <Button onClick={handleBuscar} className="mt-2" disabled={loading}>{loading ? "Buscando..." : "Buscar Oportunidades"}</Button>
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Resultados</CardTitle>
+          <Button variant="secondary" size="sm" onClick={handleExportPDF} disabled={!filtered.length}>Gerar Relatório (PDF)</Button>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
