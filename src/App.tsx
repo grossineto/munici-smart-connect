@@ -26,6 +26,8 @@ import NotFound from "./pages/NotFound";
 import Account from "./pages/Account";
 import Departments from "./pages/Departments";
 import DepartmentDetail from "./pages/DepartmentDetail";
+import PesquisasPoliticas from "./pages/PesquisasPoliticas";
+import OportunidadesRecursos from "./pages/OportunidadesRecursos";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +58,8 @@ const App = () => (
                 <Route path="/departments" element={<DashboardLayout><Departments /></DashboardLayout>} />
                 <Route path="/departments/:slug" element={<DashboardLayout><DepartmentDetail /></DashboardLayout>} />
                 <Route path="/account" element={<DashboardLayout><Account /></DashboardLayout>} />
+                <Route path="/pesquisas-politicas" element={<DashboardLayout><PesquisasPoliticas /></DashboardLayout>} />
+                <Route path="/oportunidades" element={<DashboardLayout><OportunidadesRecursos /></DashboardLayout>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
