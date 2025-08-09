@@ -314,13 +314,14 @@ serve(async (req) => {
 
     console.log("🔎 Buscando oportunidades:", { area, providers: selected });
 
-    const tasks: Promise<NormalizedOpportunity[]>[] = [];
-    if (selected.includes("perplexity")) tasks.push(fetchPerplexity(idea, area));
-    if (selected.includes("bndes")) tasks.push(fetchBNDES(idea, area));
-    if (selected.includes("caixa")) tasks.push(fetchCaixa(idea, area));
-    if (selected.includes("bb")) tasks.push(fetchBB(idea, area));
+    const tasks: { name: "perplexity" | "bndes" | "caixa" | "bb"; promise: Promise<NormalizedOpportunity[]> }[] = [];
+    if (selected.includes("perplexity")) tasks.push({ name: "perplexity", promise: fetchPerplexity(idea, area) });
+    if (selected.includes("bndes")) tasks.push({ name: "bndes", promise: fetchBNDES(idea, area) });
+    if (selected.includes("caixa")) tasks.push({ name: "caixa", promise: fetchCaixa(idea, area) });
+    if (selected.includes("bb")) tasks.push({ name: "bb", promise: fetchBB(idea, area) });
 
-    const results = (await Promise.all(tasks)).flat();
+    const arrays = await Promise.all(tasks.map((t) => t.promise));
+    const results = arrays.flat();
 
     // Simple de-dup by link+name
     const seen = new Set<string>();
@@ -331,7 +332,17 @@ serve(async (req) => {
       return true;
     });
 
-    return new Response(JSON.stringify({ opportunities: unique }), {
+    const counts = Object.fromEntries(tasks.map((t, i) => [t.name, arrays[i]?.length || 0]));
+    const env = {
+      perplexity: Boolean(PERPLEXITY_API_KEY),
+      bndes: Boolean(BNDES_API_BASE && BNDES_API_KEY),
+      portal: Boolean(CAIXA_API_KEY),
+      bb: Boolean(BB_API_BASE && BB_API_KEY),
+    };
+
+    console.log("✅ Diagnóstico find-opportunities:", { selected, counts, total: unique.length, env });
+
+    return new Response(JSON.stringify({ opportunities: unique, diagnostics: { selected, counts, total: unique.length, env } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

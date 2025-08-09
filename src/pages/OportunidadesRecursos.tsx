@@ -111,7 +111,11 @@ const OportunidadesRecursos: React.FC = () => {
         link: it.link || it.url || '#',
       }));
       setResults(mapped);
+      console.log('find-opportunities diagnostics:', data?.diagnostics);
       toast({ title: "Busca executada", description: `${mapped.length} oportunidades encontradas` });
+      if (mapped.length === 0) {
+        toast({ title: "Sem resultados", description: "Veja os diagnósticos no console e verifique as chaves/limites das APIs.", variant: "destructive" });
+      }
     } catch (err) {
       console.error('Erro ao buscar oportunidades:', err);
       toast({ title: "Falha na busca", description: "Utilizando dados de exemplo.", variant: "destructive" });
