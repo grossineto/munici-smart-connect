@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { chartTheme } from "@/lib/chartTheme";
 import { Calendar, Download, TrendingUp, TrendingDown, Users, FileText, Clock, CheckCircle, FileImage, FileSpreadsheet } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -415,20 +416,26 @@ const Reports = () => {
            <CardContent>
              <ResponsiveContainer width="100%" height={250}>
                <BarChart data={reportData.requestsByType}>
-                 <CartesianGrid strokeDasharray="3 3" />
+                 <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid.stroke} />
                  <XAxis 
                    dataKey="label" 
                    angle={-45}
                    textAnchor="end"
                    height={80}
-                   fontSize={12}
+                   tick={{ fontSize: 12, fill: chartTheme.axis.tick }}
+                   tickLine={false}
+                   axisLine={{ stroke: chartTheme.axis.stroke }}
                  />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="#8884d8" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
+                 <YAxis 
+                   tick={{ fontSize: 12, fill: chartTheme.axis.tick }}
+                   tickLine={false}
+                   axisLine={{ stroke: chartTheme.axis.stroke }}
+                 />
+                 <Tooltip contentStyle={chartTheme.tooltip.style} />
+                 <Bar dataKey="count" fill={chartTheme.bar.fill} radius={chartTheme.bar.radius as any} />
+               </BarChart>
+             </ResponsiveContainer>
+           </CardContent>
         </Card>
 
         {/* Solicitações por Status */}
@@ -456,7 +463,7 @@ const Reports = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip contentStyle={chartTheme.tooltip.style} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -474,11 +481,11 @@ const Reports = () => {
          <CardContent>
            <ResponsiveContainer width="100%" height={250}>
              <BarChart data={reportData.requestsByMonth}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#82ca9d" />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid.stroke} />
+              <XAxis dataKey="month" tick={{ fontSize: 12, fill: chartTheme.axis.tick }} tickLine={false} axisLine={{ stroke: chartTheme.axis.stroke }} />
+              <YAxis tick={{ fontSize: 12, fill: chartTheme.axis.tick }} tickLine={false} axisLine={{ stroke: chartTheme.axis.stroke }} />
+              <Tooltip contentStyle={chartTheme.tooltip.style} />
+              <Bar dataKey="count" fill={chartTheme.bar.fill} radius={chartTheme.bar.radius as any} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

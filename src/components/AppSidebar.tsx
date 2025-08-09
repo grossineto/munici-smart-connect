@@ -60,7 +60,7 @@ export function AppSidebar() {
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted/50";
+    isActive ? "bg-primary-soft text-primary font-medium" : "hover:bg-surfaceMuted";
 
   return (
     <Sidebar>
@@ -165,13 +165,13 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <div className="mt-auto p-4 border-t bg-muted/30">
+        <div className="mt-auto p-4 border-t bg-surfaceMuted">
           <Button
             variant="ghost"
             className="w-full justify-start mb-2"
             asChild
           >
-            <NavLink to="/account" end className={({ isActive }) => isActive ? "bg-primary/10 text-primary font-medium w-full justify-start" : "w-full justify-start hover:bg-muted/50"}>
+            <NavLink to="/account" end className={({ isActive }) => isActive ? "bg-primary-soft text-primary font-medium w-full justify-start" : "w-full justify-start hover:bg-surfaceMuted"}>
               <Settings className="h-4 w-4" />
               <span className="ml-2">Configurações</span>
             </NavLink>
