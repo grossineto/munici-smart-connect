@@ -14,8 +14,8 @@
   --text-muted: 215 19% 35%;
 
   --primary: 221 83% 53%;
-  --primary-hover: 221 83% 49%;
-  --primary-pressed: 221 83% 45%;
+  --primary-hover: 221 83% 46%;
+  --primary-pressed: 221 83% 40%;
   --primary-foreground: 0 0% 100%;
   --primary-ring: 221 83% 63%;
   --primary-soft: 221 83% 94%;
@@ -37,8 +37,8 @@
   --text-muted: 215 16% 72%;
 
   --primary: 221 83% 60%;
-  --primary-hover: 221 83% 56%;
-  --primary-pressed: 221 83% 52%;
+  --primary-hover: 221 83% 52%;
+  --primary-pressed: 221 83% 46%;
   --primary-foreground: 0 0% 100%;
   --primary-ring: 221 83% 68%;
   --primary-soft: 221 83% 20%;
