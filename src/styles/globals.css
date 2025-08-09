@@ -74,9 +74,9 @@ h1,h2,h3,h4 { @apply tracking-[-0.01em]; }
 
 /* Sidebar light theme overrides */
 .sidebar-link { color: hsl(var(--sidebar-text-color-light)); }
-.sidebar-link svg { stroke: hsl(var(--sidebar-icon-color-light)); }
+.sidebar-link svg { stroke: hsl(var(--sidebar-icon-color-light)); color: hsl(var(--sidebar-icon-color-light)); }
 .sidebar-link:hover { color: hsl(var(--sidebar-text-color-light)); }
 .sidebar-link--active { color: hsl(var(--sidebar-text-color-light)); }
 /* Keep dark mode as-is */
 .dark .sidebar-link { color: inherit; }
-.dark .sidebar-link svg { stroke: currentColor; }
+.dark .sidebar-link svg { stroke: currentColor; color: currentColor; }
