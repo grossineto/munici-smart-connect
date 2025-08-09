@@ -24,6 +24,9 @@
   --warning: 42 96% 50%;
   --destructive: 0 84% 60%;
   --info: 188 81% 41%;
+  /* Sidebar (light mode) */
+  --sidebar-text-color-light: 210 29% 43%;
+  --sidebar-icon-color-light: 210 29% 43%;
 }
 
 /* --------- Tokens (Dark) --------- */
@@ -68,3 +71,12 @@ h1,h2,h3,h4 { @apply tracking-[-0.01em]; }
 .gradient-subtle { background: linear-gradient(135deg, hsl(var(--surface-muted)), hsl(var(--surface))); }
 .text-institutional { font-weight: 500; letter-spacing: -0.01em; }
 .heading-institutional { font-weight: 600; letter-spacing: -0.01em; }
+
+/* Sidebar light theme overrides */
+.sidebar-link { color: hsl(var(--sidebar-text-color-light)); }
+.sidebar-link svg { stroke: hsl(var(--sidebar-icon-color-light)); }
+.sidebar-link:hover { color: hsl(var(--sidebar-text-color-light)); }
+.sidebar-link--active { color: hsl(var(--sidebar-text-color-light)); }
+/* Keep dark mode as-is */
+.dark .sidebar-link { color: inherit; }
+.dark .sidebar-link svg { stroke: currentColor; }
