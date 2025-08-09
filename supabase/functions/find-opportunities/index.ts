@@ -72,7 +72,7 @@ Responda APENAS com JSON válido, sem comentários:
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "llama-3.1-sonar-small-128k-online",
+      model: "sonar-small-128k-online",
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
@@ -163,8 +163,8 @@ Responda APENAS com JSON válido, sem comentários:
 
 // Provider adapters (placeholders) — implement real endpoints once available
 async function fetchBNDES(idea: string, area?: string): Promise<NormalizedOpportunity[]> {
-  if (!BNDES_API_BASE || !BNDES_API_KEY) {
-    console.info("BNDES_API_BASE/BNDES_API_KEY ausentes — pulando BNDES");
+  if (!BNDES_API_KEY || !BNDES_API_BASE || !/^https?:\/\//.test(BNDES_API_BASE)) {
+    console.info("BNDES desativado — base inválida ou chave ausente; defina BNDES_API_BASE como URL e BNDES_API_KEY.");
     return [];
   }
   try {
@@ -193,7 +193,7 @@ async function fetchBNDES(idea: string, area?: string): Promise<NormalizedOpport
 
 async function fetchCaixa(idea: string, area?: string): Promise<NormalizedOpportunity[]> {
   // Integração com o Portal da Transparência (genérica, sem filtrar por órgão)
-  const PORTAL_API_BASE = CAIXA_API_BASE || "https://api.portaldatransparencia.gov.br/api-de-dados";
+  const PORTAL_API_BASE = (CAIXA_API_BASE && /^https?:\/\//.test(CAIXA_API_BASE)) ? CAIXA_API_BASE : "https://api.portaldatransparencia.gov.br/api-de-dados";
   const PORTAL_API_KEY = CAIXA_API_KEY;
 
   if (!PORTAL_API_KEY) {

@@ -23,6 +23,9 @@ type Opportunity = {
   prazo: string; // YYYY-MM-DD
   area: typeof AREAS[number];
   link: string;
+  summary?: string;
+  source?: string;
+  score?: number;
 };
 
 const opportunities: Opportunity[] = [
@@ -68,6 +71,12 @@ const OportunidadesRecursos: React.FC = () => {
       y += 14;
       doc.text(`Prazo: ${o.prazo ? new Date(o.prazo).toLocaleDateString() : '-'}`, 40, y);
       y += 14;
+      doc.text(`Fonte: ${o.source || '-'}`, 40, y);
+      y += 14;
+      if (o.summary) {
+        doc.text(`Resumo: ${o.summary}`, 40, y);
+        y += 14;
+      }
       if (o.link) {
         doc.textWithLink('Link', 40, y, { url: o.link });
       }
@@ -109,6 +118,9 @@ const OportunidadesRecursos: React.FC = () => {
         prazo: it.deadline || it.prazo || '',
         area: (it.area || it.areaTag || it.tags?.[0] || 'Infraestrutura') as Opportunity['area'],
         link: it.link || it.url || '#',
+        summary: it.summary || '',
+        source: it.source || '',
+        score: typeof it.score === 'number' ? it.score : 0,
       }));
       setResults(mapped);
       console.log('find-opportunities diagnostics:', data?.diagnostics);
@@ -224,13 +236,17 @@ const OportunidadesRecursos: React.FC = () => {
                     <TableCell>
                       <div className="font-medium">{o.nome}</div>
                       <div className="text-xs text-muted-foreground">ID: {o.id}</div>
+                      {o.summary ? <div className="text-xs text-muted-foreground mt-1">{o.summary}</div> : null}
                     </TableCell>
                     <TableCell>{o.orgao}</TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{o.area}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">{o.area}</Badge>
+                        {o.source ? <Badge variant="outline">{o.source.toUpperCase()}</Badge> : null}
+                      </div>
                     </TableCell>
                     <TableCell>{o.valor}</TableCell>
-                    <TableCell>{new Date(o.prazo).toLocaleDateString()}</TableCell>
+                    <TableCell>{o.prazo ? new Date(o.prazo).toLocaleDateString() : '—'}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="outline" size="sm" asChild>
                         <a href={o.link} target="_blank" rel="noopener noreferrer">Detalhes</a>
