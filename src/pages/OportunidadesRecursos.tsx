@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import SEO from "@/components/SEO";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 // Mock data
 const AREAS = ["Saúde", "Educação", "Infraestrutura", "Meio Ambiente", "Assistência Social"] as const;
@@ -35,15 +36,44 @@ const OportunidadesRecursos: React.FC = () => {
   const [idea, setIdea] = useState("");
   const [area, setArea] = useState<string>("Todas");
   const [termo, setTermo] = useState("");
+  const [results, setResults] = useState<Opportunity[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const filtered = useMemo(() => {
-    return opportunities.filter(o => (area === "Todas" || o.area === area) && (!termo || (o.nome + o.orgao).toLowerCase().includes(termo.toLowerCase())));
-  }, [area, termo]);
+    const base = results.length ? results : opportunities;
+    return base.filter(o => (area === "Todas" || o.area === area) && (!termo || (o.nome + o.orgao).toLowerCase().includes(termo.toLowerCase())));
+  }, [area, termo, results]);
 
-  const handleBuscar = () => {
-    // Mock IA matching
-    const matched = opportunities.filter(o => idea.toLowerCase().includes(o.area.toLowerCase().slice(0, 5)));
-    toast({ title: "Busca executada (mock)", description: `${matched.length} oportunidades potencialmente compatíveis` });
+  const handleBuscar = async () => {
+    if (!idea.trim()) {
+      toast({ title: "Descreva o projeto", description: "Digite sua ideia para buscar oportunidades.", variant: "default" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('find-opportunities', {
+        body: { idea, area: area !== 'Todas' ? area : undefined }
+      });
+      if (error) throw error;
+      const items = (data?.opportunities || []) as any[];
+      const mapped: Opportunity[] = items.map((it, idx) => ({
+        id: it.id || `${Date.now()}-${idx}`,
+        nome: it.name || it.nome || it.titulo || 'Oportunidade',
+        orgao: it.agency || it.orgao || it.instituicao || 'Instituição',
+        valor: it.value || it.valor || '—',
+        prazo: it.deadline || it.prazo || '',
+        area: (it.area || it.areaTag || it.tags?.[0] || 'Infraestrutura') as Opportunity['area'],
+        link: it.link || it.url || '#',
+      }));
+      setResults(mapped);
+      toast({ title: "Busca executada", description: `${mapped.length} oportunidades encontradas` });
+    } catch (err) {
+      console.error('Erro ao buscar oportunidades:', err);
+      toast({ title: "Falha na busca", description: "Utilizando dados de exemplo.", variant: "destructive" });
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const jsonLd = {
@@ -99,7 +129,7 @@ const OportunidadesRecursos: React.FC = () => {
               <label className="text-xs text-muted-foreground">Buscar</label>
               <Input placeholder="Filtrar por nome/órgão" value={termo} onChange={(e) => setTermo(e.target.value)} />
             </div>
-            <Button onClick={handleBuscar} className="mt-2">Buscar Oportunidades (Mock)</Button>
+            <Button onClick={handleBuscar} className="mt-2" disabled={loading}>{loading ? "Buscando..." : "Buscar Oportunidades"}</Button>
           </div>
         </CardContent>
       </Card>
