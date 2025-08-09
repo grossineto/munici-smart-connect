@@ -34,19 +34,19 @@ import {
 import { Button } from "@/components/ui/button";
 
 const group1 = [
-  { title: "Monitoramento de Notícias", url: "/news-monitoring", icon: Newspaper },
-  { title: "Monitoramento de Redes", url: "/social-monitoring", icon: Share2 },
-  { title: "Omnichannel", url: "/whatsapp", icon: Phone },
   { title: "Secretarias", url: "/departments", icon: Building2 },
+  { title: "Oportunidades e Recursos", url: "/oportunidades", icon: Landmark },
+  { title: "Monitoramento de Redes", url: "/social-monitoring", icon: Share2 },
+  { title: "Monitoramento de Notícias", url: "/news-monitoring", icon: Newspaper },
+  { title: "Omnichannel", url: "/whatsapp", icon: Phone },
+  { title: "Pesquisas", url: "/pesquisas-politicas", icon: LineChart },
 ];
 
 const group2 = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Insights", url: "/insights", icon: Brain },
   { title: "Gabinete de Urgência", url: "/urgency-office", icon: AlertTriangle },
-  { title: "Relatorios", url: "/reports", icon: BarChart3 },
-  { title: "Pesquisas Políticas", url: "/pesquisas-politicas", icon: LineChart },
-  { title: "Oportunidades e Recursos", url: "/oportunidades", icon: Landmark },
+  { title: "Relatórios", url: "/reports", icon: BarChart3 },
 ];
 
 const group3 = [
