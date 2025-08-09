@@ -1,6 +1,6 @@
 export const chartTheme = {
-  line: { stroke: "#2F6BFF", strokeWidth: 2, dot: false },
-  area: { stroke: "#2F6BFF", strokeWidth: 2, fill: "rgba(47,107,255,0.12)" },
+  line: { stroke: "#2563EB", strokeWidth: 2, dot: false },
+  area: { stroke: "#2563EB", strokeWidth: 2, fill: "rgba(37,99,235,0.12)" },
   bar: { fill: "#CBD5E1", radius: [6, 6, 0, 0] },
   grid: { stroke: "#E6EAF0" },
   axis: { stroke: "#E6EAF0", tick: "#475569", fontSize: 12 },

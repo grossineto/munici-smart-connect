@@ -13,12 +13,12 @@
   --text: 222 47% 11%;
   --text-muted: 215 19% 35%;
 
-  --primary: 225 100% 60%;
-  --primary-hover: 225 100% 54%;
-  --primary-pressed: 225 100% 50%;
+  --primary: 221 83% 53%;
+  --primary-hover: 221 83% 49%;
+  --primary-pressed: 221 83% 45%;
   --primary-foreground: 0 0% 100%;
-  --primary-ring: 225 100% 70%;
-  --primary-soft: 225 100% 94%;
+  --primary-ring: 221 83% 63%;
+  --primary-soft: 221 83% 94%;
 
   --success: 142 72% 35%;
   --warning: 42 96% 50%;
@@ -36,12 +36,12 @@
   --text: 210 40% 98%;
   --text-muted: 215 16% 72%;
 
-  --primary: 225 100% 66%;
-  --primary-hover: 225 100% 62%;
-  --primary-pressed: 225 100% 58%;
+  --primary: 221 83% 60%;
+  --primary-hover: 221 83% 56%;
+  --primary-pressed: 221 83% 52%;
   --primary-foreground: 0 0% 100%;
-  --primary-ring: 225 100% 75%;
-  --primary-soft: 225 100% 20%;
+  --primary-ring: 221 83% 68%;
+  --primary-soft: 221 83% 20%;
 }
 
 html, body { @apply bg-bg text-text antialiased font-sans; }
