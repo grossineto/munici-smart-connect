@@ -132,7 +132,7 @@ export function NotificationBell() {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative focus:ring-[hsl(var(--sidebar-icon-color-light))] dark:focus:ring-[hsl(var(--primary-ring))]">
           <Bell className="h-5 w-5 icon-sidebar-accent" />
           {unreadCount > 0 && (
             <Badge 

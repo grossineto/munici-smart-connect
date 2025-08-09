@@ -170,7 +170,7 @@ export function AppSidebar() {
         <div className="mt-auto p-4 border-t bg-surfaceMuted">
           <Button
             variant="ghost"
-            className="w-full justify-start mb-2"
+            className="w-full justify-start mb-2 focus:ring-[hsl(var(--sidebar-icon-color-light))] dark:focus:ring-[hsl(var(--primary-ring))]"
             asChild
           >
             <NavLink to="/account" end className={({ isActive }) => isActive ? "sidebar-link sidebar-link--active font-medium w-full justify-start" : "sidebar-link w-full justify-start hover:bg-surfaceMuted"}>
@@ -181,7 +181,7 @@ export function AppSidebar() {
           <Button
             variant="ghost"
             onClick={signOut}
-            className="w-full justify-start hover:bg-destructive/10 hover:text-destructive transition-colors"
+            className="w-full justify-start hover:bg-destructive/10 hover:text-destructive transition-colors focus:ring-[hsl(var(--sidebar-icon-color-light))] dark:focus:ring-[hsl(var(--primary-ring))]"
           >
             <LogOut className="h-4 w-4 icon-sidebar-accent" />
             <span className="ml-2">Sair</span>

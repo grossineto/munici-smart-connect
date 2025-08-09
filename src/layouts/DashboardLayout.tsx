@@ -73,7 +73,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate('/politicians')}
-                  className="hover:bg-muted/50"
+                  className="hover:bg-muted/50 focus:ring-[hsl(var(--sidebar-icon-color-light))] dark:focus:ring-[hsl(var(--primary-ring))]"
                   title="Gerenciar Políticos"
                 >
                   <UserCheck className="h-4 w-4 icon-sidebar-accent" />
@@ -81,7 +81,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <NotificationBell />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="p-0 rounded-full">
+                    <Button variant="ghost" size="sm" className="p-0 rounded-full focus:ring-[hsl(var(--sidebar-icon-color-light))] dark:focus:ring-[hsl(var(--primary-ring))]">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={avatarUrl || undefined} alt={user?.email || 'Conta'} />
                         <AvatarFallback className="bg-primary/10 text-primary text-xs">{initials}</AvatarFallback>
