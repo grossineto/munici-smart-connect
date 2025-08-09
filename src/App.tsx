@@ -24,6 +24,8 @@ import Politicians from "./pages/Politicians";
 import DashboardLayout from "./layouts/DashboardLayout";
 import NotFound from "./pages/NotFound";
 import Account from "./pages/Account";
+import Departments from "./pages/Departments";
+import DepartmentDetail from "./pages/DepartmentDetail";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +53,8 @@ const App = () => (
                 <Route path="/news-monitoring" element={<DashboardLayout><NewsMonitoring /></DashboardLayout>} />
                 <Route path="/social-monitoring" element={<DashboardLayout><SocialMonitoring /></DashboardLayout>} />
                 <Route path="/politicians" element={<DashboardLayout><Politicians /></DashboardLayout>} />
+                <Route path="/departments" element={<DashboardLayout><Departments /></DashboardLayout>} />
+                <Route path="/departments/:slug" element={<DashboardLayout><DepartmentDetail /></DashboardLayout>} />
                 <Route path="/account" element={<DashboardLayout><Account /></DashboardLayout>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

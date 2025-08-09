@@ -13,7 +13,8 @@ import {
   Shield,
   Newspaper,
   Share2,
-  UserCheck
+  UserCheck,
+  Building2
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,6 +40,7 @@ const group1 = [
 const group2 = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Insights", url: "/insights", icon: Brain },
+  { title: "Secretarias", url: "/departments", icon: Building2 },
   { title: "Gabinete de Urgência", url: "/urgency-office", icon: AlertTriangle },
   { title: "Relatorios", url: "/reports", icon: BarChart3 },
 ];
