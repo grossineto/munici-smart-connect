@@ -183,7 +183,7 @@ export function AppSidebar() {
             onClick={signOut}
             className="w-full justify-start hover:bg-destructive/10 hover:text-destructive transition-colors"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-4 w-4 icon-sidebar-accent" />
             <span className="ml-2">Sair</span>
           </Button>
         </div>

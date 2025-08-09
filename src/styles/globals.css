@@ -77,6 +77,11 @@ h1,h2,h3,h4 { @apply tracking-[-0.01em]; }
 .sidebar-link svg { stroke: hsl(var(--sidebar-icon-color-light)); color: hsl(var(--sidebar-icon-color-light)); }
 .sidebar-link:hover { color: hsl(var(--sidebar-text-color-light)); }
 .sidebar-link--active { color: hsl(var(--sidebar-text-color-light)); }
+/* Generic light-mode icon accent class (for non-sidebar-link icons) */
+.icon-sidebar-accent { color: hsl(var(--sidebar-icon-color-light)); }
+.icon-sidebar-accent, .icon-sidebar-accent svg { stroke: hsl(var(--sidebar-icon-color-light)); }
 /* Keep dark mode as-is */
 .dark .sidebar-link { color: inherit; }
 .dark .sidebar-link svg { stroke: currentColor; color: currentColor; }
+.dark .icon-sidebar-accent { color: inherit; }
+.dark .icon-sidebar-accent, .dark .icon-sidebar-accent svg { stroke: currentColor; }

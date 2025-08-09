@@ -76,7 +76,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   className="hover:bg-muted/50"
                   title="Gerenciar Políticos"
                 >
-                  <UserCheck className="h-4 w-4" />
+                  <UserCheck className="h-4 w-4 icon-sidebar-accent" />
                 </Button>
                 <NotificationBell />
                 <DropdownMenu>
