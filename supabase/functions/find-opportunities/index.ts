@@ -8,32 +8,40 @@ const corsHeaders = {
 
 const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+// Optional provider secrets/endpoints (configure if available)
+const BNDES_API_BASE = Deno.env.get("BNDES_API_BASE");
+const BNDES_API_KEY = Deno.env.get("BNDES_API_KEY");
+
+const CAIXA_API_BASE = Deno.env.get("CAIXA_API_BASE");
+const CAIXA_API_KEY = Deno.env.get("CAIXA_API_KEY");
+
+const BB_API_BASE = Deno.env.get("BB_API_BASE");
+const BB_API_KEY = Deno.env.get("BB_API_KEY");
+
+// Types
+interface NormalizedOpportunity {
+  id: string;
+  name: string;
+  agency: string;
+  value: string;
+  deadline: string;
+  area: string;
+  link: string;
+  score: number;
+  summary: string;
+  source: "perplexity" | "bndes" | "caixa" | "bb";
+}
+
+async function fetchPerplexity(idea: string, area?: string): Promise<NormalizedOpportunity[]> {
+  if (!PERPLEXITY_API_KEY) {
+    console.warn("PERPLEXITY_API_KEY ausente — pulando Perplexity");
+    return [];
   }
 
-  try {
-    const { idea, area } = await req.json().catch(() => ({ idea: "", area: undefined }));
+  const system =
+    "Você é um consultor de captação de recursos para prefeituras do Brasil. Retorne apenas JSON válido.";
 
-    if (!idea || typeof idea !== "string") {
-      return new Response(JSON.stringify({ error: "Parâmetro 'idea' é obrigatório" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (!PERPLEXITY_API_KEY) {
-      return new Response(JSON.stringify({
-        error: "PERPLEXITY_API_KEY ausente nas secrets do Supabase",
-        hint: "Defina a secret PERPLEXITY_API_KEY para ativar a busca em tempo real",
-      }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    const system =
-      "Você é um consultor de captação de recursos para prefeituras do Brasil. Retorne apenas JSON válido.";
-
-    const user = `Com base no projeto abaixo, encontre até 8 oportunidades (editais, programas, linhas de crédito) REAIS e ATUAIS.
+  const user = `Com base no projeto abaixo, encontre até 8 oportunidades (editais, programas, linhas de crédito) REAIS e ATUAIS.
 - Priorize fontes oficiais: gov.br, Plataforma +Brasil (Siconv), ministérios, Caixa, Banco do Brasil, BNDES, bancos públicos, governos estaduais.
 - Se possível, traga prazos de inscrição, valores e links oficiais.
 
@@ -57,81 +65,204 @@ Responda APENAS com JSON válido, sem comentários:
   ]
 }`;
 
-    const resp = await fetch("https://api.perplexity.ai/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${PERPLEXITY_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-sonar-small-128k-online",
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
-        ],
-        temperature: 0.2,
-        top_p: 0.9,
-        max_tokens: 1200,
-        return_images: false,
-        return_related_questions: false,
-        frequency_penalty: 1,
-        presence_penalty: 0,
-        // leve viés para domínios oficiais
-        search_domain_filter: [
-          "gov.br",
-          "bndes.gov.br",
-          "caixa.gov.br",
-          "bb.com.br",
-          "saude.gov.br",
-          "mec.gov.br",
-          "infraestrutura.gov.br",
-          "mds.gov.br",
-          "fazenda.gov.br",
-          "planalto.gov.br",
-        ],
-        search_recency_filter: "month",
-      }),
-    });
+  const resp = await fetch("https://api.perplexity.ai/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${PERPLEXITY_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "llama-3.1-sonar-small-128k-online",
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+      temperature: 0.2,
+      top_p: 0.9,
+      max_tokens: 1200,
+      return_images: false,
+      return_related_questions: false,
+      frequency_penalty: 1,
+      presence_penalty: 0,
+      search_domain_filter: [
+        "gov.br",
+        "bndes.gov.br",
+        "caixa.gov.br",
+        "bb.com.br",
+        "saude.gov.br",
+        "mec.gov.br",
+        "infraestrutura.gov.br",
+        "mds.gov.br",
+        "fazenda.gov.br",
+        "planalto.gov.br",
+      ],
+      search_recency_filter: "month",
+    }),
+  });
 
-    if (!resp.ok) {
-      const text = await resp.text();
-      console.error("Perplexity error:", resp.status, text);
-      return new Response(JSON.stringify({ error: "Falha ao consultar Perplexity" }), {
-        status: 502,
+  if (!resp.ok) {
+    const text = await resp.text();
+    console.error("Perplexity error:", resp.status, text);
+    return [];
+  }
+
+  const data = await resp.json();
+  const content: string = data?.choices?.[0]?.message?.content || "";
+
+  const fenced = content.match(/```json[\s\S]*?```/i);
+  const jsonText = fenced ? fenced[0].replace(/```json/i, "").replace(/```/g, "").trim() : content.trim();
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch (_err) {
+    console.warn("Falha parse JSON Perplexity; retornando vazio");
+    parsed = { opportunities: [] };
+  }
+
+  const list = Array.isArray(parsed?.opportunities) ? parsed.opportunities : [];
+
+  return list.map((it: any, idx: number) => ({
+    id: it.id || `${Date.now()}-px-${idx}`,
+    name: it.name || it.nome || it.titulo || "Oportunidade",
+    agency: it.agency || it.orgao || it.instituicao || "Instituição",
+    value: it.value || it.valor || "—",
+    deadline: it.deadline || it.prazo || "",
+    area: it.area || it.areaTag || (Array.isArray(it.tags) ? it.tags[0] : "Infraestrutura"),
+    link: it.link || it.url || "",
+    score: typeof it.score === "number" ? it.score : 0,
+    summary: it.summary || it.resumo || "",
+    source: "perplexity" as const,
+  }));
+}
+
+// Provider adapters (placeholders) — implement real endpoints once available
+async function fetchBNDES(idea: string, area?: string): Promise<NormalizedOpportunity[]> {
+  if (!BNDES_API_BASE || !BNDES_API_KEY) {
+    console.info("BNDES_API_BASE/BNDES_API_KEY ausentes — pulando BNDES");
+    return [];
+  }
+  try {
+    const url = `${BNDES_API_BASE}/oportunidades?query=${encodeURIComponent(idea)}${area ? `&area=${encodeURIComponent(area)}` : ""}`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${BNDES_API_KEY}` } });
+    if (!r.ok) throw new Error(`BNDES HTTP ${r.status}`);
+    const data = await r.json();
+    const items = Array.isArray(data?.items) ? data.items : [];
+    return items.map((it: any, idx: number) => ({
+      id: it.id?.toString?.() || `${Date.now()}-bd-${idx}`,
+      name: it.name || it.title || "Linha BNDES",
+      agency: it.agency || "BNDES",
+      value: it.value || it.amount || "—",
+      deadline: it.deadline || it.due_date || "",
+      area: it.area || it.category || "Infraestrutura",
+      link: it.link || it.url || "",
+      score: typeof it.score === "number" ? it.score : 0,
+      summary: it.summary || it.description || "",
+      source: "bndes" as const,
+    }));
+  } catch (e) {
+    console.error("Erro BNDES:", e);
+    return [];
+  }
+}
+
+async function fetchCaixa(idea: string, area?: string): Promise<NormalizedOpportunity[]> {
+  if (!CAIXA_API_BASE || !CAIXA_API_KEY) {
+    console.info("CAIXA_API_BASE/CAIXA_API_KEY ausentes — pulando Caixa");
+    return [];
+  }
+  try {
+    const url = `${CAIXA_API_BASE}/programas?query=${encodeURIComponent(idea)}${area ? `&area=${encodeURIComponent(area)}` : ""}`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${CAIXA_API_KEY}` } });
+    if (!r.ok) throw new Error(`Caixa HTTP ${r.status}`);
+    const data = await r.json();
+    const items = Array.isArray(data?.items) ? data.items : [];
+    return items.map((it: any, idx: number) => ({
+      id: it.id?.toString?.() || `${Date.now()}-cx-${idx}`,
+      name: it.name || it.title || "Programa CAIXA",
+      agency: it.agency || "Caixa Econômica Federal",
+      value: it.value || it.amount || "—",
+      deadline: it.deadline || it.due_date || "",
+      area: it.area || it.category || "Infraestrutura",
+      link: it.link || it.url || "",
+      score: typeof it.score === "number" ? it.score : 0,
+      summary: it.summary || it.description || "",
+      source: "caixa" as const,
+    }));
+  } catch (e) {
+    console.error("Erro CAIXA:", e);
+    return [];
+  }
+}
+
+async function fetchBB(idea: string, area?: string): Promise<NormalizedOpportunity[]> {
+  if (!BB_API_BASE || !BB_API_KEY) {
+    console.info("BB_API_BASE/BB_API_KEY ausentes — pulando BB");
+    return [];
+  }
+  try {
+    const url = `${BB_API_BASE}/linhas-credito?query=${encodeURIComponent(idea)}${area ? `&area=${encodeURIComponent(area)}` : ""}`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${BB_API_KEY}` } });
+    if (!r.ok) throw new Error(`BB HTTP ${r.status}`);
+    const data = await r.json();
+    const items = Array.isArray(data?.items) ? data.items : [];
+    return items.map((it: any, idx: number) => ({
+      id: it.id?.toString?.() || `${Date.now()}-bb-${idx}`,
+      name: it.name || it.title || "Linha BB",
+      agency: it.agency || "Banco do Brasil",
+      value: it.value || it.amount || "—",
+      deadline: it.deadline || it.due_date || "",
+      area: it.area || it.category || "Infraestrutura",
+      link: it.link || it.url || "",
+      score: typeof it.score === "number" ? it.score : 0,
+      summary: it.summary || it.description || "",
+      source: "bb" as const,
+    }));
+  } catch (e) {
+    console.error("Erro BB:", e);
+    return [];
+  }
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { idea, area, providers } = await req.json().catch(() => ({ idea: "", area: undefined, providers: undefined }));
+
+    if (!idea || typeof idea !== "string") {
+      return new Response(JSON.stringify({ error: "Parâmetro 'idea' é obrigatório" }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const data = await resp.json();
-    const content: string = data?.choices?.[0]?.message?.content || "";
+    const selected: ("perplexity" | "bndes" | "caixa" | "bb")[] = Array.isArray(providers) && providers.length
+      ? providers
+      : ["perplexity"]; // padrão
 
-    const fenced = content.match(/```json[\s\S]*?```/i);
-    const jsonText = fenced ? fenced[0].replace(/```json/i, "").replace(/```/g, "").trim() : content.trim();
+    console.log("🔎 Buscando oportunidades:", { area, providers: selected });
 
-    let parsed: any;
-    try {
-      parsed = JSON.parse(jsonText);
-    } catch (_err) {
-      // fallback simples
-      parsed = { opportunities: [] };
-    }
+    const tasks: Promise<NormalizedOpportunity[]>[] = [];
+    if (selected.includes("perplexity")) tasks.push(fetchPerplexity(idea, area));
+    if (selected.includes("bndes")) tasks.push(fetchBNDES(idea, area));
+    if (selected.includes("caixa")) tasks.push(fetchCaixa(idea, area));
+    if (selected.includes("bb")) tasks.push(fetchBB(idea, area));
 
-    const list = Array.isArray(parsed?.opportunities) ? parsed.opportunities : [];
+    const results = (await Promise.all(tasks)).flat();
 
-    // Normalizar campos mínimos esperados no frontend
-    const normalized = list.map((it: any, idx: number) => ({
-      id: it.id || `${Date.now()}-${idx}`,
-      name: it.name || it.nome || it.titulo || "Oportunidade",
-      agency: it.agency || it.orgao || it.instituicao || "Instituição",
-      value: it.value || it.valor || "—",
-      deadline: it.deadline || it.prazo || "",
-      area: it.area || it.areaTag || (Array.isArray(it.tags) ? it.tags[0] : undefined) || "Infraestrutura",
-      link: it.link || it.url || "",
-      score: typeof it.score === "number" ? it.score : 0,
-      summary: it.summary || it.resumo || "",
-    }));
+    // Simple de-dup by link+name
+    const seen = new Set<string>();
+    const unique = results.filter((r) => {
+      const key = `${r.link}|${r.name}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 
-    return new Response(JSON.stringify({ opportunities: normalized }), {
+    return new Response(JSON.stringify({ opportunities: unique }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

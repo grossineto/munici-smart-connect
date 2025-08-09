@@ -52,7 +52,11 @@ const OportunidadesRecursos: React.FC = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('find-opportunities', {
-        body: { idea, area: area !== 'Todas' ? area : undefined }
+        body: { 
+          idea, 
+          area: area !== 'Todas' ? area : undefined,
+          providers: ['perplexity', 'bndes', 'caixa', 'bb']
+        }
       });
       if (error) throw error;
       const items = (data?.opportunities || []) as any[];
