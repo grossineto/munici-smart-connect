@@ -167,30 +167,86 @@ async function fetchBNDES(idea: string, area?: string): Promise<NormalizedOpport
 }
 
 async function fetchCaixa(idea: string, area?: string): Promise<NormalizedOpportunity[]> {
-  if (!CAIXA_API_BASE || !CAIXA_API_KEY) {
-    console.info("CAIXA_API_BASE/CAIXA_API_KEY ausentes — pulando Caixa");
+  // Integração com o Portal da Transparência usando header "chave-api"
+  const PORTAL_API_BASE = CAIXA_API_BASE || "https://api.portaldatransparencia.gov.br/api-de-dados";
+  const PORTAL_API_KEY = CAIXA_API_KEY;
+
+  if (!PORTAL_API_KEY) {
+    console.info("CAIXA_API_KEY (Portal da Transparência) ausente — pulando CAIXA");
     return [];
   }
+
+  const headers = { "chave-api": PORTAL_API_KEY } as Record<string, string>;
+  const qs = (params: Record<string, string | number | undefined>) =>
+    Object.entries(params)
+      .filter(([, v]) => v !== undefined && v !== "")
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+      .join("&");
+
+  const req = async (path: string, params: Record<string, string | number | undefined>) => {
+    const url = `${PORTAL_API_BASE}/${path}?${qs(params)}`;
+    const r = await fetch(url, { headers });
+    if (!r.ok) {
+      const text = await r.text();
+      console.error(`Portal da Transparência ${path} HTTP ${r.status}:`, text);
+      return [];
+    }
+    try {
+      return await r.json();
+    } catch {
+      return [];
+    }
+  };
+
+  const getCaixaOrgaoCodigo = async (): Promise<string | undefined> => {
+    try {
+      const orgs = await req("orgaos", { nome: "CAIXA ECONOMICA FEDERAL", pagina: 1 });
+      const first = Array.isArray(orgs) ? orgs[0] : undefined;
+      return first?.codigo || first?.id || first?.codigoOrgao;
+    } catch (e) {
+      console.warn("Falha ao obter código do órgão CAIXA:", e);
+      return undefined;
+    }
+  };
+
   try {
-    const url = `${CAIXA_API_BASE}/programas?query=${encodeURIComponent(idea)}${area ? `&area=${encodeURIComponent(area)}` : ""}`;
-    const r = await fetch(url, { headers: { Authorization: `Bearer ${CAIXA_API_KEY}` } });
-    if (!r.ok) throw new Error(`Caixa HTTP ${r.status}`);
-    const data = await r.json();
-    const items = Array.isArray(data?.items) ? data.items : [];
-    return items.map((it: any, idx: number) => ({
-      id: it.id?.toString?.() || `${Date.now()}-cx-${idx}`,
-      name: it.name || it.title || "Programa CAIXA",
-      agency: it.agency || "Caixa Econômica Federal",
-      value: it.value || it.amount || "—",
-      deadline: it.deadline || it.due_date || "",
-      area: it.area || it.category || "Infraestrutura",
-      link: it.link || it.url || "",
-      score: typeof it.score === "number" ? it.score : 0,
-      summary: it.summary || it.description || "",
-      source: "caixa" as const,
-    }));
+    const codigoOrgao = await getCaixaOrgaoCodigo();
+
+    // Consultas prioritárias: licitações, convênios e contratos
+    const [licitacoes, convenios, contratos] = await Promise.all([
+      req("licitacoes", { pagina: 1, codigoOrgao, objeto: idea }),
+      req("convenios", { pagina: 1, codigoOrgao, objeto: idea }),
+      req("contratos", { pagina: 1, codigoOrgao, objeto: idea }),
+    ]);
+
+    const rawItems = [
+      ...(Array.isArray(licitacoes) ? licitacoes : []),
+      ...(Array.isArray(convenios) ? convenios : []),
+      ...(Array.isArray(contratos) ? contratos : []),
+    ];
+
+    return rawItems.map((it: any, idx: number) => {
+      const id = it.id?.toString?.() || it.codigo?.toString?.() || it.numeroAviso?.toString?.() || it.numeroConvenio?.toString?.() || it.numeroContrato?.toString?.() || `${Date.now()}-cx-${idx}`;
+      const objeto = it.objeto || it.descricao || it.naturezaJuridica || "Oportunidade CAIXA";
+      const valor = it.valorEstimado || it.valorGlobal || it.valor || it.valorContrato || "—";
+      const prazo = it.dataAbertura || it.dataFinal || it.dataFimVigencia || it.dataPublicacao || "";
+      const link = it.url || it.urlPortal || "https://www.portaltransparencia.gov.br/";
+
+      return {
+        id,
+        name: String(objeto).slice(0, 140),
+        agency: "Caixa Econômica Federal",
+        value: typeof valor === "number" ? `R$ ${valor.toLocaleString("pt-BR")}` : String(valor),
+        deadline: prazo,
+        area: area || (Array.isArray(it?.tags) ? it.tags[0] : "Infraestrutura"),
+        link,
+        score: 0,
+        summary: String(objeto).slice(0, 200),
+        source: "caixa" as const,
+      };
+    });
   } catch (e) {
-    console.error("Erro CAIXA:", e);
+    console.error("Erro CAIXA (Portal da Transparência):", e);
     return [];
   }
 }

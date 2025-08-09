@@ -55,7 +55,7 @@ const OportunidadesRecursos: React.FC = () => {
         body: { 
           idea, 
           area: area !== 'Todas' ? area : undefined,
-          providers: ['perplexity', 'bndes', 'caixa', 'bb']
+          providers: ['caixa']
         }
       });
       if (error) throw error;
