@@ -108,16 +108,40 @@ Responda APENAS com JSON válido, sem comentários:
   }
 
   const data = await resp.json();
-  const content: string = data?.choices?.[0]?.message?.content || "";
+  const rawContent: string = data?.choices?.[0]?.message?.content || "";
 
-  const fenced = content.match(/```json[\s\S]*?```/i);
-  const jsonText = fenced ? fenced[0].replace(/```json/i, "").replace(/```/g, "").trim() : content.trim();
-
-  let parsed: any;
+  // Tentar extrair JSON de forma robusta
+  let parsed: any = { opportunities: [] };
   try {
-    parsed = JSON.parse(jsonText);
+    let jsonText = rawContent.trim();
+    const fenced = jsonText.match(/```json[\s\S]*?```/i);
+    if (fenced) {
+      jsonText = fenced[0].replace(/```json/i, "").replace(/```/g, "").trim();
+    } else {
+      // Se começar com array, embrulhar em { opportunities: [...] }
+      if (jsonText.startsWith("[")) {
+        const arr = JSON.parse(jsonText);
+        parsed = { opportunities: arr };
+      }
+    }
+    if (parsed.opportunities === undefined) {
+      // Se ainda não parseamos, tentar pegar o primeiro bloco {...}
+      if (!fenced && !jsonText.startsWith("[")) {
+        const first = jsonText.indexOf("{");
+        const last = jsonText.lastIndexOf("}");
+        if (first !== -1 && last !== -1 && last > first) {
+          const slice = jsonText.slice(first, last + 1);
+          parsed = JSON.parse(slice);
+        } else {
+          parsed = JSON.parse(jsonText);
+        }
+      }
+      if (parsed.opportunities === undefined && Array.isArray(parsed)) {
+        parsed = { opportunities: parsed };
+      }
+    }
   } catch (_err) {
-    console.warn("Falha parse JSON Perplexity; retornando vazio");
+    console.warn("Falha parse JSON Perplexity; content inicia com:", rawContent.slice(0, 200));
     parsed = { opportunities: [] };
   }
 
