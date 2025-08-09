@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -43,7 +44,7 @@
   --primary-soft: 225 100% 20%;
 }
 
-html, body { @apply bg-bg text-text antialiased; }
+html, body { @apply bg-bg text-text antialiased font-sans; }
 h1,h2,h3,h4 { @apply tracking-[-0.01em]; }
 .container-XL { @apply max-w-[1280px] mx-auto; }
 
@@ -52,7 +53,7 @@ h1,h2,h3,h4 { @apply tracking-[-0.01em]; }
 .card { @apply bg-surface rounded-lg shadow-card p-6 border border-border; }
 .card-hover:hover{ @apply shadow-cardHover -translate-y-[1px] transition; }
 
-.sidebar-item { @apply flex items-center gap-3 px-3 py-2 rounded-pill text-text-muted hover:bg-surface-muted; }
+.sidebar-item { @apply flex items-center gap-3 px-3 py-2 rounded-pill text-muted-foreground hover:bg-surface-muted; }
 .sidebar-item--active { @apply bg-primary-soft text-primary font-semibold; }
 
 .dropdown { @apply bg-surface border border-border shadow-dropdown rounded-lg z-[60]; }

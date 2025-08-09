@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useSocialMentions } from '@/hooks/useSocialMonitor';
+import { chartTheme } from '@/lib/chartTheme';
 
 interface SentimentLineChartProps {
   selectedPolitician?: string;
@@ -153,16 +154,17 @@ export function SentimentLineChart({
         <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid.stroke} className="opacity-30" />
               <XAxis 
                 dataKey="dateLabel" 
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: chartTheme.axis.tick }}
                 tickLine={false}
+                axisLine={{ stroke: chartTheme.axis.stroke }}
               />
               <YAxis 
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: chartTheme.axis.tick }}
                 tickLine={false}
-                axisLine={false}
+                axisLine={{ stroke: chartTheme.axis.stroke }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend 
