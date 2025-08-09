@@ -615,11 +615,11 @@ function NewsMonitoring() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container-XL p-6">
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">Carregando monitoramento...</p>
+            <p className="text-muted-foreground">Carregando monitoramento...</p>
           </div>
         </div>
       </div>
@@ -629,8 +629,8 @@ function NewsMonitoring() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header Profissional */}
-      <div className="border-b-2 border-muted bg-card shadow-sm">
-        <div className="container mx-auto px-6 py-8">
+      <div className="border-b-2 border-border bg-card shadow-sm">
+        <div className="container-XL px-6 py-8">
           <div className="mb-8 flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-3">

@@ -65,11 +65,11 @@ export function RecentSuggestions({ onSelectPolitician, className = "" }: Recent
           <Button
             key={index}
             variant="ghost"
-            className="w-full justify-start p-4 h-auto text-left hover:bg-muted/80 border border-transparent hover:border-muted-foreground/20 transition-all duration-200"
+            className="w-full justify-start p-4 h-auto text-left hover:bg-surfaceMuted border border-transparent hover:border-border transition-all duration-200"
             onClick={() => onSelectPolitician(politician)}
           >
               <div className="flex items-center gap-3 w-full">
-                <Avatar className="w-10 h-10 border border-muted">
+                <Avatar className="w-10 h-10 border border-border">
                   <AvatarImage 
                     src={politician.avatar}
                     alt={`Foto de ${politician.nome}`}

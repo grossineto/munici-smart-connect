@@ -76,7 +76,7 @@ export function PoliticianCard({ politician, className = "" }: PoliticianCardPro
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           {/* Avatar */}
-          <Avatar className="h-16 w-16 border-2 border-muted">
+          <Avatar className="h-16 w-16 border-2 border-border">
             <AvatarImage 
               src={politician.avatar}
               alt={`Foto de ${politician.nome}`}

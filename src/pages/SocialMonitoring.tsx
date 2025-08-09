@@ -394,7 +394,7 @@ const SocialMonitoring = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-8">
+    <div className="container-XL py-6 space-y-8">
       {/* Header Principal */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -420,7 +420,7 @@ const SocialMonitoring = () => {
         </div>
 
         {/* Status das Plataformas */}
-        <div className="flex items-center gap-6 p-4 bg-muted/20 rounded-lg border">
+        <div className="flex items-center gap-6 p-4 bg-surfaceMuted rounded-lg border border-border">
           <div className="flex items-center gap-2">
             <Twitter className="h-4 w-4 text-blue-500" />
             <span className="text-sm">Twitter</span>
