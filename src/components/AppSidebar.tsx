@@ -61,7 +61,7 @@ export function AppSidebar() {
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive
-      ? "sidebar-link sidebar-link--active bg-primary-soft font-medium dark:text-primary"
+      ? "sidebar-link sidebar-link--active font-medium"
       : "sidebar-link hover:bg-surfaceMuted";
 
   return (
@@ -173,7 +173,7 @@ export function AppSidebar() {
             className="w-full justify-start mb-2"
             asChild
           >
-            <NavLink to="/account" end className={({ isActive }) => isActive ? "sidebar-link sidebar-link--active bg-primary-soft font-medium w-full justify-start dark:text-primary" : "sidebar-link w-full justify-start hover:bg-surfaceMuted"}>
+            <NavLink to="/account" end className={({ isActive }) => isActive ? "sidebar-link sidebar-link--active font-medium w-full justify-start" : "sidebar-link w-full justify-start hover:bg-surfaceMuted"}>
               <Settings className="h-4 w-4" />
               <span className="ml-2">Configurações</span>
             </NavLink>
