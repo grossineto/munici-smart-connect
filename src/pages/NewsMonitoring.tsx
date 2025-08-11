@@ -144,11 +144,17 @@ function NewsMonitoring() {
       setLoading(true);
       console.log('🔄 Carregando dados gerais...');
 
+      const tenantId = await getCurrentTenantId();
+
       // Carregar alertas
-      const { data: alertsData, error: alertsError } = await supabase
+      let alertsQuery = supabase
         .from('news_alerts' as any)
         .select('*')
         .order('created_at', { ascending: false });
+
+      if (tenantId) alertsQuery = alertsQuery.eq('tenant_id', tenantId);
+
+      const { data: alertsData, error: alertsError } = await alertsQuery;
 
       if (alertsError) {
         console.error('Erro ao carregar alertas:', alertsError);
@@ -158,10 +164,14 @@ function NewsMonitoring() {
       }
 
       // Carregar análises
-      const { data: analysesData, error: analysesError } = await supabase
+      let analysesQuery = supabase
         .from('news_analysis' as any)
         .select('*')
         .order('created_at', { ascending: false });
+
+      if (tenantId) analysesQuery = analysesQuery.eq('tenant_id', tenantId);
+
+      const { data: analysesData, error: analysesError } = await analysesQuery;
 
       if (analysesError) {
         console.error('Erro ao carregar análises:', analysesError);
@@ -199,9 +209,10 @@ function NewsMonitoring() {
       setFilteredAnalyses([]);
       
       console.log(`🔍 Carregando dados FILTRADOS para: ${politician.nome} - ${politician.cidade}/${politician.uf}`);
+      const tenantId = await getCurrentTenantId();
       
       // Filtros corrigidos para alertas - usando sintaxe correta do Supabase
-      const { data: alertsData, error: alertsError } = await supabase
+      let alertsQuery = supabase
         .from('news_alerts')
         .select(`
           *,
@@ -217,6 +228,9 @@ function NewsMonitoring() {
         .or(`title.ilike.%${politician.nome}%,title.ilike.%${politician.cidade}%,message.ilike.%${politician.nome}%,message.ilike.%${politician.cidade}%`)
         .order('published_at', { ascending: false, foreignTable: 'news_articles' })
         .limit(50);
+      if (tenantId) alertsQuery = alertsQuery.eq('tenant_id', tenantId);
+
+      const { data: alertsData, error: alertsError } = await alertsQuery;
 
       if (alertsError) {
         console.error('Erro ao carregar alertas filtrados:', alertsError);
@@ -244,7 +258,7 @@ function NewsMonitoring() {
       }
 
       // Filtros corrigidos para análises - usando sintaxe correta do Supabase
-      const { data: analysesData, error: analysesError } = await supabase
+      let analysesQuery = supabase
         .from('news_analysis')
         .select(`
           *,
@@ -260,6 +274,9 @@ function NewsMonitoring() {
         .or(`summary.ilike.%${politician.nome}%,summary.ilike.%${politician.cidade}%,impact_analysis.ilike.%${politician.nome}%,impact_analysis.ilike.%${politician.cidade}%`)
         .order('published_at', { ascending: false, foreignTable: 'news_articles' })
         .limit(50);
+      if (tenantId) analysesQuery = analysesQuery.eq('tenant_id', tenantId);
+
+      const { data: analysesData, error: analysesError } = await analysesQuery;
 
       if (analysesError) {
         console.error('Erro ao carregar análises filtradas:', analysesError);
