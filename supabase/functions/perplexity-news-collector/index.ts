@@ -349,10 +349,28 @@ serve(async (req) => {
         
         console.log(`📰 Resposta query ${i+1}:`, content.substring(0, 300));
 
-        // Parse mais robusto
-        const newsBlocks = content.split(/NOTÍCIA \d+:/).filter(block => 
+        // Parse robusto com fallback para JSON
+        let newsBlocks = content.split(/NOTÍCIA \d+:/).filter(block => 
           block.trim() && (block.includes('Título:') || block.includes('titulo:'))
         );
+
+        // Fallback: tentar extrair JSON estruturado (array ou { articles: [] })
+        if (newsBlocks.length === 0) {
+          try {
+            const jsonBlock = extractJsonBlock(content);
+            if (jsonBlock) {
+              const parsed = JSON.parse(sanitizeJson(jsonBlock));
+              const articles = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.articles) ? parsed.articles : []);
+              if (articles.length) {
+                newsBlocks = articles.slice(0, settings.maxArticles).map((a: any) =>
+                  `Título: ${a.title || a.titulo || 'Sem título'}\nURL: ${a.url || a.link || ''}\nFonte: ${a.source || a.fonte || 'Portal de Notícias'}\nResumo: ${a.summary || a.resumo || ''}`
+                );
+              }
+            }
+          } catch (_) {
+            // Ignorar e seguir com os próximos fallbacks
+          }
+        }
 
         console.log(`📊 Query ${i+1}: ${newsBlocks.length} blocos encontrados`);
 
