@@ -317,7 +317,7 @@ serve(async (req) => {
             return_related_questions: false,
             frequency_penalty: 1,
             presence_penalty: 0,
-            search_domain_filter: domainFilter,
+            search_domain_filter: settings.scope === 'restrito' ? domainFilter : undefined,
             search_recency_filter: perplexRecency
           }),
         });
@@ -720,6 +720,64 @@ serve(async (req) => {
     const targetInfo = mayor 
       ? `${mayor.mayorName} - ${mayor.cityName}/${mayor.state}` 
       : 'Ricardo Nunes - São Paulo/SP';
+
+    if (processedArticles.length === 0) {
+      try {
+        console.log('🟡 Nenhuma notícia via Perplexity; tentando fallback (30 dias, sem restrição de domínio)...');
+        const fallbackQuery = mayor
+          ? `${mayor.mayorName} ${mayor.cityName} ${mayor.state} últimos 30 dias notícias`
+          : `Prefeitura de São Paulo últimos 30 dias notícias`;
+        const fallbackResp = await fetch('https://api.perplexity.ai/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${perplexityApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'llama-3.1-sonar-small-128k-online',
+            messages: [
+              { role: 'system', content: 'Liste notícias reais dos últimos 30 dias com título, URL, fonte e um resumo curto.' },
+              { role: 'user', content: `Encontre o máximo possível de notícias dos últimos 30 dias sobre: ${fallbackQuery}. Retorne blocos NOTÍCIA n com Título, URL, Fonte e Resumo.` }
+            ],
+            temperature: 0.2,
+            max_tokens: 1200,
+            search_recency_filter: 'month'
+          })
+        });
+        if (fallbackResp.ok) {
+          const data = await fallbackResp.json();
+          const c = data.choices?.[0]?.message?.content || '';
+          let blocks = c.split(/NOT[ÍI]CIA\s*\d+\s*[:\-]/gi).filter((b: string) => b.trim().toLowerCase().includes('título:'));
+          if (blocks.length === 0) {
+            const urls = Array.from(new Set((c.match(/https?:\/\/[\S)\]]+/g) || [])));
+            if (urls.length) {
+              blocks = urls.map((u: string) => `Título: ${u}\nURL: ${u}\nFonte: ${new URL(u).hostname}\nResumo: Link detectado`);
+            }
+          }
+          for (const block of blocks) {
+            try {
+              const t = (block.match(/T[íi]tulo:\s*(.+)/i) || [])[1];
+              const u = (block.match(/URL:\s*(https?:\/\/[^\s\n]+)/i) || [])[1];
+              const s = (block.match(/Fonte:\s*(.+)/i) || [])[1] || 'Portal';
+              const r = (block.match(/Resumo:\s*(.+)/i) || [])[1] || '';
+              if (!t || !u) continue;
+              const { data: exists } = await supabase.from('news_articles').select('id').eq('url', u).eq('tenant_id', tenantId).limit(1);
+              let articleId: string | undefined = exists?.[0]?.id;
+              if (!articleId) {
+                const { data: ins } = await supabase.from('news_articles').insert({ title: `[${today}] ${t}`, url: u, author: s, content: r, published_at: new Date().toISOString(), tenant_id: tenantId }).select('id').single();
+                articleId = ins?.id;
+              }
+              if (articleId) {
+                await supabase.from('news_analysis').insert({ article_id: articleId, sentiment_score: 0, urgency_level: 'medium', relevance_score: 5, mentions_city: true, tenant_id: tenantId, summary: r, impact_analysis: r });
+                processedArticles.push({ title: t, url: u, source: s, analysis: r, urgency: 'medium', relevance: 5 });
+              }
+            } catch {}
+          }
+        }
+      } catch (e) {
+        console.log('⚠️ Fallback falhou:', e);
+      }
+    }
 
     console.log(`🎉 COLETA CONCLUÍDA: ${processedArticles.length} notícias processadas para ${targetInfo}`);
 
