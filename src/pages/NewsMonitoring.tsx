@@ -225,7 +225,7 @@ function NewsMonitoring() {
             published_at
           )
         `)
-        .or(`title.ilike.%${politician.nome}%,title.ilike.%${politician.cidade}%,message.ilike.%${politician.nome}%,message.ilike.%${politician.cidade}%`)
+        .or(`title.ilike.%${politician.nome}%,title.ilike.%${politician.cidade}%,message.ilike.%${politician.nome}%,message.ilike.%${politician.cidade}%,news_articles.title.ilike.%${politician.nome}%,news_articles.title.ilike.%${politician.cidade}%`)
         .order('published_at', { ascending: false, foreignTable: 'news_articles' })
         .limit(50);
       if (tenantId) alertsQuery = alertsQuery.eq('tenant_id', tenantId);
@@ -271,7 +271,7 @@ function NewsMonitoring() {
             published_at
           )
         `)
-        .or(`summary.ilike.%${politician.nome}%,summary.ilike.%${politician.cidade}%,impact_analysis.ilike.%${politician.nome}%,impact_analysis.ilike.%${politician.cidade}%`)
+        .or(`summary.ilike.%${politician.nome}%,summary.ilike.%${politician.cidade}%,impact_analysis.ilike.%${politician.nome}%,impact_analysis.ilike.%${politician.cidade}%,news_articles.title.ilike.%${politician.nome}%,news_articles.title.ilike.%${politician.cidade}%`)
         .order('published_at', { ascending: false, foreignTable: 'news_articles' })
         .limit(50);
       if (tenantId) analysesQuery = analysesQuery.eq('tenant_id', tenantId);
