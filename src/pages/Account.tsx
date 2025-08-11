@@ -31,6 +31,7 @@ const Account = () => {
     role: null,
     phone: "",
   });
+  const [bootstrapping, setBootstrapping] = useState(false);
 
   const currentTheme = theme === "system" ? systemTheme : theme;
 
@@ -223,6 +224,47 @@ const Account = () => {
                   onCheckedChange={(v) => setTheme(v ? "dark" : "light")}
                   aria-label="Alternar tema"
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Administração</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Conceder-se acesso de administrador quando não existir nenhum admin no sistema.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  disabled={bootstrapping}
+                  onClick={async () => {
+                    try {
+                      setBootstrapping(true);
+                      const { data, error } = await supabase.functions.invoke("bootstrap-admin", { body: {} });
+                      if (error) throw error;
+                      if (data?.status === "already_admin") {
+                        toast({ title: "Você já é admin", description: "Seu acesso já é total." });
+                      } else if (data?.status === "granted") {
+                        toast({ title: "Acesso concedido", description: "Você agora é admin." });
+                        setProfile((p) => ({ ...p, role: "admin" }));
+                      } else if (data?.status === "forbidden") {
+                        toast({ title: "Ação não permitida", description: "Já existe um admin. Solicite a promoção." });
+                      } else {
+                        toast({ title: "Processo concluído", description: data?.message ?? "Verifique seu acesso." });
+                      }
+                    } catch (e: any) {
+                      console.error(e);
+                      toast({ title: "Falha ao solicitar admin", description: e?.message ?? "Tente novamente." });
+                    } finally {
+                      setBootstrapping(false);
+                    }
+                  }}
+                >
+                  Tornar-me Admin
+                </Button>
               </div>
             </CardContent>
           </Card>
