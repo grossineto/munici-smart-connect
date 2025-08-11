@@ -274,69 +274,88 @@ serve(async (req) => {
       console.log(`🔍 ${i+1}/${todayQueries.length}: ${query}`);
       const countText = settings.maxArticles > 0 ? `até ${settings.maxArticles}` : 'o máximo possível de';
       try {
-        const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${perplexityApiKey}`,
-            'Content-Type': 'application/json',
-          },
-            body: JSON.stringify({
-              model: 'llama-3.1-sonar-small-128k-online',
-              messages: [
-              {
-                role: 'system',
-                content: 'Você é um especialista em jornalismo brasileiro. Encontre notícias REAIS e ATUAIS dos principais portais.'
-              },
-              {
-                role: 'user',
-                content: `Encontre ${countText} notícias ATUAIS de ${datePhrase} sobre "${query}" dos portais brasileiros.
-                
-                IMPORTANTE: Use apenas notícias reais publicadas ${datePhrase} (sem redes sociais).
-                
-                FONTES PRIORITÁRIAS: ${regionalSources}, ${domainFilter.join(', ')}
-                FONTES NACIONAIS: G1, Folha, Estadão, UOL, R7, CNN Brasil, Metrópoles, Band
-                
-                Para cada notícia REAL encontrada, retorne EXATAMENTE:
-                FORMATO DE RESPOSTA (sem markdown, apenas texto puro):
-                Para cada notícia REAL encontrada, gere blocos consecutivos como abaixo, começando em NOTÍCIA 1 e seguindo em ordem (2, 3, 4, ...), sem limite artificial:
-                
-                NOTÍCIA {n}:
-                Título: [título completo]
-                URL: [link direto]
-                Fonte: [portal]
-                Data: [data de publicação]
-                Resumo: [2-3 linhas sobre o conteúdo]
-                
-                Inclua quantas notícias conseguir encontrar dentro do período solicitado. Não invente links e priorize as fontes listadas.`
-              }
-            ],
-            temperature: 0.2,
-            top_p: 0.9,
-            max_tokens: 1200,
-            return_images: false,
-            return_related_questions: false,
-            frequency_penalty: 1,
-            presence_penalty: 0,
-            search_domain_filter: settings.scope === 'restrito' ? domainFilter : undefined,
-            search_recency_filter: perplexRecency
-          }),
-        });
+        const MODELS = [
+          'sonar-small-online',
+          'sonar',
+          'llama-3.1-sonar-small-128k-online',
+          'llama-3.1-sonar-large-128k-online'
+        ];
+        const countText = settings.maxArticles > 0 ? `até ${settings.maxArticles}` : 'o máximo possível de';
+        let perplexityData: any = null;
+        let lastErr: { status: number; text: string; model: string } | null = null;
 
-        if (!perplexityResponse.ok) {
-          const errorText = await perplexityResponse.text();
-          console.error(`❌ Erro Perplexity query ${i+1} (${perplexityResponse.status}):`, errorText);
-          
-          // Se for erro de rate limit, aguardar mais tempo
-          if (perplexityResponse.status === 429) {
-            console.log('⏸️ Rate limit detectado, aguardando 10 segundos...');
-            await new Promise(resolve => setTimeout(resolve, 10000));
+        for (const model of MODELS) {
+          console.log(`🧠 Tentando modelo Perplexity: ${model}`);
+          const resp = await fetch('https://api.perplexity.ai/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${perplexityApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                {
+                  role: 'system',
+                  content: 'Você é um especialista em jornalismo brasileiro. Encontre notícias REAIS e ATUAIS dos principais portais.'
+                },
+                {
+                  role: 'user',
+                  content: `Encontre ${countText} notícias ATUAIS de ${datePhrase} sobre "${query}" dos portais brasileiros.
+                  
+                  IMPORTANTE: Use apenas notícias reais publicadas ${datePhrase} (sem redes sociais).
+                  
+                  FONTES PRIORITÁRIAS: ${regionalSources}, ${domainFilter.join(', ')}
+                  FONTES NACIONAIS: G1, Folha, Estadão, UOL, R7, CNN Brasil, Metrópoles, Band
+                  
+                  Para cada notícia REAL encontrada, retorne EXATAMENTE:
+                  FORMATO DE RESPOSTA (sem markdown, apenas texto puro):
+                  Para cada notícia REAL encontrada, gere blocos consecutivos como abaixo, começando em NOTÍCIA 1 e seguindo em ordem (2, 3, 4, ...), sem limite artificial:
+                  
+                  NOTÍCIA {n}:
+                  Título: [título completo]
+                  URL: [link direto]
+                  Fonte: [portal]
+                  Data: [data de publicação]
+                  Resumo: [2-3 linhas sobre o conteúdo]
+                  
+                  Inclua quantas notícias conseguir encontrar dentro do período solicitado. Não invente links e priorize as fontes listadas.`
+                }
+              ],
+              temperature: 0.2,
+              top_p: 0.9,
+              max_tokens: 1200,
+              return_images: false,
+              return_related_questions: false,
+              frequency_penalty: 1,
+              presence_penalty: 0,
+              search_domain_filter: settings.scope === 'restrito' ? domainFilter : undefined,
+              search_recency_filter: perplexRecency
+            }),
+          });
+
+          if (!resp.ok) {
+            const text = await resp.text();
+            console.error(`❌ Erro Perplexity (${model}) ${resp.status}:`, text);
+            lastErr = { status: resp.status, text, model };
+            if (resp.status === 429) {
+              console.log('⏸️ Rate limit detectado, aguardando 10 segundos...');
+              await new Promise(r => setTimeout(r, 10000));
+            }
+            // tentar próximo modelo em erros 400/404/422/501 etc.
+            continue;
           }
+
+          perplexityData = await resp.json();
+          break;
+        }
+
+        if (!perplexityData) {
+          console.warn('🟡 Nenhum modelo Perplexity funcionou nesta query; seguindo para fallback de parsing.', lastErr);
           continue;
         }
 
-        const perplexityData = await perplexityResponse.json();
-        const content = perplexityData.choices[0].message.content;
-        
+        const content = perplexityData.choices?.[0]?.message?.content || '';
         console.log(`📰 Resposta query ${i+1}:`, content.substring(0, 300));
 
         // Parse robusto com fallback para JSON
@@ -727,25 +746,30 @@ serve(async (req) => {
         const fallbackQuery = mayor
           ? `${mayor.mayorName} ${mayor.cityName} ${mayor.state} últimos 30 dias notícias`
           : `Prefeitura de São Paulo últimos 30 dias notícias`;
-        const fallbackResp = await fetch('https://api.perplexity.ai/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${perplexityApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'llama-3.1-sonar-small-128k-online',
-            messages: [
-              { role: 'system', content: 'Liste notícias reais dos últimos 30 dias com título, URL, fonte e um resumo curto.' },
-              { role: 'user', content: `Encontre o máximo possível de notícias dos últimos 30 dias sobre: ${fallbackQuery}. Retorne blocos NOTÍCIA n com Título, URL, Fonte e Resumo.` }
-            ],
-            temperature: 0.2,
-            max_tokens: 1200,
-            search_recency_filter: 'month'
-          })
-        });
-        if (fallbackResp.ok) {
-          const data = await fallbackResp.json();
+        let fbData: any = null;
+        for (const model of ['sonar-small-online','sonar','llama-3.1-sonar-small-128k-online','llama-3.1-sonar-large-128k-online']) {
+          const fallbackResp = await fetch('https://api.perplexity.ai/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${perplexityApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                { role: 'system', content: 'Liste notícias reais dos últimos 30 dias com título, URL, fonte e um resumo curto.' },
+                { role: 'user', content: `Encontre o máximo possível de notícias dos últimos 30 dias sobre: ${fallbackQuery}. Retorne blocos NOTÍCIA n com Título, URL, Fonte e Resumo.` }
+              ],
+              temperature: 0.2,
+              max_tokens: 1200,
+              search_recency_filter: 'month'
+            })
+          });
+          if (fallbackResp.ok) { fbData = await fallbackResp.json(); break; }
+          console.error('❌ Fallback Perplexity falhou com modelo', model, await fallbackResp.text());
+        }
+        if (fbData) {
+          const data = fbData;
           const c = data.choices?.[0]?.message?.content || '';
           let blocks = c.split(/NOT[ÍI]CIA\s*\d+\s*[:\-]/gi).filter((b: string) => b.trim().toLowerCase().includes('título:'));
           if (blocks.length === 0) {
