@@ -68,11 +68,12 @@ export function PerplexitySettings({ value, onChange }: Props) {
               <SelectValue placeholder="Selecione" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">1</SelectItem>
-              <SelectItem value="2">2</SelectItem>
+              <SelectItem value="0">Sem limite</SelectItem>
               <SelectItem value="3">3</SelectItem>
-              <SelectItem value="4">4</SelectItem>
               <SelectItem value="5">5</SelectItem>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
             </SelectContent>
           </Select>
         </div>

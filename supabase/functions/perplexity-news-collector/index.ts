@@ -139,7 +139,7 @@ serve(async (req) => {
       const rawSettings = body.settings || {};
       const settings = {
         recency: (rawSettings.recency === 'week' || rawSettings.recency === 'month') ? rawSettings.recency : 'day',
-        maxArticles: Number(rawSettings.maxArticles) || 3,
+        maxArticles: Number.isFinite(Number(rawSettings.maxArticles)) ? Number(rawSettings.maxArticles) : 0,
         scope: (rawSettings.scope === 'local' || rawSettings.scope === 'amplo' || rawSettings.scope === 'restrito') ? rawSettings.scope : 'amplo',
         deduplicate: rawSettings.deduplicate !== false,
       } as {
@@ -272,7 +272,7 @@ serve(async (req) => {
         break;
       }
       console.log(`🔍 ${i+1}/${todayQueries.length}: ${query}`);
-      
+      const countText = settings.maxArticles > 0 ? `até ${settings.maxArticles}` : 'o máximo possível de';
       try {
         const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
           method: 'POST',
@@ -281,7 +281,7 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
             body: JSON.stringify({
-              model: 'sonar-small-online',
+              model: 'llama-3.1-sonar-small-128k-online',
               messages: [
               {
                 role: 'system',
@@ -289,7 +289,7 @@ serve(async (req) => {
               },
               {
                 role: 'user',
-                content: `Encontre até ${settings.maxArticles} notícias ATUAIS de ${datePhrase} sobre "${query}" dos portais brasileiros.
+                content: `Encontre ${countText} notícias ATUAIS de ${datePhrase} sobre "${query}" dos portais brasileiros.
                 
                 IMPORTANTE: Use apenas notícias reais publicadas ${datePhrase} (sem redes sociais).
                 
@@ -362,7 +362,8 @@ serve(async (req) => {
               const parsed = JSON.parse(sanitizeJson(jsonBlock));
               const articles = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.articles) ? parsed.articles : []);
               if (articles.length) {
-                newsBlocks = articles.slice(0, settings.maxArticles).map((a: any) =>
+                const cap = settings.maxArticles > 0 ? settings.maxArticles : articles.length;
+                newsBlocks = articles.slice(0, cap).map((a: any) =>
                   `Título: ${a.title || a.titulo || 'Sem título'}\nURL: ${a.url || a.link || ''}\nFonte: ${a.source || a.fonte || 'Portal de Notícias'}\nResumo: ${a.summary || a.resumo || ''}`
                 );
               }

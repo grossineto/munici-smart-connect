@@ -52,7 +52,7 @@ function NewsMonitoring() {
 
   const [perplexityConfig, setPerplexityConfig] = useState<PerplexityConfig>({
     recency: 'week',
-    maxArticles: 3,
+    maxArticles: 0,
     scope: 'amplo',
     deduplicate: true,
   });
