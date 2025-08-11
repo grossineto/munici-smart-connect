@@ -20,54 +20,39 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting real news collection...');
+    const body = await req.json().catch(() => ({}));
+    const tenantId: string | null = typeof body.tenantId === 'string' ? body.tenantId : null;
+    const mayor = body.mayor || null;
+    console.log('Starting real news collection...', { tenantId, mayor });
 
-    // Simular coleta de notícias de APIs de notícias públicas
+    // Simular coleta de notícias reais para o político/cidade selecionado
+    const name = mayor?.mayorName || mayor?.nome || 'Prefeito(a)';
+    const city = mayor?.cityName || mayor?.cidade || 'São Paulo';
+    const uf = mayor?.state || mayor?.uf || 'SP';
+    const tag = `${city}-${uf}`.toLowerCase().replace(/\s+/g, '-');
+    
     const realNewsArticles = [
       {
-        title: "Prefeito Ricardo Nunes assina novo decreto para melhorar transporte público em SP",
-        content: "O prefeito de São Paulo, Ricardo Nunes, assinou nesta segunda-feira um decreto que visa melhorar o transporte público na capital paulista. A medida inclui aumento da frota de ônibus e criação de novas linhas estratégicas. 'Estamos comprometidos em oferecer um transporte de qualidade para todos os paulistanos', declarou o prefeito durante a cerimônia no Palácio das Indústrias.",
-        url: "https://g1.globo.com/sp/sao-paulo/noticia-transporte-" + Date.now(),
-        source: "G1 São Paulo"
+        title: `${city} anuncia pacote de mobilidade urbana; ${name} destaca melhorias no transporte`,
+        content: `A prefeitura de ${city}/${uf} anunciou um pacote de melhorias para o transporte público, incluindo aumento de frota e faixas exclusivas. ${name} afirmou que as medidas reduzirão o tempo de viagem da população.`,
+        url: `https://g1.globo.com/${tag}/mobilidade-${Date.now()}`,
+        source: `G1 ${city}`
       },
       {
-        title: "Hospitais municipais de SP registram superlotação e críticas à gestão",
-        content: "Hospitais da rede municipal de São Paulo enfrentam superlotação nesta semana, gerando críticas de médicos e pacientes à gestão do prefeito Ricardo Nunes. O Hospital Municipal do Tatuapé reportou ocupação de 120% nos leitos de UTI. Vereadores da oposição cobram explicações da prefeitura sobre a crise no sistema de saúde.",
-        url: "https://folha.uol.com.br/cotidiano/saude-municipal-" + Date.now(),
-        source: "Folha de S.Paulo"
+        title: `${city} inaugura nova unidade de saúde com capacidade ampliada`,
+        content: `Foi inaugurada uma nova unidade de saúde em ${city}, com atendimento 24h e capacidade ampliada. A gestão de ${name} afirmou que a unidade desafogará o sistema e melhorará o atendimento.`,
+        url: `https://folha.uol.com.br/${tag}/saude-${Date.now()}`,
+        source: `Folha ${city}`
       },
       {
-        title: "São Paulo bate recorde de arrecadação e prefeito comemora resultado",
-        content: "A Prefeitura de São Paulo bateu recorde histórico de arrecadação no primeiro semestre de 2024. O prefeito Ricardo Nunes atribuiu o resultado às políticas de modernização fiscal e ao crescimento econômico da cidade. Os recursos extras serão investidos em infraestrutura e serviços públicos.",
-        url: "https://estadao.com.br/economia/sao-paulo-arrecadacao-" + Date.now(),
-        source: "Estadão São Paulo"
-      },
-      {
-        title: "Manifestação no centro de SP protesta contra política habitacional da prefeitura",
-        content: "Centenas de pessoas se reuniram na Praça da Sé para protestar contra a política habitacional da Prefeitura de São Paulo. Os manifestantes criticam a gestão de Ricardo Nunes e pedem mais investimentos em habitação popular. O movimento promete novas manifestações se não houver mudanças.",
-        url: "https://uol.com.br/noticias/habitacao-protesto-" + Date.now(),
-        source: "UOL SP"
-      },
-      {
-        title: "Escândalo em licitação de obras públicas em SP ganha repercussão nacional",
-        content: "Um escândalo envolvendo irregularidades em licitação de obras públicas na cidade de São Paulo ganhou repercussão nacional. O Ministério Público investiga possíveis favorecimentos em contratos da gestão atual. A Prefeitura de São Paulo nega qualquer irregularidade e promete colaborar com as investigações.",
-        url: "https://cnnbrasil.com.br/politica/escandalo-licitacao-" + Date.now(),
-        source: "CNN Brasil"
+        title: `Educação em ${city}: escolas municipais recebem investimentos em tecnologia`,
+        content: `A rede municipal de ensino de ${city} recebeu novos laboratórios de informática e capacitação para professores. Segundo a prefeitura, a iniciativa faz parte do plano de modernização da educação.`,
+        url: `https://estadao.com.br/${tag}/educacao-${Date.now()}`,
+        source: `Estadão`
       }
     ];
 
-    const results = [];
-
-    // Get first news source for reference
-    const { data: sources } = await supabase
-      .from('news_sources')
-      .select('*')
-      .limit(1);
-
-    const defaultSource = sources?.[0];
-    if (!defaultSource) {
-      throw new Error('No news source found');
-    }
+    const results: any[] = [];
 
     for (const newsItem of realNewsArticles) {
       try {
@@ -76,6 +61,7 @@ serve(async (req) => {
           .from('news_articles')
           .select('id')
           .eq('url', newsItem.url)
+          .eq('tenant_id', tenantId as any)
           .maybeSingle();
 
         let savedArticle;
@@ -87,11 +73,12 @@ serve(async (req) => {
           const { data: newArticle, error: insertError } = await supabase
             .from('news_articles')
             .insert({
-              source_id: defaultSource.id,
               title: newsItem.title,
               content: newsItem.content,
               url: newsItem.url,
-              published_at: new Date().toISOString()
+              author: newsItem.source,
+              published_at: new Date().toISOString(),
+              tenant_id: tenantId
             })
             .select()
             .single();
@@ -114,22 +101,18 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-4.1-2025-04-14',
+            model: 'gpt-4o-mini',
             messages: [
               {
                 role: 'system',
-                content: `Você é um analista especializado em monitoramento de notícias para gestão pública municipal de São Paulo. 
-                Analise a notícia procurando especificamente por menções a:
-                - "prefeito de são paulo", "Ricardo Nunes", "prefeito ricardo nunes", "prefeitura de são paulo"
-                - Palavras relacionadas à gestão municipal, políticas públicas, saúde, educação, transporte
-                - Situações que possam afetar a imagem do prefeito ou da prefeitura
-                - Críticas, protestos, escândalos ou problemas na gestão
-                
+                content: `Você é um analista especializado em monitoramento de notícias para gestão pública municipal. 
+                Considere o contexto do município de ${city}/${uf} e a gestão de ${name}. 
+                Analise a notícia buscando temas de gestão municipal, potenciais crises e oportunidades.
                 Retorne APENAS um JSON válido com esta estrutura:
                 {
                   "sentiment_score": number(-1 a 1),
                   "urgency_level": "low|medium|high|critical",
-                  "relevance_score": number(0 a 1),
+                  "relevance_score": number(0 a 10),
                   "keywords": ["palavra1", "palavra2"],
                   "summary": "resumo em até 150 caracteres",
                   "impact_analysis": "análise do impacto para a gestão municipal",
@@ -163,6 +146,7 @@ serve(async (req) => {
               .from('news_analysis')
               .insert({
                 article_id: savedArticle.id,
+                tenant_id: tenantId,
                 ...analysis
               });
 
@@ -181,7 +165,8 @@ serve(async (req) => {
                   alert_type: analysis.crisis_potential ? 'crisis' : 'mention',
                   severity: analysis.urgency_level,
                   title: `Alerta: ${newsItem.title}`,
-                  message: analysis.summary
+                  message: analysis.summary,
+                  tenant_id: tenantId
                 });
 
               if (alertError) {
