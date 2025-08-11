@@ -297,27 +297,17 @@ serve(async (req) => {
                 FONTES NACIONAIS: G1, Folha, Estadão, UOL, R7, CNN Brasil, Metrópoles, Band
                 
                 Para cada notícia REAL encontrada, retorne EXATAMENTE:
+                FORMATO DE RESPOSTA (sem markdown, apenas texto puro):
+                Para cada notícia REAL encontrada, gere blocos consecutivos como abaixo, começando em NOTÍCIA 1 e seguindo em ordem (2, 3, 4, ...), sem limite artificial:
                 
-                NOTÍCIA 1:
+                NOTÍCIA {n}:
                 Título: [título completo]
                 URL: [link direto]
                 Fonte: [portal]
                 Data: [data de publicação]
                 Resumo: [2-3 linhas sobre o conteúdo]
                 
-                NOTÍCIA 2:
-                Título: [título completo]
-                URL: [link direto]
-                Fonte: [portal]
-                Data: [data de publicação]
-                Resumo: [2-3 linhas sobre o conteúdo]
-                
-                NOTÍCIA 3:
-                Título: [título completo]
-                URL: [link direto]
-                Fonte: [portal]
-                Data: [data de publicação]
-                Resumo: [2-3 linhas sobre o conteúdo]`
+                Inclua quantas notícias conseguir encontrar dentro do período solicitado. Não invente links e priorize as fontes listadas.`
               }
             ],
             temperature: 0.2,
@@ -350,8 +340,8 @@ serve(async (req) => {
         console.log(`📰 Resposta query ${i+1}:`, content.substring(0, 300));
 
         // Parse robusto com fallback para JSON
-        let newsBlocks = content.split(/NOTÍCIA \d+:/).filter(block => 
-          block.trim() && (block.includes('Título:') || block.includes('titulo:'))
+        let newsBlocks = content.split(/NOT[ÍI]CIA\s*\d+\s*[:\-]/gi).filter(block => 
+          block.trim() && ((block.toLowerCase().includes('título:')) || (block.toLowerCase().includes('titulo:')))
         );
 
         // Fallback: tentar extrair JSON estruturado (array ou { articles: [] })

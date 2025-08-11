@@ -215,7 +215,7 @@ function NewsMonitoring() {
           )
         `)
         .or(`title.ilike.%${politician.nome}%,title.ilike.%${politician.cidade}%,message.ilike.%${politician.nome}%,message.ilike.%${politician.cidade}%`)
-        .order('created_at', { ascending: false })
+        .order('published_at', { ascending: false, foreignTable: 'news_articles' })
         .limit(50);
 
       if (alertsError) {
@@ -258,7 +258,7 @@ function NewsMonitoring() {
           )
         `)
         .or(`summary.ilike.%${politician.nome}%,summary.ilike.%${politician.cidade}%,impact_analysis.ilike.%${politician.nome}%,impact_analysis.ilike.%${politician.cidade}%`)
-        .order('created_at', { ascending: false })
+        .order('published_at', { ascending: false, foreignTable: 'news_articles' })
         .limit(50);
 
       if (analysesError) {
@@ -383,6 +383,23 @@ function NewsMonitoring() {
     }
   };
 
+  // Polling temporário após coleta
+  const startEphemeralPolling = (durationMs = 120000, intervalMs = 8000) => {
+    const end = Date.now() + durationMs;
+    const interval = setInterval(async () => {
+      if (Date.now() > end) {
+        clearInterval(interval);
+        return;
+      }
+      if (selectedPolitician) {
+        await loadDataForPolitician(selectedPolitician);
+      } else {
+        await loadData();
+      }
+    }, intervalMs);
+    return () => clearInterval(interval);
+  };
+
   // Função para executar coleta de notícias
   const runPerplexityNews = async () => {
     console.log('Starting Perplexity news collection...');
@@ -457,10 +474,12 @@ function NewsMonitoring() {
 
   // Função para executar coleta para político específico
   const runPerplexityNewsForPolitician = async (politician: any) => {
+    let stopPolling: null | (() => void) = null;
     try {
       console.log('🚀 Iniciando coleta para político:', politician);
       
       setIsCollecting(true);
+      stopPolling = startEphemeralPolling();
       
       // Timeout local de 4 minutos
       const timeoutPromise = new Promise<never>((_, reject) => {
@@ -529,6 +548,7 @@ function NewsMonitoring() {
         variant: "destructive",
       });
     } finally {
+      if (typeof stopPolling === 'function') stopPolling();
       setIsCollecting(false);
     }
   };
