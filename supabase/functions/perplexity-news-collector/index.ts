@@ -362,6 +362,27 @@ serve(async (req) => {
             // Ignorar e seguir com os próximos fallbacks
           }
         }
+        
+        // Fallback final: extrair por URLs de domínios permitidos
+        if (newsBlocks.length === 0) {
+          const urls = Array.from(new Set((content.match(/https?:\/\/[\S)\]]+/g) || [])));
+          const allowed = urls.filter(u => {
+            try {
+              const { hostname } = new URL(u);
+              return domainFilter.some(d => hostname === d || hostname.endsWith(`.${d}`));
+            } catch {
+              return false;
+            }
+          });
+          if (allowed.length) {
+            const cap = settings.maxArticles > 0 ? settings.maxArticles : allowed.length;
+            newsBlocks = allowed.slice(0, cap).map(u => {
+              let host = '';
+              try { host = new URL(u).hostname; } catch {}
+              return `Título: ${u}\nURL: ${u}\nFonte: ${host}\nResumo: Link detectado pelo coletor`;
+            });
+          }
+        }
 
         console.log(`📊 Query ${i+1}: ${newsBlocks.length} blocos encontrados`);
 
