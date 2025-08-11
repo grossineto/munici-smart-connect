@@ -280,9 +280,9 @@ serve(async (req) => {
             'Authorization': `Bearer ${perplexityApiKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            model: 'llama-3.1-sonar-small-128k-online',
-            messages: [
+            body: JSON.stringify({
+              model: 'sonar-small-online',
+              messages: [
               {
                 role: 'system',
                 content: 'Você é um especialista em jornalismo brasileiro. Encontre notícias REAIS e ATUAIS dos principais portais.'
