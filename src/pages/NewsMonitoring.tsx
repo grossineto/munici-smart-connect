@@ -547,7 +547,25 @@ function NewsMonitoring() {
           title: "Coleta Concluída ✅",
           description: data.message,
         });
-        
+        // Se veio vazio, tentar fallback com mês e sem limite
+        if (!data.articles || data.articles.length === 0) {
+          console.log('🟡 Sem resultados; tentando fallback (30 dias, ilimitado)...');
+          const fallback = await supabase.functions.invoke('perplexity-news-collector', {
+            body: {
+              tenantId,
+              settings: { recency: 'month', maxArticles: 0, scope: 'amplo', deduplicate: true },
+              mayor: {
+                nome: politician.nome,
+                cidade: politician.cidade,
+                uf: politician.uf,
+                mayorName: politician.nome,
+                cityName: politician.cidade,
+                state: politician.uf,
+              }
+            }
+          });
+          console.log('Fallback response:', fallback.data, fallback.error);
+        }
         // Recarregar dados após sucesso
         if (selectedPolitician) {
           loadDataForPolitician(selectedPolitician);
