@@ -3,112 +3,122 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design System Institucional - Plataforma de Monitoramento de Notícias
-   Cores sérias e profissionais para ambiente político/estratégico
-   Todas as cores DEVEM ser HSL para consistência */
+/* Design System Moderno - B.R.I.A.N. Platform
+   Cores vibrantes e gradientes para interface moderna e atrativa */
 
 @layer base {
   :root {
-    /* Cores base institucionais */
-    --background: 210 11% 97%;
-    --foreground: 210 6% 10%;
+    /* Background moderno com gradiente sutil */
+    --background: 220 26% 14%;
+    --foreground: 210 40% 98%;
 
-    --card: 210 11% 99%;
-    --card-foreground: 210 6% 12%;
+    --card: 220 23% 18%;
+    --card-foreground: 210 40% 96%;
 
-    --popover: 210 11% 99%;
-    --popover-foreground: 210 6% 12%;
+    --popover: 220 23% 18%;
+    --popover-foreground: 210 40% 96%;
 
-    /* Primary - azul institucional escuro */
-    --primary: 221 39% 11%;
+    /* Primary - azul tecnológico vibrante */
+    --primary: 217 91% 60%;
     --primary-foreground: 210 40% 98%;
+    --primary-hover: 217 91% 55%;
+    --primary-glow: 217 91% 70%;
 
-    /* Secondary - cinza grafite corporativo */
-    --secondary: 210 7% 89%;
-    --secondary-foreground: 210 6% 16%;
+    /* Secondary - roxo futurista */
+    --secondary: 260 75% 60%;
+    --secondary-foreground: 210 40% 98%;
 
-    /* Muted - tons neutros profissionais */
-    --muted: 210 7% 95%;
-    --muted-foreground: 210 4% 42%;
+    /* Accent - ciano brilhante */
+    --accent: 190 95% 55%;
+    --accent-foreground: 220 26% 14%;
 
-    /* Accent - azul corporativo */
-    --accent: 217 32% 17%;
-    --accent-foreground: 210 40% 98%;
+    /* Muted - tons escuros suaves */
+    --muted: 220 16% 22%;
+    --muted-foreground: 210 20% 70%;
 
-    /* Estados de feedback */
-    --destructive: 0 72% 51%;
+    /* Estados de feedback vibrantes */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 222.2 84% 4.9%;
-    --success: 142 76% 36%;
+    --warning: 35 91% 55%;
+    --warning-foreground: 220 26% 14%;
+    --success: 142 76% 50%;
     --success-foreground: 210 40% 98%;
+    --info: 200 98% 60%;
+    --info-foreground: 220 26% 14%;
 
-    /* Border e Ring - contornos definidos para aparência institucional */
-    --border: 210 12% 84%;
-    --input: 210 12% 84%;
-    --ring: 221 39% 11%;
+    /* Borders suaves */
+    --border: 220 16% 28%;
+    --input: 220 16% 28%;
+    --ring: 217 91% 60%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Sidebar institucional */
-    --sidebar-background: 210 11% 98%;
-    --sidebar-foreground: 210 6% 16%;
-    --sidebar-primary: 221 39% 11%;
+    /* Sidebar moderna */
+    --sidebar-background: 220 23% 16%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 210 7% 93%;
-    --sidebar-accent-foreground: 210 6% 16%;
-    --sidebar-border: 210 12% 88%;
-    --sidebar-ring: 221 39% 11%;
+    --sidebar-accent: 220 16% 22%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 220 16% 28%;
+    --sidebar-ring: 217 91% 60%;
 
-    /* Sombras institucionais mais definidas */
-    --shadow-institutional: 0 4px 12px -2px hsl(221 39% 11% / 0.15);
-    --shadow-card: 0 2px 8px -1px hsl(221 39% 11% / 0.1);
-    --shadow-subtle: 0 1px 4px hsl(221 39% 11% / 0.08);
+    /* Sombras com glow effects */
+    --shadow-glow: 0 0 40px hsl(217 91% 60% / 0.3);
+    --shadow-card: 0 8px 32px hsl(220 26% 14% / 0.8);
+    --shadow-intense: 0 16px 48px hsl(217 91% 60% / 0.2);
 
-    /* Gradientes corporativos */
-    --gradient-primary: linear-gradient(135deg, hsl(221 39% 11%), hsl(217 32% 17%));
-    --gradient-accent: linear-gradient(180deg, hsl(217 32% 17%), hsl(221 39% 11%));
-    --gradient-subtle: linear-gradient(135deg, hsl(210 11% 97%), hsl(210 7% 95%));
+    /* Gradientes futuristas */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(190 95% 55%));
+    --gradient-secondary: linear-gradient(135deg, hsl(260 75% 60%), hsl(217 91% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(220 26% 14%) 0%, hsl(217 91% 60% / 0.1) 50%, hsl(190 95% 55% / 0.1) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(220 23% 18%), hsl(220 16% 22%));
+    --gradient-button: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 70%));
   }
 
   .dark {
-    /* Dark mode institucional */
-    --background: 221 39% 6%;
-    --foreground: 210 40% 98%;
+    /* Light mode - tons claros e arejados */
+    --background: 210 40% 98%;
+    --foreground: 220 26% 14%;
 
-    --card: 221 39% 8%;
-    --card-foreground: 210 40% 96%;
+    --card: 210 40% 99%;
+    --card-foreground: 220 26% 16%;
 
-    --popover: 221 39% 8%;
-    --popover-foreground: 210 40% 96%;
+    --popover: 210 40% 99%;
+    --popover-foreground: 220 26% 16%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 221 39% 11%;
+    --primary: 217 91% 55%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 217 32% 12%;
-    --secondary-foreground: 210 40% 96%;
+    --secondary: 260 75% 55%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 32% 12%;
-    --muted-foreground: 210 4% 60%;
+    --accent: 190 95% 50%;
+    --accent-foreground: 220 26% 14%;
 
-    --accent: 217 32% 17%;
-    --accent-foreground: 210 40% 98%;
+    --muted: 210 20% 95%;
+    --muted-foreground: 220 16% 45%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 55%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 32% 17%;
-    --input: 217 32% 17%;
-    --ring: 210 40% 98%;
+    --border: 210 20% 88%;
+    --input: 210 20% 88%;
+    --ring: 217 91% 55%;
 
-    --sidebar-background: 221 39% 7%;
-    --sidebar-foreground: 210 40% 96%;
-    --sidebar-primary: 210 40% 98%;
-    --sidebar-primary-foreground: 221 39% 11%;
-    --sidebar-accent: 217 32% 14%;
-    --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-border: 217 32% 17%;
-    --sidebar-ring: 210 40% 98%;
+    --sidebar-background: 210 40% 99%;
+    --sidebar-foreground: 220 26% 16%;
+    --sidebar-primary: 217 91% 55%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 210 20% 95%;
+    --sidebar-accent-foreground: 220 26% 16%;
+    --sidebar-border: 210 20% 88%;
+    --sidebar-ring: 217 91% 55%;
+
+    /* Gradientes para light mode */
+    --gradient-hero: linear-gradient(135deg, hsl(210 40% 98%) 0%, hsl(217 91% 55% / 0.05) 50%, hsl(190 95% 50% / 0.05) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(210 40% 99%), hsl(210 20% 95%));
+    --shadow-glow: 0 0 40px hsl(217 91% 55% / 0.15);
   }
 }
 
@@ -129,39 +139,81 @@
     letter-spacing: -0.02em;
   }
   
-  /* Classes utilitárias institucionais */
-  .shadow-institutional {
-    box-shadow: var(--shadow-institutional);
+  /* Classes utilitárias modernas */
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
   }
   
   .shadow-card {
     box-shadow: var(--shadow-card);
   }
   
-  .shadow-subtle {
-    box-shadow: var(--shadow-subtle);
+  .shadow-intense {
+    box-shadow: var(--shadow-intense);
   }
   
   .gradient-primary {
     background: var(--gradient-primary);
   }
   
-  .gradient-accent {
-    background: var(--gradient-accent);
+  .gradient-secondary {
+    background: var(--gradient-secondary);
   }
   
-  .gradient-subtle {
-    background: var(--gradient-subtle);
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+  
+  .gradient-button {
+    background: var(--gradient-button);
   }
 
-  /* Tipografia institucional */
-  .text-institutional {
-    @apply font-medium tracking-tight;
-    letter-spacing: -0.01em;
+  /* Tipografia moderna */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent font-bold;
   }
   
-  .heading-institutional {
-    @apply font-semibold tracking-tight;
-    letter-spacing: -0.025em;
+  .heading-hero {
+    @apply font-bold tracking-tight text-4xl md:text-6xl;
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Animações avançadas */
+  .hover-glow {
+    @apply transition-all duration-300 hover:shadow-glow;
+  }
+  
+  .float-animation {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px hsl(var(--primary) / 0.3); }
+    50% { box-shadow: 0 0 40px hsl(var(--primary) / 0.6); }
+  }
+
+  /* Efeitos interativos */
+  .card-interactive {
+    @apply transition-all duration-300 hover:scale-105 hover:shadow-intense cursor-pointer;
+  }
+  
+  .glass-effect {
+    @apply backdrop-blur-md bg-white/10 border border-white/20;
   }
 }
