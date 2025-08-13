@@ -45,11 +45,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
     <ProtectedRoute>
       <SidebarProvider>
-        <div className="min-h-screen flex w-full">
+        <div className="min-h-screen flex w-full gradient-hero">
           <AppSidebar />
           
           <div className="flex-1 flex flex-col">
-            <header className="h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center px-4 md:px-6 gap-2 md:gap-4 sticky top-0 z-10">
+            <header className="h-16 border-b glass-effect flex items-center px-4 md:px-6 gap-2 md:gap-4 sticky top-0 z-10 shadow-card">
               <SidebarTrigger />
               <div className="flex-1 flex items-center gap-2 md:gap-4 min-w-0">
                 {/* Brand logo swaps for light/dark */}
@@ -100,7 +100,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </div>
             </header>
             
-            <main className="flex-1 p-3 md:p-6 bg-muted/10">
+            <main className="flex-1 p-3 md:p-6 bg-gradient-to-br from-background/50 to-muted/30">
               {children}
             </main>
           </div>

@@ -73,18 +73,19 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
-        <div className="p-6 border-b bg-gradient-to-br from-primary/5 to-secondary/5">
-          <div className="flex justify-center">
-            <div className="relative">
+        <div className="p-6 border-b gradient-primary relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 animate-pulse-glow"></div>
+          <div className="flex justify-center relative z-10">
+            <div className="relative hover-glow">
               <img 
                 src="/lovable-uploads/15e88a34-c752-40da-b211-dbf4235418f1.png" 
                 alt="BR.I.A.N. logo" 
-                className="w-full h-auto max-w-28 transition-transform duration-200 hover:scale-105 dark:hidden"
+                className="w-full h-auto max-w-28 transition-transform duration-300 hover:scale-110 drop-shadow-lg dark:hidden"
               />
               <img 
                 src="/lovable-uploads/0ec6f0c4-8dda-463e-b561-6fbdb3c27d77.png" 
                 alt="BR.I.A.N. logo — versão branca" 
-                className="w-full h-auto max-w-28 transition-transform duration-200 hover:scale-105 hidden dark:block"
+                className="w-full h-auto max-w-28 transition-transform duration-300 hover:scale-110 drop-shadow-lg hidden dark:block"
               />
             </div>
           </div>
@@ -173,7 +174,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <div className="mt-auto p-4 border-t bg-surfaceMuted">
+        <div className="mt-auto p-4 border-t gradient-card backdrop-blur-sm">
           <Button
             variant="ghost"
             className="w-full justify-start mb-2 focus:ring-[hsl(var(--sidebar-icon-color-light))] dark:focus:ring-[hsl(var(--primary-ring))]"
