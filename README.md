@@ -27,6 +27,10 @@ Design a scalable and modular architecture capable of:
 
 The system is designed following a modular and scalable approach, allowing independent evolution of core domains.
 
+## Architecture Diagram
+
+![Architecture Diagram](./architecture_v3.png)
+
 ### Key Components
 
 * **Frontend Layer**
