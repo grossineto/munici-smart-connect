@@ -1,6 +1,6 @@
-# Munici Smart Connect
+# Smart City Platform Architecture
 
-Conceptual platform for digital transformation in municipal management, focused on connecting citizens, services, and public administration through a unified digital ecosystem.
+Conceptual design of a scalable and integrated digital platform for municipal services.
 
 ---
 
